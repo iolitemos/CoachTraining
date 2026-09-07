@@ -1,0 +1,25 @@
+using CoachTraining.Api.Models.Enums;
+
+namespace CoachTraining.Api.DTOs.PrivateSessions;
+
+public class PrivateSessionDetailDto
+{
+    public int TrainingSessionId { get; set; }
+    public DateOnly SessionDate { get; set; }
+    public TimeOnly StartTime { get; set; }
+    public TimeOnly EndTime { get; set; }
+    public int CoachId { get; set; }
+    public string CoachCode { get; set; } = string.Empty;
+    public string CoachFullName { get; set; } = string.Empty;
+    public string? Location { get; set; }
+    public string? Remarks { get; set; }
+    public SessionStatus Status { get; set; }
+    public List<PrivateSessionAthleteDto> Athletes { get; set; } = [];
+}
+
+public class PrivateSessionAthleteDto
+{
+    public int AthleteId { get; set; }
+    public string AthleteCode { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+}

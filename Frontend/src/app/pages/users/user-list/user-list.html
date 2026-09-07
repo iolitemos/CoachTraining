@@ -1,0 +1,92 @@
+<app-page-header title="จัดการผู้ใช้งาน" subtitle="จัดการบัญชีผู้ใช้และบทบาทในระบบ">
+  <a
+    actions
+    routerLink="/users/new"
+    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+  >
+    เพิ่มผู้ใช้
+  </a>
+</app-page-header>
+
+<div class="mt-4">
+  <app-search-filter-toolbar placeholder="ค้นหาชื่อผู้ใช้ อีเมล หรือชื่อ-นามสกุล" (search)="onSearch($event)" />
+</div>
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดรายชื่อผู้ใช้..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดรายชื่อผู้ใช้ได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (users().length === 0) {
+        <app-empty-state title="ไม่พบผู้ใช้งาน" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มผู้ใช้ใหม่" />
+      } @else {
+        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table class="w-full min-w-160 text-left text-sm">
+            <thead class="border-b border-border text-text-secondary">
+              <tr>
+                <th class="px-4 py-3 font-medium">ชื่อผู้ใช้</th>
+                <th class="px-4 py-3 font-medium">ชื่อ-นามสกุล</th>
+                <th class="px-4 py-3 font-medium">อีเมล</th>
+                <th class="px-4 py-3 font-medium">บทบาท</th>
+                <th class="px-4 py-3 font-medium">สถานะ</th>
+                <th class="px-4 py-3 font-medium">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users(); track user.userId) {
+                <tr class="border-b border-border last:border-0">
+                  <td class="px-4 py-3 text-text">{{ user.username }}</td>
+                  <td class="px-4 py-3 text-text">{{ user.fullName }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ user.email }}</td>
+                  <td class="px-4 py-3 text-text-secondary">
+                    {{ user.roles.map(getRoleLabel).join(', ') }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                      [class]="user.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
+                    >
+                      {{ user.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <a [routerLink]="['/users', user.userId, 'edit']" class="text-primary-600 hover:underline">
+                        แก้ไข
+                      </a>
+                      <button
+                        type="button"
+                        class="text-danger hover:underline"
+                        (click)="requestStatusChange(user)"
+                      >
+                        {{ user.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4">
+          <app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" />
+        </div>
+      }
+    }
+  }
+</div>
+
+<app-confirmation-dialog
+  [open]="pendingStatusChange() !== null"
+  [danger]="!!pendingStatusChange()?.isActive"
+  [processing]="statusChangeProcessing()"
+  title="ยืนยันการเปลี่ยนสถานะ"
+  [message]="(pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งานผู้ใช้ ' : 'ต้องการเปิดใช้งานผู้ใช้ ') + (pendingStatusChange()?.username ?? '') + ' ใช่หรือไม่?'"
+  (confirmed)="confirmStatusChange()"
+  (cancelled)="cancelStatusChange()"
+/>

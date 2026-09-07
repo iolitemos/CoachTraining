@@ -1,0 +1,106 @@
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+
+import { PrivateSessionForm } from './private-session-form';
+
+describe('PrivateSessionForm', () => {
+  let component: PrivateSessionForm;
+  let fixture: ComponentFixture<PrivateSessionForm>;
+  let httpMock: HttpTestingController;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [PrivateSessionForm],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: convertToParamMap({}) } },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(PrivateSessionForm);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  async function initInAddMode(): Promise<void> {
+    const initPromise = component.ngOnInit();
+    httpMock.expectOne((r) => r.url.endsWith('/coaches/options')).flush({ message: 'Success', data: [] });
+    await initPromise;
+  }
+
+  it('should create in "add" mode and load active coach options', async () => {
+    await initInAddMode();
+
+    expect(component).toBeTruthy();
+    expect(component.isEditMode()).toBe(false);
+    expect(component.loading()).toBe(false);
+  });
+
+  it('should require at least one athlete before submit even when the rest of the form is valid', async () => {
+    await initInAddMode();
+
+    component.form.setValue({
+      coachId: 1,
+      sessionDate: '2026-01-10',
+      startTime: '09:00',
+      endTime: '10:00',
+      location: '',
+      remarks: '',
+    });
+
+    await component.onSubmit();
+
+    expect(component.errorMessage()).toBe('กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน');
+    expect(component.submitting()).toBe(false);
+  });
+
+  it('should not add the same athlete twice', async () => {
+    await initInAddMode();
+
+    const athlete = { athleteId: 1, athleteCode: 'A001', fullName: 'นักกีฬาทดสอบ', nickname: null };
+    component.addAthlete(athlete);
+    component.addAthlete(athlete);
+
+    expect(component.selectedAthletes().length).toBe(1);
+  });
+
+  it('should show schedule-conflict messages on a 409 response', async () => {
+    await initInAddMode();
+
+    component.addAthlete({ athleteId: 1, athleteCode: 'A001', fullName: 'นักกีฬาทดสอบ', nickname: null });
+    component.form.setValue({
+      coachId: 1,
+      sessionDate: '2026-01-10',
+      startTime: '09:00',
+      endTime: '10:00',
+      location: '',
+      remarks: '',
+    });
+
+    const submitPromise = component.onSubmit();
+
+    httpMock.expectOne((r) => r.url.endsWith('/private-sessions')).flush(
+      {
+        message: 'พบตารางฝึกซ้อมที่ขัดแย้งกัน',
+        errors: [{ field: 'coachId', message: 'โค้ชมีตารางฝึกซ้อมในเวลานี้แล้ว' }],
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    await submitPromise;
+
+    expect(component.conflictMessages()).toEqual(['โค้ชมีตารางฝึกซ้อมในเวลานี้แล้ว']);
+    expect(component.submitting()).toBe(false);
+  });
+});

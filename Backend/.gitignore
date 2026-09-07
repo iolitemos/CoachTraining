@@ -1,0 +1,16 @@
+## .NET
+bin/
+obj/
+*.user
+
+## Rider / VS
+.vs/
+.idea/
+*.suo
+
+## Secrets (never commit real connection strings, JWT keys, etc.)
+appsettings.*.local.json
+
+## Local dev config holds real DB credentials / JWT signing key (see appsettings.Development.json)
+## QAS/Production appsettings must stay empty placeholders in git; real values come from env vars at deploy time.
+CoachTraining.Api/appsettings.Development.json

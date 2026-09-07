@@ -1,0 +1,45 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace CoachTraining.Api.DTOs.RoutineSchedules;
+
+public class RoutineScheduleCreateDto : IValidatableObject
+{
+    /// <summary>Optional — auto-generated from day/time when left blank.</summary>
+    [MaxLength(200)]
+    public string? Name { get; set; }
+
+    [Required(ErrorMessage = "กรุณาเลือกโค้ช")]
+    public int CoachId { get; set; }
+
+    [Required(ErrorMessage = "กรุณาเลือกวันในสัปดาห์")]
+    public DayOfWeek DayOfWeek { get; set; }
+
+    [Required(ErrorMessage = "กรุณากรอกเวลาเริ่ม")]
+    public TimeOnly StartTime { get; set; }
+
+    [Required(ErrorMessage = "กรุณากรอกเวลาสิ้นสุด")]
+    public TimeOnly EndTime { get; set; }
+
+    [Required(ErrorMessage = "กรุณาเลือกวันที่เริ่มมีผล")]
+    public DateOnly EffectiveStartDate { get; set; }
+
+    public DateOnly? EffectiveEndDate { get; set; }
+
+    [MaxLength(50)]
+    public string? RecurrencePattern { get; set; }
+
+    public string? Remarks { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (EndTime <= StartTime)
+        {
+            yield return new ValidationResult("เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่ม", [nameof(EndTime)]);
+        }
+
+        if (EffectiveEndDate is not null && EffectiveEndDate < EffectiveStartDate)
+        {
+            yield return new ValidationResult("วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มมีผล", [nameof(EffectiveEndDate)]);
+        }
+    }
+}

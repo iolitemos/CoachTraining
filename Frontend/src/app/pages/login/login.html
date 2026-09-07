@@ -1,0 +1,52 @@
+<div class="flex min-h-screen items-center justify-center bg-background px-4">
+  <div class="w-full max-w-sm rounded-xl bg-surface p-6 shadow-sm">
+    <h1 class="text-center text-lg font-semibold text-text">ระบบจัดการฝึกซ้อมและเช็คชื่อนักกีฬา</h1>
+    <p class="mt-1 text-center text-sm text-text-secondary">เข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+
+    <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div>
+        <label for="username" class="mb-1 block text-sm font-medium text-text">
+          ชื่อผู้ใช้ <span class="text-danger">*</span>
+        </label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          autocomplete="username"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+        />
+        @if (form.controls.username.invalid && form.controls.username.touched) {
+          <p class="mt-1 text-xs text-danger">กรุณากรอกชื่อผู้ใช้</p>
+        }
+      </div>
+
+      <div>
+        <label for="password" class="mb-1 block text-sm font-medium text-text">
+          รหัสผ่าน <span class="text-danger">*</span>
+        </label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          autocomplete="current-password"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+        />
+        @if (form.controls.password.invalid && form.controls.password.touched) {
+          <p class="mt-1 text-xs text-danger">กรุณากรอกรหัสผ่าน</p>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">{{ errorMessage() }}</p>
+      }
+
+      <button
+        type="submit"
+        [disabled]="submitting()"
+        class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ submitting() ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
+      </button>
+    </form>
+  </div>
+</div>

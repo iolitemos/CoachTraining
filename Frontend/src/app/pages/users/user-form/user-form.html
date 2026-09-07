@@ -1,0 +1,123 @@
+<app-page-header
+  [title]="isEditMode() ? 'แก้ไขผู้ใช้งาน' : 'เพิ่มผู้ใช้งาน'"
+  subtitle="กำหนดข้อมูลบัญชี บทบาท และการเชื่อมโยงโค้ช"
+>
+  <a actions routerLink="/users" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
+</app-page-header>
+
+<div class="mt-4 max-w-xl">
+  @if (loading()) {
+    <app-loading-indicator label="กำลังโหลดข้อมูล..." />
+  } @else {
+    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div>
+        <label for="username" class="mb-1 block text-sm font-medium text-text">
+          ชื่อผู้ใช้ <span class="text-danger">*</span>
+        </label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text disabled:bg-secondary-50 disabled:text-text-secondary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+        />
+        @if (form.controls.username.invalid && form.controls.username.touched) {
+          <p class="mt-1 text-xs text-danger">กรุณากรอกชื่อผู้ใช้</p>
+        }
+      </div>
+
+      <div>
+        <label for="fullName" class="mb-1 block text-sm font-medium text-text">
+          ชื่อ-นามสกุล <span class="text-danger">*</span>
+        </label>
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+        />
+        @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
+          <p class="mt-1 text-xs text-danger">กรุณากรอกชื่อ-นามสกุล</p>
+        }
+      </div>
+
+      <div>
+        <label for="email" class="mb-1 block text-sm font-medium text-text">
+          อีเมล <span class="text-danger">*</span>
+        </label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+        />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <p class="mt-1 text-xs text-danger">กรุณากรอกอีเมลให้ถูกต้อง</p>
+        }
+      </div>
+
+      @if (!isEditMode()) {
+        <div>
+          <label for="password" class="mb-1 block text-sm font-medium text-text">
+            รหัสผ่าน <span class="text-danger">*</span>
+          </label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+          />
+          @if (form.controls.password.invalid && form.controls.password.touched) {
+            <p class="mt-1 text-xs text-danger">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</p>
+          }
+        </div>
+      }
+
+      <div>
+        <span class="mb-1 block text-sm font-medium text-text">
+          บทบาท <span class="text-danger">*</span>
+        </span>
+        <div class="flex flex-col gap-2">
+          @for (role of roleOptions(); track role.roleId) {
+            <label class="flex items-center gap-2 text-sm text-text">
+              <input
+                type="checkbox"
+                [checked]="isRoleChecked(role.roleId)"
+                (change)="toggleRole(role.roleId, $any($event.target).checked)"
+                class="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
+              />
+              {{ getRoleLabel(role.name) }}
+            </label>
+          }
+        </div>
+      </div>
+
+      @if (isEditMode()) {
+        <div>
+          <label for="coachId" class="mb-1 block text-sm font-medium text-text">เชื่อมโยงกับโค้ช (ถ้ามี)</label>
+          <select
+            id="coachId"
+            formControlName="coachId"
+            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+          >
+            <option [ngValue]="null">— ไม่เชื่อมโยง —</option>
+            @for (coach of coachOptions(); track coach.coachId) {
+              <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">{{ errorMessage() }}</p>
+      }
+
+      <button
+        type="submit"
+        [disabled]="submitting()"
+        class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
+      </button>
+    </form>
+  }
+</div>

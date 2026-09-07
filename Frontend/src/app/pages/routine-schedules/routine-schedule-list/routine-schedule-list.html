@@ -1,0 +1,99 @@
+<app-page-header title="จัดการตารางฝึกซ้อมประจำ" subtitle="ตารางฝึกซ้อมประจำที่เกิดซ้ำตามรอบสัปดาห์">
+  <a
+    actions
+    routerLink="/routine-schedules/new"
+    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+  >
+    เพิ่มตารางฝึกซ้อม
+  </a>
+</app-page-header>
+
+<div class="mt-4">
+  <app-search-filter-toolbar placeholder="ค้นหาชื่อตาราง รหัสโค้ช หรือชื่อโค้ช" (search)="onSearch($event)" />
+</div>
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดตารางฝึกซ้อม..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดตารางฝึกซ้อมได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (schedules().length === 0) {
+        <app-empty-state title="ไม่พบตารางฝึกซ้อม" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มตารางฝึกซ้อมใหม่" />
+      } @else {
+        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table class="w-full min-w-160 text-left text-sm">
+            <thead class="border-b border-border text-text-secondary">
+              <tr>
+                <th class="px-4 py-3 font-medium">ชื่อตาราง</th>
+                <th class="px-4 py-3 font-medium">โค้ช</th>
+                <th class="px-4 py-3 font-medium">วัน</th>
+                <th class="px-4 py-3 font-medium">เวลา</th>
+                <th class="px-4 py-3 font-medium">เริ่มมีผล</th>
+                <th class="px-4 py-3 font-medium">สิ้นสุด</th>
+                <th class="px-4 py-3 font-medium">สถานะ</th>
+                <th class="px-4 py-3 font-medium">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (schedule of schedules(); track schedule.routineScheduleId) {
+                <tr class="border-b border-border last:border-0">
+                  <td class="px-4 py-3 font-medium text-text">{{ schedule.name }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ schedule.coachCode }} — {{ schedule.coachFullName }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ getDayOfWeekLabel(schedule.dayOfWeek) }}</td>
+                  <td class="px-4 py-3 text-text-secondary">
+                    {{ schedule.startTime.slice(0, 5) }} - {{ schedule.endTime.slice(0, 5) }}
+                  </td>
+                  <td class="px-4 py-3 text-text-secondary">{{ schedule.effectiveStartDate }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ schedule.effectiveEndDate || '-' }}</td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                      [class]="schedule.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
+                    >
+                      {{ schedule.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <a
+                        [routerLink]="['/routine-schedules', schedule.routineScheduleId, 'edit']"
+                        class="text-primary-600 hover:underline"
+                      >
+                        แก้ไข
+                      </a>
+                      <button
+                        type="button"
+                        class="text-danger hover:underline"
+                        (click)="requestStatusChange(schedule)"
+                      >
+                        {{ schedule.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4">
+          <app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" />
+        </div>
+      }
+    }
+  }
+</div>
+
+<app-confirmation-dialog
+  [open]="pendingStatusChange() !== null"
+  [danger]="!!pendingStatusChange()?.isActive"
+  [processing]="statusChangeProcessing()"
+  title="ยืนยันการเปลี่ยนสถานะ"
+  [message]="(pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งานตารางฝึกซ้อม ' : 'ต้องการเปิดใช้งานตารางฝึกซ้อม ') + (pendingStatusChange()?.name ?? '') + ' ใช่หรือไม่?'"
+  (confirmed)="confirmStatusChange()"
+  (cancelled)="cancelStatusChange()"
+/>

@@ -1,0 +1,169 @@
+<div class="min-h-screen bg-background">
+  <!-- Top bar -->
+  <header class="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
+    <button
+      type="button"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary hover:bg-secondary-50 md:hidden"
+      (click)="toggleSidebar()"
+      aria-label="เปิดเมนู"
+    >
+      <svg lucideMenu [size]="20"></svg>
+    </button>
+    <span class="flex-1 text-sm font-semibold text-text sm:text-base">ระบบจัดการฝึกซ้อมและเช็คชื่อนักกีฬา</span>
+
+    @if (authService.currentUser(); as user) {
+      <div class="flex items-center gap-3">
+        <span class="hidden text-sm text-text-secondary sm:inline">{{ user.fullName }}</span>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-text-secondary hover:bg-secondary-50"
+          (click)="logout()"
+        >
+          <svg lucideLogOut [size]="16"></svg>
+          ออกจากระบบ
+        </button>
+      </div>
+    }
+  </header>
+
+  <div class="flex">
+    <!-- Desktop sidebar -->
+    <aside class="hidden w-56 shrink-0 border-r border-border bg-surface md:block">
+      <nav class="flex flex-col gap-1 p-3">
+        <a
+          routerLink="/"
+          routerLinkActive="bg-primary-50 text-primary-700"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+        >
+          <svg lucideLayoutDashboard [size]="18"></svg>
+          หน้าหลัก
+        </a>
+        @if (authService.hasRole(appRole.Administrator)) {
+          <a
+            routerLink="/coaches"
+            routerLinkActive="bg-primary-50 text-primary-700"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+          >
+            <svg lucideUserCheck [size]="18"></svg>
+            จัดการโค้ช
+          </a>
+          <a
+            routerLink="/athletes"
+            routerLinkActive="bg-primary-50 text-primary-700"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+          >
+            <svg lucideDumbbell [size]="18"></svg>
+            จัดการนักกีฬา
+          </a>
+          <a
+            routerLink="/routine-schedules"
+            routerLinkActive="bg-primary-50 text-primary-700"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+          >
+            <svg lucideRepeat [size]="18"></svg>
+            ตารางฝึกซ้อมประจำ
+          </a>
+          <a
+            routerLink="/private-sessions"
+            routerLinkActive="bg-primary-50 text-primary-700"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+          >
+            <svg lucideCalendarHeart [size]="18"></svg>
+            จัดการฝึกซ้อมส่วนตัว
+          </a>
+          <a
+            routerLink="/users"
+            routerLinkActive="bg-primary-50 text-primary-700"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+          >
+            <svg lucideUsers [size]="18"></svg>
+            จัดการผู้ใช้งาน
+          </a>
+        }
+      </nav>
+    </aside>
+
+    <!-- Mobile sidebar (drawer) -->
+    @if (sidebarOpen()) {
+      <div class="fixed inset-0 z-40 md:hidden">
+        <div class="absolute inset-0 bg-black/40" (click)="closeSidebar()"></div>
+        <aside class="relative flex h-full w-64 flex-col gap-1 bg-surface p-3 shadow-lg">
+          <div class="mb-2 flex items-center justify-between">
+            <span class="text-sm font-semibold text-text">เมนู</span>
+            <button
+              type="button"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:bg-secondary-50"
+              (click)="closeSidebar()"
+              aria-label="ปิดเมนู"
+            >
+              <svg lucideX [size]="18"></svg>
+            </button>
+          </div>
+          <a
+            routerLink="/"
+            routerLinkActive="bg-primary-50 text-primary-700"
+            [routerLinkActiveOptions]="{ exact: true }"
+            (click)="closeSidebar()"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+          >
+            <svg lucideLayoutDashboard [size]="18"></svg>
+            หน้าหลัก
+          </a>
+          @if (authService.hasRole(appRole.Administrator)) {
+            <a
+              routerLink="/coaches"
+              routerLinkActive="bg-primary-50 text-primary-700"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            >
+              <svg lucideUserCheck [size]="18"></svg>
+              จัดการโค้ช
+            </a>
+            <a
+              routerLink="/athletes"
+              routerLinkActive="bg-primary-50 text-primary-700"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            >
+              <svg lucideDumbbell [size]="18"></svg>
+              จัดการนักกีฬา
+            </a>
+            <a
+              routerLink="/routine-schedules"
+              routerLinkActive="bg-primary-50 text-primary-700"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            >
+              <svg lucideRepeat [size]="18"></svg>
+              ตารางฝึกซ้อมประจำ
+            </a>
+            <a
+              routerLink="/private-sessions"
+              routerLinkActive="bg-primary-50 text-primary-700"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            >
+              <svg lucideCalendarHeart [size]="18"></svg>
+              จัดการฝึกซ้อมส่วนตัว
+            </a>
+            <a
+              routerLink="/users"
+              routerLinkActive="bg-primary-50 text-primary-700"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            >
+              <svg lucideUsers [size]="18"></svg>
+              จัดการผู้ใช้งาน
+            </a>
+          }
+        </aside>
+      </div>
+    }
+
+    <!-- Routed content -->
+    <main class="min-w-0 flex-1 p-4 sm:p-6">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

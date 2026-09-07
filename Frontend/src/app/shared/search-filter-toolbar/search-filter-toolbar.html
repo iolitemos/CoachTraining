@@ -1,0 +1,35 @@
+<form class="flex items-center gap-2" (ngSubmit)="onSubmit()">
+  <div class="relative flex-1">
+    <svg lucideSearch [size]="18" class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-secondary-400"></svg>
+    <input
+      type="search"
+      name="search"
+      [placeholder]="placeholder()"
+      [(ngModel)]="searchTerm"
+      class="w-full rounded-lg border border-border bg-surface py-2 pr-3 pl-9 text-sm text-text placeholder:text-secondary-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+    />
+  </div>
+
+  <button
+    type="submit"
+    class="inline-flex h-9.5 items-center rounded-lg bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+  >
+    ค้นหา
+  </button>
+
+  <button
+    type="button"
+    class="relative inline-flex h-9.5 w-9.5 items-center justify-center rounded-lg border border-border bg-surface text-text-secondary transition-colors hover:bg-secondary-50"
+    (click)="filterClick.emit()"
+    aria-label="ตัวกรองขั้นสูง"
+  >
+    <svg lucideListFilter [size]="18"></svg>
+    @if (activeFilterCount() > 0) {
+      <span
+        class="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[10px] font-semibold text-white"
+      >
+        {{ activeFilterCount() }}
+      </span>
+    }
+  </button>
+</form>

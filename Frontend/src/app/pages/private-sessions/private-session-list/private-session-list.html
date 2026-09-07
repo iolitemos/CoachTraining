@@ -1,0 +1,73 @@
+<app-page-header title="จัดการฝึกซ้อมส่วนตัว" subtitle="เซสชันฝึกซ้อมส่วนตัวที่มอบหมายให้นักกีฬาเฉพาะราย">
+  <a
+    actions
+    routerLink="/private-sessions/new"
+    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+  >
+    เพิ่มฝึกซ้อมส่วนตัว
+  </a>
+</app-page-header>
+
+<div class="mt-4">
+  <app-search-filter-toolbar placeholder="ค้นหารหัสโค้ช ชื่อโค้ช หรือสถานที่" (search)="onSearch($event)" />
+</div>
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดรายการฝึกซ้อมส่วนตัว..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดรายการฝึกซ้อมส่วนตัวได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (sessions().length === 0) {
+        <app-empty-state title="ไม่พบเซสชันฝึกซ้อมส่วนตัว" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มฝึกซ้อมส่วนตัวใหม่" />
+      } @else {
+        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table class="w-full min-w-160 text-left text-sm">
+            <thead class="border-b border-border text-text-secondary">
+              <tr>
+                <th class="px-4 py-3 font-medium">วันที่</th>
+                <th class="px-4 py-3 font-medium">เวลา</th>
+                <th class="px-4 py-3 font-medium">โค้ช</th>
+                <th class="px-4 py-3 font-medium">สถานที่</th>
+                <th class="px-4 py-3 font-medium">จำนวนนักกีฬา</th>
+                <th class="px-4 py-3 font-medium">สถานะ</th>
+                <th class="px-4 py-3 font-medium">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (session of sessions(); track session.trainingSessionId) {
+                <tr class="border-b border-border last:border-0">
+                  <td class="px-4 py-3 font-medium text-text">{{ session.sessionDate }}</td>
+                  <td class="px-4 py-3 text-text-secondary">
+                    {{ session.startTime.slice(0, 5) }} - {{ session.endTime.slice(0, 5) }}
+                  </td>
+                  <td class="px-4 py-3 text-text-secondary">{{ session.coachCode }} — {{ session.coachFullName }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ session.location || '-' }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ session.athleteCount }}</td>
+                  <td class="px-4 py-3">
+                    <app-status-badge [status]="session.status" />
+                  </td>
+                  <td class="px-4 py-3">
+                    <a
+                      [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']"
+                      class="text-primary-600 hover:underline"
+                    >
+                      {{ session.status === 'Scheduled' ? 'แก้ไข' : 'ดูรายละเอียด' }}
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4">
+          <app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" />
+        </div>
+      }
+    }
+  }
+</div>

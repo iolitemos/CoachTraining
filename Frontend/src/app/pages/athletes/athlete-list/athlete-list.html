@@ -1,0 +1,92 @@
+<app-page-header title="จัดการนักกีฬา" subtitle="ข้อมูลหลักนักกีฬาที่ใช้ในการเช็คชื่อฝึกซ้อม">
+  <a
+    actions
+    routerLink="/athletes/new"
+    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+  >
+    เพิ่มนักกีฬา
+  </a>
+</app-page-header>
+
+<div class="mt-4">
+  <app-search-filter-toolbar placeholder="ค้นหารหัสนักกีฬา ชื่อ-นามสกุล หรือชื่อเล่น" (search)="onSearch($event)" />
+</div>
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดรายชื่อนักกีฬา..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดรายชื่อนักกีฬาได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (athletes().length === 0) {
+        <app-empty-state title="ไม่พบข้อมูลนักกีฬา" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มนักกีฬาใหม่" />
+      } @else {
+        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table class="w-full min-w-160 text-left text-sm">
+            <thead class="border-b border-border text-text-secondary">
+              <tr>
+                <th class="px-4 py-3 font-medium">รหัสนักกีฬา</th>
+                <th class="px-4 py-3 font-medium">ชื่อ-นามสกุล</th>
+                <th class="px-4 py-3 font-medium">ชื่อเล่น</th>
+                <th class="px-4 py-3 font-medium">วันเกิด</th>
+                <th class="px-4 py-3 font-medium">ระดับ</th>
+                <th class="px-4 py-3 font-medium">สถานะ</th>
+                <th class="px-4 py-3 font-medium">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (athlete of athletes(); track athlete.athleteId) {
+                <tr class="border-b border-border last:border-0">
+                  <td class="px-4 py-3 font-medium text-text">{{ athlete.athleteCode }}</td>
+                  <td class="px-4 py-3 text-text">{{ athlete.fullName }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ athlete.nickname || '-' }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ athlete.dateOfBirth || '-' }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ athlete.athleteLevel || '-' }}</td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                      [class]="athlete.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
+                    >
+                      {{ athlete.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                      <a [routerLink]="['/athletes', athlete.athleteId, 'edit']" class="text-primary-600 hover:underline">
+                        แก้ไข
+                      </a>
+                      <button
+                        type="button"
+                        class="text-danger hover:underline"
+                        (click)="requestStatusChange(athlete)"
+                      >
+                        {{ athlete.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4">
+          <app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" />
+        </div>
+      }
+    }
+  }
+</div>
+
+<app-confirmation-dialog
+  [open]="pendingStatusChange() !== null"
+  [danger]="!!pendingStatusChange()?.isActive"
+  [processing]="statusChangeProcessing()"
+  title="ยืนยันการเปลี่ยนสถานะ"
+  [message]="(pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งานนักกีฬา ' : 'ต้องการเปิดใช้งานนักกีฬา ') + (pendingStatusChange()?.fullName ?? '') + ' ใช่หรือไม่?'"
+  (confirmed)="confirmStatusChange()"
+  (cancelled)="cancelStatusChange()"
+/>
