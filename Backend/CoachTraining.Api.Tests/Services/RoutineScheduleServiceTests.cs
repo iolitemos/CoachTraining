@@ -1,4 +1,5 @@
 using CoachTraining.Api.DTOs.RoutineSchedules;
+using CoachTraining.Api.DTOs.Common;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
@@ -21,15 +22,48 @@ public class RoutineScheduleServiceTests
         return coach;
     }
 
-    /// <summary>The next date on/after <paramref name="from"/> that falls on <paramref name="dayOfWeek"/>.</summary>
-    private static DateOnly NextDate(DateOnly from, DayOfWeek dayOfWeek)
+    [Fact]
+    public async Task ListAsync_OrdersSchedulesByTrainingDateThenTime()
     {
-        var date = from;
-        while (date.DayOfWeek != dayOfWeek)
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        db.RoutineSchedules.AddRange(
+            new RoutineSchedule
+            {
+                CoachId = coach.CoachId,
+                EffectiveStartDate = new DateOnly(2026, 9, 3),
+                StartTime = new TimeOnly(18, 30),
+                EndTime = new TimeOnly(20, 30),
+            },
+            new RoutineSchedule
+            {
+                CoachId = coach.CoachId,
+                EffectiveStartDate = new DateOnly(2026, 9, 2),
+                StartTime = new TimeOnly(19, 0),
+                EndTime = new TimeOnly(20, 30),
+            },
+            new RoutineSchedule
+            {
+                CoachId = coach.CoachId,
+                EffectiveStartDate = new DateOnly(2026, 9, 2),
+                StartTime = new TimeOnly(18, 30),
+                EndTime = new TimeOnly(20, 30),
+            });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).ListAsync(new PagedRequest
         {
-            date = date.AddDays(1);
-        }
-        return date;
+            Page = 1,
+            PageSize = 20,
+        });
+
+        Assert.Equal(
+            [
+                (new DateOnly(2026, 9, 2), new TimeOnly(18, 30)),
+                (new DateOnly(2026, 9, 2), new TimeOnly(19, 0)),
+                (new DateOnly(2026, 9, 3), new TimeOnly(18, 30)),
+            ],
+            result.Items.Select(x => (x.EffectiveStartDate, x.StartTime)).ToArray());
     }
 
     [Fact]
@@ -39,12 +73,10 @@ public class RoutineScheduleServiceTests
         var coach = await SeedCoachAsync(db);
         var service = CreateService(db);
 
-        // At least a week out so the 28-day default window guarantees an occurrence.
         var effectiveStart = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
         var dto = new RoutineScheduleCreateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = effectiveStart.DayOfWeek,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = effectiveStart,
@@ -55,12 +87,14 @@ public class RoutineScheduleServiceTests
         Assert.Null(result.Error);
         Assert.NotNull(result.Schedule);
         Assert.NotNull(result.InitialGeneration);
-        Assert.True(result.InitialGeneration!.GeneratedCount > 0);
+        Assert.Equal(1, result.InitialGeneration!.GeneratedCount);
 
         var generatedSession = await db.TrainingSessions.FirstAsync(s => s.RoutineScheduleId == result.Schedule!.RoutineScheduleId);
         Assert.Equal(TrainingType.Routine, generatedSession.TrainingType);
         Assert.Equal(SessionStatus.Scheduled, generatedSession.Status);
         Assert.Equal(coach.CoachCode, generatedSession.AssignedCoachCodeSnapshot);
+        Assert.Equal(effectiveStart, generatedSession.SessionDate);
+        Assert.Single(await db.TrainingSessions.Where(s => s.RoutineScheduleId == result.Schedule.RoutineScheduleId).ToListAsync());
     }
 
     [Fact]
@@ -75,7 +109,6 @@ public class RoutineScheduleServiceTests
         var result = await service.CreateAsync(new RoutineScheduleCreateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = DayOfWeek.Monday,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = DateOnly.FromDateTime(DateTime.UtcNow),
@@ -94,7 +127,6 @@ public class RoutineScheduleServiceTests
         var result = await service.CreateAsync(new RoutineScheduleCreateDto
         {
             CoachId = 999,
-            DayOfWeek = DayOfWeek.Monday,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = DateOnly.FromDateTime(DateTime.UtcNow),
@@ -115,7 +147,6 @@ public class RoutineScheduleServiceTests
         var first = await service.CreateAsync(new RoutineScheduleCreateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = effectiveStart.DayOfWeek,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = effectiveStart,
@@ -125,7 +156,6 @@ public class RoutineScheduleServiceTests
         var second = await service.CreateAsync(new RoutineScheduleCreateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = effectiveStart.DayOfWeek,
             StartTime = new TimeOnly(18, 0),
             EndTime = new TimeOnly(20, 0),
             EffectiveStartDate = effectiveStart,
@@ -139,6 +169,73 @@ public class RoutineScheduleServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WithOverlapAndNoOverrideReason_ReturnsConflicts()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var service = CreateService(db);
+        var effectiveStart = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
+
+        await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = coach.CoachId,
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(19, 0),
+            EffectiveStartDate = effectiveStart,
+        }, actionByUserId: 1);
+
+        // FR-CONFLICT-004: OverrideConflict alone, without a reason, must not bypass the conflict.
+        var second = await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = coach.CoachId,
+            StartTime = new TimeOnly(18, 0),
+            EndTime = new TimeOnly(20, 0),
+            EffectiveStartDate = effectiveStart,
+            OverrideConflict = true,
+        }, actionByUserId: 1);
+
+        Assert.Null(second.Schedule);
+        Assert.NotEmpty(second.Conflicts);
+        Assert.Equal(1, await db.RoutineSchedules.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithOverlapAndOverrideReason_PersistsScheduleAndRecordsHistory()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var service = CreateService(db);
+        var effectiveStart = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
+
+        await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = coach.CoachId,
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(19, 0),
+            EffectiveStartDate = effectiveStart,
+        }, actionByUserId: 1);
+
+        var second = await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = coach.CoachId,
+            StartTime = new TimeOnly(18, 0),
+            EndTime = new TimeOnly(20, 0),
+            EffectiveStartDate = effectiveStart,
+            OverrideConflict = true,
+            OverrideReason = "โค้ชยืนยันสอนสองกลุ่มพร้อมกัน",
+        }, actionByUserId: 42);
+
+        Assert.Null(second.Error);
+        Assert.NotNull(second.Schedule);
+        Assert.Equal(2, await db.RoutineSchedules.CountAsync());
+
+        var overrideHistory = await db.ConflictOverrideHistories.SingleAsync();
+        Assert.Equal(second.Schedule!.RoutineScheduleId, overrideHistory.RoutineScheduleId);
+        Assert.Equal("โค้ชยืนยันสอนสองกลุ่มพร้อมกัน", overrideHistory.Reason);
+        Assert.Equal(42, overrideHistory.ActionByUserId);
+    }
+
+    [Fact]
     public async Task UpdateAsync_DoesNotModifyAlreadyGeneratedSessionTimes()
     {
         using var db = TestDbContextFactory.Create();
@@ -149,7 +246,6 @@ public class RoutineScheduleServiceTests
         var created = await service.CreateAsync(new RoutineScheduleCreateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = effectiveStart.DayOfWeek,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = effectiveStart,
@@ -168,7 +264,6 @@ public class RoutineScheduleServiceTests
         var updateResult = await service.UpdateAsync(created.Schedule!.RoutineScheduleId, new RoutineScheduleUpdateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = effectiveStart.DayOfWeek,
             StartTime = new TimeOnly(9, 0),
             EndTime = new TimeOnly(11, 0),
             EffectiveStartDate = effectiveStart,
@@ -193,7 +288,6 @@ public class RoutineScheduleServiceTests
         var created = await service.CreateAsync(new RoutineScheduleCreateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = effectiveStart.DayOfWeek,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = effectiveStart,
@@ -201,11 +295,10 @@ public class RoutineScheduleServiceTests
 
         var countAfterCreate = await db.TrainingSessions.CountAsync();
 
-        // Re-run generation for the exact same window CreateAsync already covered
-        // (today + the default 28-day horizon) — should be a no-op.
+        // Re-run generation through the selected date — should be a no-op.
         var (result, error) = await service.GenerateSessionsAsync(
             created.Schedule!.RoutineScheduleId,
-            DateOnly.FromDateTime(DateTime.UtcNow).AddDays(28),
+            effectiveStart,
             actionByUserId: 1);
 
         Assert.Null(error);
@@ -219,7 +312,7 @@ public class RoutineScheduleServiceTests
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
         var service = CreateService(db);
-        var occurrenceDate = NextDate(DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7), DayOfWeek.Monday);
+        var occurrenceDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
 
         // A pre-existing session occupies the coach's time on the very first occurrence date.
         db.TrainingSessions.Add(new TrainingSession
@@ -238,7 +331,6 @@ public class RoutineScheduleServiceTests
         var result = await service.CreateAsync(new RoutineScheduleCreateDto
         {
             CoachId = coach.CoachId,
-            DayOfWeek = DayOfWeek.Monday,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = occurrenceDate,
@@ -250,5 +342,62 @@ public class RoutineScheduleServiceTests
         var hasRoutineSessionOnConflictDate = await db.TrainingSessions.AnyAsync(s =>
             s.RoutineScheduleId == result.Schedule!.RoutineScheduleId && s.SessionDate == occurrenceDate);
         Assert.False(hasRoutineSessionOnConflictDate);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithUntouchedScheduledSession_RemovesSessionAndHidesSchedule()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var service = CreateService(db);
+        var selectedDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
+        var created = await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = coach.CoachId,
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(19, 0),
+            EffectiveStartDate = selectedDate,
+        }, actionByUserId: 1);
+
+        var (found, error) = await service.DeleteAsync(
+            created.Schedule!.RoutineScheduleId, actionByUserId: 1);
+
+        Assert.True(found);
+        Assert.Null(error);
+        Assert.False(await db.TrainingSessions.AnyAsync(s =>
+            s.RoutineScheduleId == created.Schedule.RoutineScheduleId));
+        Assert.False(await db.RoutineSchedules.AnyAsync(rs =>
+            rs.RoutineScheduleId == created.Schedule.RoutineScheduleId));
+        Assert.True(await db.RoutineSchedules.IgnoreQueryFilters().AnyAsync(rs =>
+            rs.RoutineScheduleId == created.Schedule.RoutineScheduleId && rs.IsDeleted));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithProgressedSession_ReturnsErrorAndPreservesData()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var service = CreateService(db);
+        var created = await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = coach.CoachId,
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(19, 0),
+            EffectiveStartDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7),
+        }, actionByUserId: 1);
+        var session = await db.TrainingSessions.SingleAsync(s =>
+            s.RoutineScheduleId == created.Schedule!.RoutineScheduleId);
+        session.Status = SessionStatus.Completed;
+        await db.SaveChangesAsync();
+
+        var (found, error) = await service.DeleteAsync(
+            created.Schedule!.RoutineScheduleId, actionByUserId: 1);
+
+        Assert.True(found);
+        Assert.NotNull(error);
+        Assert.True(await db.TrainingSessions.AnyAsync(s =>
+            s.RoutineScheduleId == created.Schedule.RoutineScheduleId));
+        Assert.True(await db.RoutineSchedules.AnyAsync(rs =>
+            rs.RoutineScheduleId == created.Schedule.RoutineScheduleId));
     }
 }

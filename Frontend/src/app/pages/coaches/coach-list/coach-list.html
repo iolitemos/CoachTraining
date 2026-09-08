@@ -9,7 +9,10 @@
 </app-page-header>
 
 <div class="mt-4">
-  <app-search-filter-toolbar placeholder="ค้นหารหัสโค้ช ชื่อ-นามสกุล หรือชื่อเล่น" (search)="onSearch($event)" />
+  <app-search-filter-toolbar
+    placeholder="ค้นหารหัสโค้ช ชื่อ-นามสกุล หรือชื่อเล่น"
+    (search)="onSearch($event)"
+  />
 </div>
 
 <div class="mt-4">
@@ -22,7 +25,10 @@
     }
     @case ('ready') {
       @if (coaches().length === 0) {
-        <app-empty-state title="ไม่พบข้อมูลโค้ช" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มโค้ชใหม่" />
+        <app-empty-state
+          title="ไม่พบข้อมูลโค้ช"
+          description="ลองค้นหาด้วยคำอื่น หรือเพิ่มโค้ชใหม่"
+        />
       } @else {
         <div class="overflow-x-auto rounded-xl border border-border bg-surface">
           <table class="w-full min-w-160 text-left text-sm">
@@ -31,8 +37,8 @@
                 <th class="px-4 py-3 font-medium">รหัสโค้ช</th>
                 <th class="px-4 py-3 font-medium">ชื่อ-นามสกุล</th>
                 <th class="px-4 py-3 font-medium">ชื่อเล่น</th>
+                <th class="px-4 py-3 font-medium">สีประจำตัว</th>
                 <th class="px-4 py-3 font-medium">เบอร์โทร</th>
-                <th class="px-4 py-3 font-medium">ประเภทโค้ช</th>
                 <th class="px-4 py-3 font-medium">บัญชีที่เชื่อมโยง</th>
                 <th class="px-4 py-3 font-medium">สถานะ</th>
                 <th class="px-4 py-3 font-medium">การจัดการ</th>
@@ -44,20 +50,35 @@
                   <td class="px-4 py-3 font-medium text-text">{{ coach.coachCode }}</td>
                   <td class="px-4 py-3 text-text">{{ coach.fullName }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ coach.nickname || '-' }}</td>
+                  <td class="px-4 py-3">
+                    <span class="flex items-center gap-2 text-xs text-text-secondary">
+                      <span
+                        class="size-5 rounded-full border border-black/10"
+                        [style.background-color]="coach.colorHex"
+                      ></span>
+                      {{ coach.colorHex }}
+                    </span>
+                  </td>
                   <td class="px-4 py-3 text-text-secondary">{{ coach.phoneNumber || '-' }}</td>
-                  <td class="px-4 py-3 text-text-secondary">{{ coach.coachType || '-' }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ coach.linkedUsername || '-' }}</td>
                   <td class="px-4 py-3">
                     <span
                       class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-                      [class]="coach.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
+                      [class]="
+                        coach.isActive
+                          ? 'bg-success-surface text-success'
+                          : 'bg-secondary-100 text-secondary-600'
+                      "
                     >
                       {{ coach.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
                     </span>
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center gap-3">
-                      <a [routerLink]="['/coaches', coach.coachId, 'edit']" class="text-primary-600 hover:underline">
+                      <a
+                        [routerLink]="['/coaches', coach.coachId, 'edit']"
+                        class="text-primary-600 hover:underline"
+                      >
                         แก้ไข
                       </a>
                       <button
@@ -76,7 +97,12 @@
         </div>
 
         <div class="mt-4">
-          <app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" />
+          <app-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="totalCount()"
+            (pageChange)="onPageChange($event)"
+          />
         </div>
       }
     }
@@ -88,7 +114,11 @@
   [danger]="!!pendingStatusChange()?.isActive"
   [processing]="statusChangeProcessing()"
   title="ยืนยันการเปลี่ยนสถานะ"
-  [message]="(pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งานโค้ช ' : 'ต้องการเปิดใช้งานโค้ช ') + (pendingStatusChange()?.fullName ?? '') + ' ใช่หรือไม่?'"
+  [message]="
+    (pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งานโค้ช ' : 'ต้องการเปิดใช้งานโค้ช ') +
+    (pendingStatusChange()?.fullName ?? '') +
+    ' ใช่หรือไม่?'
+  "
   (confirmed)="confirmStatusChange()"
   (cancelled)="cancelStatusChange()"
 />

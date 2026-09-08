@@ -2,14 +2,20 @@
   [title]="isEditMode() ? 'แก้ไขข้อมูลโค้ช' : 'เพิ่มโค้ช'"
   subtitle="ข้อมูลหลักโค้ชที่ใช้ในการจัดตารางและบันทึกการสอน"
 >
-  <a actions routerLink="/coaches" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
+  <a actions routerLink="/coaches" class="text-sm font-medium text-text-secondary hover:underline"
+    >ย้อนกลับ</a
+  >
 </app-page-header>
 
 <div class="mt-4 max-w-xl">
   @if (loading()) {
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
-    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <form
+      class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+    >
       <div>
         <label for="coachCode" class="mb-1 block text-sm font-medium text-text">
           รหัสโค้ช <span class="text-danger">*</span>
@@ -50,9 +56,30 @@
         />
       </div>
 
+      <div>
+        <label for="colorHex" class="mb-1 block text-sm font-medium text-text">
+          สีประจำตัวโค้ช <span class="text-danger">*</span>
+        </label>
+        <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2">
+          <input
+            id="colorHex"
+            type="color"
+            formControlName="colorHex"
+            class="h-9 w-12 cursor-pointer rounded border-0 bg-transparent p-0"
+          />
+          <span class="text-sm font-medium text-text">{{ form.controls.colorHex.value }}</span>
+          <span class="text-xs text-text-secondary">ใช้แยกโค้ชในปฏิทินฝึกซ้อม</span>
+        </div>
+        @if (form.controls.colorHex.invalid && form.controls.colorHex.touched) {
+          <p class="mt-1 text-xs text-danger">กรุณาเลือกสีประจำตัวโค้ช</p>
+        }
+      </div>
+
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label for="phoneNumber" class="mb-1 block text-sm font-medium text-text">เบอร์โทรศัพท์</label>
+          <label for="phoneNumber" class="mb-1 block text-sm font-medium text-text"
+            >เบอร์โทรศัพท์</label
+          >
           <input
             id="phoneNumber"
             type="text"
@@ -75,25 +102,54 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label for="coachType" class="mb-1 block text-sm font-medium text-text">ประเภทโค้ช</label>
-          <input
-            id="coachType"
-            type="text"
-            formControlName="coachType"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-          />
-        </div>
+      <div>
+        <span class="mb-1 block text-sm font-medium text-text">รายละเอียดบัญชีธนาคาร</span>
+        <p class="mb-2 text-xs text-text-secondary">สำหรับใช้อ้างอิงในการจ่ายค่าตอบแทน</p>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="bankName" class="mb-1 block text-sm font-medium text-text">ธนาคาร</label>
+            <select
+              id="bankName"
+              formControlName="bankName"
+              class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            >
+              <option value="">— เลือกธนาคาร —</option>
+              @for (bank of bankNameOptions; track bank) {
+                <option [value]="bank">{{ bank }}</option>
+              }
+              @if (
+                form.controls.bankName.value && !bankNameOptions.includes(form.controls.bankName.value)
+              ) {
+                <option [value]="form.controls.bankName.value">
+                  {{ form.controls.bankName.value }}
+                </option>
+              }
+            </select>
+          </div>
 
-        <div>
-          <label for="specialization" class="mb-1 block text-sm font-medium text-text">ความเชี่ยวชาญ</label>
-          <input
-            id="specialization"
-            type="text"
-            formControlName="specialization"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-          />
+          <div>
+            <label for="bankAccountNumber" class="mb-1 block text-sm font-medium text-text"
+              >เลขที่บัญชี</label
+            >
+            <input
+              id="bankAccountNumber"
+              type="text"
+              formControlName="bankAccountNumber"
+              class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            />
+          </div>
+
+          <div class="sm:col-span-2">
+            <label for="bankAccountName" class="mb-1 block text-sm font-medium text-text"
+              >ชื่อบัญชี</label
+            >
+            <input
+              id="bankAccountName"
+              type="text"
+              formControlName="bankAccountName"
+              class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -110,15 +166,21 @@
       @if (isEditMode()) {
         <div>
           <span class="mb-1 block text-sm font-medium text-text">บัญชีผู้ใช้ที่เชื่อมโยง</span>
-          <p class="rounded-lg border border-border bg-secondary-50 px-3 py-2 text-sm text-text-secondary">
+          <p
+            class="rounded-lg border border-border bg-secondary-50 px-3 py-2 text-sm text-text-secondary"
+          >
             {{ linkedUsername() || 'ยังไม่ได้เชื่อมโยงกับบัญชีผู้ใช้' }}
           </p>
-          <p class="mt-1 text-xs text-text-secondary">จัดการการเชื่อมโยงบัญชีได้ที่หน้าจัดการผู้ใช้งาน</p>
+          <p class="mt-1 text-xs text-text-secondary">
+            จัดการการเชื่อมโยงบัญชีได้ที่หน้าจัดการผู้ใช้งาน
+          </p>
         </div>
       }
 
       @if (errorMessage()) {
-        <p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">{{ errorMessage() }}</p>
+        <p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">
+          {{ errorMessage() }}
+        </p>
       }
 
       <button

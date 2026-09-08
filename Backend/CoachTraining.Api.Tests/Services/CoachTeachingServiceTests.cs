@@ -82,6 +82,41 @@ public class CoachTeachingServiceTests
     }
 
     [Fact]
+    public async Task StartAsync_WithPreassignedSubstitute_PreservesSubstituteAndRejectsOriginalCoach()
+    {
+        using var db = TestDbContextFactory.Create();
+        var assignedCoach = await SeedCoachAsync(db, "C001");
+        var substituteCoach = await SeedCoachAsync(db, "C002");
+        var session = await SeedSessionAsync(db, assignedCoach);
+        session.ActualCoachId = substituteCoach.CoachId;
+        session.ActualCoachCodeSnapshot = substituteCoach.CoachCode;
+        session.ActualCoachNameSnapshot = substituteCoach.FullName;
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var assignedCoachResult = await service.StartAsync(
+            session.TrainingSessionId,
+            new TeachingStartRequest { ActualStartDateTime = new DateTime(2026, 1, 5, 17, 5, 0) },
+            isPrivilegedRole: false,
+            currentCoachId: assignedCoach.CoachId,
+            actionByUserId: 1);
+
+        Assert.True(assignedCoachResult.Forbidden);
+
+        var substituteResult = await service.StartAsync(
+            session.TrainingSessionId,
+            new TeachingStartRequest { ActualStartDateTime = new DateTime(2026, 1, 5, 17, 5, 0) },
+            isPrivilegedRole: false,
+            currentCoachId: substituteCoach.CoachId,
+            actionByUserId: 1);
+
+        Assert.Null(substituteResult.Error);
+        Assert.Equal(substituteCoach.CoachId, substituteResult.Session!.ActualCoachId);
+        Assert.Equal(substituteCoach.CoachCode, substituteResult.Session.ActualCoachCode);
+        Assert.Equal(assignedCoach.CoachId, substituteResult.Session.AssignedCoachId);
+    }
+
+    [Fact]
     public async Task StartAsync_ByAdministratorWithoutCoachLink_UsesAssignedCoachAsActual()
     {
         using var db = TestDbContextFactory.Create();

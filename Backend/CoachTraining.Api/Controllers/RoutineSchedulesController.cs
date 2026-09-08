@@ -116,6 +116,24 @@ public class RoutineSchedulesController : ControllerBase
         return Ok(new ApiResponse<object>(new { }, dto.IsActive ? "เปิดใช้งานตารางฝึกซ้อมสำเร็จ" : "ปิดใช้งานตารางฝึกซ้อมสำเร็จ"));
     }
 
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var (found, error) = await _routineScheduleService.DeleteAsync(
+            id, _currentUser.UserId!.Value);
+        if (!found)
+        {
+            return NotFound(new ApiErrorResponse("ไม่พบตารางฝึกซ้อมที่ต้องการ"));
+        }
+
+        if (error is not null)
+        {
+            return BadRequest(new ApiErrorResponse(error));
+        }
+
+        return Ok(new ApiResponse<object>(new { }, "ลบตารางฝึกซ้อมสำเร็จ"));
+    }
+
     /// <summary>Extends generated sessions for this schedule further into the future.</summary>
     [HttpPost("{id:int}/generate-sessions")]
     public async Task<IActionResult> GenerateSessions(int id, [FromBody] GenerateSessionsRequest request)

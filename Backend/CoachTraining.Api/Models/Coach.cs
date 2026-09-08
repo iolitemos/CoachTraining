@@ -13,13 +13,20 @@ public class Coach : AuditableEntity
 
     public string? Nickname { get; set; }
 
+    public string ColorHex { get; set; } = "#10B981";
+
     public string? PhoneNumber { get; set; }
 
     public string? Email { get; set; }
 
-    public string? CoachType { get; set; }
+    /// <summary>Bank account reference for teaching-compensation payment. Reference data only —
+    /// no rate calculation or payment processing (Coach Compensation Management stays out of scope,
+    /// CLAUDE.md 3).</summary>
+    public string? BankName { get; set; }
 
-    public string? Specialization { get; set; }
+    public string? BankAccountNumber { get; set; }
+
+    public string? BankAccountName { get; set; }
 
     public bool IsActive { get; set; } = true;
 

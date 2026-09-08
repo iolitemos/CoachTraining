@@ -10,16 +10,13 @@ public class RoutineScheduleConfiguration : IEntityTypeConfiguration<RoutineSche
     {
         builder.HasKey(rs => rs.RoutineScheduleId);
 
-        builder.Property(rs => rs.Name).HasMaxLength(200).IsRequired();
-        builder.Property(rs => rs.RecurrencePattern).HasMaxLength(50).IsRequired();
-
         builder.HasOne(rs => rs.Coach)
             .WithMany()
             .HasForeignKey(rs => rs.CoachId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Supports the routine-recurrence lookup used when generating sessions.
-        builder.HasIndex(rs => new { rs.CoachId, rs.DayOfWeek, rs.IsActive });
+        // Supports coach/date lookups used for schedule display and conflict checks.
+        builder.HasIndex(rs => new { rs.CoachId, rs.EffectiveStartDate, rs.IsActive });
 
         builder.HasQueryFilter(rs => !rs.IsDeleted);
     }

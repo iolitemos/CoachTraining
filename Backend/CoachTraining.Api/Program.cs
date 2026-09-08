@@ -88,6 +88,15 @@ builder.Services.AddScoped<ICoachTeachingService, CoachTeachingService>();
 builder.Services.AddScoped<IRoutineAttendanceService, RoutineAttendanceService>();
 builder.Services.AddScoped<IPrivateAttendanceService, PrivateAttendanceService>();
 builder.Services.AddScoped<ITrainingLogService, TrainingLogService>();
+builder.Services.AddScoped<ISubstituteCoachService, SubstituteCoachService>();
+builder.Services.AddScoped<ICancellationService, CancellationService>();
+builder.Services.AddScoped<IReschedulingService, ReschedulingService>();
+builder.Services.AddScoped<ITrainingApprovalService, TrainingApprovalService>();
+builder.Services.AddScoped<ICoachDashboardService, CoachDashboardService>();
+builder.Services.AddScoped<IAdministratorDashboardService, AdministratorDashboardService>();
+builder.Services.AddScoped<ICoachTeachingHourReportService, CoachTeachingHourReportService>();
+builder.Services.AddScoped<IAthleteAttendanceReportService, AthleteAttendanceReportService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // PostgreSQL connection string is supplied via appsettings.{Environment}.json for
 // non-secret defaults and overridden by the ConnectionStrings__Default environment

@@ -104,7 +104,12 @@ public class PrivateSessionService : IPrivateSessionService
             var scheduledEnd = dto.SessionDate.ToDateTime(dto.EndTime);
 
             var conflicts = await CheckConflictsAsync(dto.CoachId, dto.AthleteIds, scheduledStart, scheduledEnd);
-            if (conflicts.Count > 0)
+
+            // FR-CONFLICT-004: an authorized Administrator (this controller is
+            // Administrator-only) may proceed past a detected conflict only by
+            // supplying an override reason; otherwise the conflict still blocks.
+            var overrideReason = conflicts.Count > 0 && dto.OverrideConflict ? dto.OverrideReason?.Trim() : null;
+            if (conflicts.Count > 0 && string.IsNullOrWhiteSpace(overrideReason))
             {
                 return new PrivateSessionSaveResult { Error = "พบตารางฝึกซ้อมทับซ้อน", Conflicts = conflicts };
             }
@@ -121,6 +126,8 @@ public class PrivateSessionService : IPrivateSessionService
                 Location = dto.Location,
                 Remarks = dto.Remarks,
                 Status = SessionStatus.Scheduled,
+                IsConflictOverridden = overrideReason is not null,
+                ConflictOverrideReason = overrideReason,
                 CreatedByUserId = actionByUserId,
             };
 
@@ -139,6 +146,9 @@ public class PrivateSessionService : IPrivateSessionService
             // call, so EF Core's implicit transaction keeps them atomic.
             _db.TrainingSessions.Add(session);
             await _db.SaveChangesAsync();
+
+            // FR-CONFLICT-005 — the override itself remains identifiable in history.
+            await RecordConflictOverrideAsync(conflicts, overrideReason, session.TrainingSessionId, actionByUserId);
 
             return new PrivateSessionSaveResult { Session = MapToDetail(session) };
         }
@@ -191,7 +201,8 @@ public class PrivateSessionService : IPrivateSessionService
         var scheduledEnd = dto.SessionDate.ToDateTime(dto.EndTime);
 
         var conflicts = await CheckConflictsAsync(dto.CoachId, dto.AthleteIds, scheduledStart, scheduledEnd, excludeTrainingSessionId: trainingSessionId);
-        if (conflicts.Count > 0)
+        var overrideReason = conflicts.Count > 0 && dto.OverrideConflict ? dto.OverrideReason?.Trim() : null;
+        if (conflicts.Count > 0 && string.IsNullOrWhiteSpace(overrideReason))
         {
             return new PrivateSessionSaveResult { Error = "พบตารางฝึกซ้อมทับซ้อน", Conflicts = conflicts };
         }
@@ -204,6 +215,10 @@ public class PrivateSessionService : IPrivateSessionService
         session.ScheduledEndDateTime = scheduledEnd;
         session.Location = dto.Location;
         session.Remarks = dto.Remarks;
+        // Recomputed fresh on every save: a conflict-free update clears any
+        // previously recorded override so the flag never outlives its cause.
+        session.IsConflictOverridden = overrideReason is not null;
+        session.ConflictOverrideReason = overrideReason;
         session.UpdatedByUserId = actionByUserId;
         session.UpdatedDate = DateTime.UtcNow;
 
@@ -221,6 +236,9 @@ public class PrivateSessionService : IPrivateSessionService
         }
 
         await _db.SaveChangesAsync();
+
+        // FR-CONFLICT-005 — the override itself remains identifiable in history.
+        await RecordConflictOverrideAsync(conflicts, overrideReason, session.TrainingSessionId, actionByUserId);
 
         return new PrivateSessionSaveResult { Session = MapToDetail(session) };
     }
@@ -251,6 +269,31 @@ public class PrivateSessionService : IPrivateSessionService
         return conflicts;
     }
 
+    /// <summary>FR-CONFLICT-004/005 — records one history row per detected conflict once an
+    /// authorized Administrator has supplied an override reason. No-op when there is
+    /// nothing to override.</summary>
+    private async Task RecordConflictOverrideAsync(
+        List<ConflictDetail> conflicts, string? overrideReason, int trainingSessionId, int actionByUserId)
+    {
+        if (conflicts.Count == 0 || string.IsNullOrWhiteSpace(overrideReason))
+        {
+            return;
+        }
+
+        foreach (var conflict in conflicts)
+        {
+            _db.ConflictOverrideHistories.Add(new ConflictOverrideHistory
+            {
+                ConflictType = Enum.Parse<ConflictType>(conflict.ConflictType),
+                TrainingSessionId = trainingSessionId,
+                Reason = overrideReason,
+                ActionByUserId = actionByUserId,
+            });
+        }
+
+        await _db.SaveChangesAsync();
+    }
+
     private static PrivateSessionDetailDto MapToDetail(TrainingSession session) => new()
     {
         TrainingSessionId = session.TrainingSessionId,
@@ -263,6 +306,8 @@ public class PrivateSessionService : IPrivateSessionService
         Location = session.Location,
         Remarks = session.Remarks,
         Status = session.Status,
+        IsConflictOverridden = session.IsConflictOverridden,
+        ConflictOverrideReason = session.ConflictOverrideReason,
         Athletes = session.PrivateAthletes.Select(psa => new PrivateSessionAthleteDto
         {
             AthleteId = psa.AthleteId,

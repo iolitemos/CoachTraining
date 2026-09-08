@@ -64,10 +64,12 @@ public class CoachService : ICoachService
                 CoachCode = dto.CoachCode,
                 FullName = dto.FullName,
                 Nickname = dto.Nickname,
+                ColorHex = dto.ColorHex.ToUpperInvariant(),
                 PhoneNumber = dto.PhoneNumber,
                 Email = dto.Email,
-                CoachType = dto.CoachType,
-                Specialization = dto.Specialization,
+                BankName = dto.BankName,
+                BankAccountNumber = dto.BankAccountNumber,
+                BankAccountName = dto.BankAccountName,
                 Remarks = dto.Remarks,
                 IsActive = true,
                 CreatedByUserId = actionByUserId,
@@ -98,10 +100,12 @@ public class CoachService : ICoachService
         // (AssignedCoachCodeSnapshot/AssignedCoachNameSnapshot) taken at the time.
         coach.FullName = dto.FullName;
         coach.Nickname = dto.Nickname;
+        coach.ColorHex = dto.ColorHex.ToUpperInvariant();
         coach.PhoneNumber = dto.PhoneNumber;
         coach.Email = dto.Email;
-        coach.CoachType = dto.CoachType;
-        coach.Specialization = dto.Specialization;
+        coach.BankName = dto.BankName;
+        coach.BankAccountNumber = dto.BankAccountNumber;
+        coach.BankAccountName = dto.BankAccountName;
         coach.Remarks = dto.Remarks;
         coach.UpdatedByUserId = actionByUserId;
         coach.UpdatedDate = DateTime.UtcNow;
@@ -141,9 +145,9 @@ public class CoachService : ICoachService
         CoachCode = coach.CoachCode,
         FullName = coach.FullName,
         Nickname = coach.Nickname,
+        ColorHex = coach.ColorHex,
         PhoneNumber = coach.PhoneNumber,
         Email = coach.Email,
-        CoachType = coach.CoachType,
         IsActive = coach.IsActive,
         LinkedUsername = coach.User != null ? coach.User.Username : null,
     };
@@ -154,10 +158,12 @@ public class CoachService : ICoachService
         CoachCode = coach.CoachCode,
         FullName = coach.FullName,
         Nickname = coach.Nickname,
+        ColorHex = coach.ColorHex,
         PhoneNumber = coach.PhoneNumber,
         Email = coach.Email,
-        CoachType = coach.CoachType,
-        Specialization = coach.Specialization,
+        BankName = coach.BankName,
+        BankAccountNumber = coach.BankAccountNumber,
+        BankAccountName = coach.BankAccountName,
         IsActive = coach.IsActive,
         Remarks = coach.Remarks,
         LinkedUserId = coach.UserId,

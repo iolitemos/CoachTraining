@@ -1,0 +1,23 @@
+/*
+ * App-shell accent palette. Aliased to the app-wide --color-primary-*
+ * tokens (styles.css) — primary is now Blue site-wide — so the top bar /
+ * sidebar stay in sync with the rest of the app from one source of truth.
+ */
+:host {
+  --shell-accent-50: var(--color-primary-50);
+  --shell-accent-100: var(--color-primary-100);
+  --shell-accent-200: var(--color-primary-200);
+  --shell-accent-300: var(--color-primary-300);
+  --shell-accent-400: var(--color-primary-400);
+  --shell-accent-500: var(--color-primary-500);
+  --shell-accent-600: var(--color-primary-600);
+  --shell-accent-700: var(--color-primary-700);
+  --shell-accent-800: var(--color-primary-800);
+  --shell-accent-900: var(--color-primary-900);
+
+  display: block;
+}
+
+.shell-avatar {
+  background: linear-gradient(135deg, var(--shell-accent-500), var(--shell-accent-700));
+}

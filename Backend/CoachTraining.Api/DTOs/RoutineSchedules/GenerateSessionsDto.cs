@@ -2,7 +2,7 @@ namespace CoachTraining.Api.DTOs.RoutineSchedules;
 
 public class GenerateSessionsRequest
 {
-    /// <summary>Generate occurrences up to and including this date (capped at the schedule's EffectiveEndDate).</summary>
+    /// <summary>The selected schedule date must be on or before this date.</summary>
     public DateOnly ThroughDate { get; set; }
 }
 

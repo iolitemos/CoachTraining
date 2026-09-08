@@ -69,6 +69,8 @@
 - [x] Add optional User-to-Coach relationship.
 - [x] Add coach profile fields defined in `requirement.md`.
 - [x] Preserve inactive coaches through soft delete/status rules rather than destructive deletion.
+- [x] Add a persistent calendar color to each Coach.
+- [x] Replace Coach Type/Coaching Specialization with bank account reference fields (BankName, BankAccountNumber, BankAccountName) per updated `requirement.md` 4.2, and apply the corresponding EF Core migration to DEV.
 
 ### 2.3 Athlete Data
 
@@ -81,11 +83,15 @@
 
 - [x] Create RoutineSchedule entity with explicit `RoutineScheduleId` primary key and common audit columns.
 - [x] Add coach relationship to RoutineSchedule.
-- [x] Add recurrence, weekday, scheduled time, effective date, status, and remarks fields.
+- [x] Store scheduled time, effective start date, status, and remarks for RoutineSchedule.
+- [x] Treat EffectiveStartDate as the single selected Routine Training date without recurrence.
+- [x] Remove RoutineSchedule Name, DayOfWeek, EffectiveEndDate, and RecurrencePattern columns with an EF Core migration.
+- [x] Create and apply the Coach calendar-color migration to DEV.
+- [x] Remove legacy repeated Routine sessions that are still Scheduled and do not match the selected date.
 - [x] Confirm RoutineSchedule contains no Group field.
 - [x] Confirm RoutineSchedule contains no Team field.
 - [x] Confirm RoutineSchedule contains no Location field.
-- [x] Add fields required to preserve recurring-schedule changes without modifying completed session history.
+- [x] Preserve completed session history when a schedule configuration changes.
 
 ### 2.5 Training Session Data
 
@@ -157,7 +163,7 @@
 - [x] Add indexes for coach/date session queries.
 - [x] Add indexes for athlete/date attendance queries.
 - [x] Add indexes for session status queries.
-- [x] Add indexes for routine recurrence lookup.
+- [x] Add indexes for Routine Schedule date lookup.
 - [x] Add indexes supporting dashboard date-range queries.
 - [x] Add indexes supporting report date-range filters.
 - [x] Apply soft-delete behavior to important business entities.
@@ -174,6 +180,7 @@
 - [x] Apply migrations to DEV database.
 - [x] Verify all migration scripts against PostgreSQL.
 - [x] Verify migration rollback/recovery approach before QAS deployment.
+- [x] Apply `RemoveRoutineScheduleManagedColumns` migration to DEV database after explicit destructive-change approval.
 
 ---
 
@@ -249,6 +256,7 @@
 - [x] Validate Coach Code uniqueness.
 - [x] Prevent inactive coaches from new active schedule assignment.
 - [x] Preserve historical records when coach profile/status changes.
+- [x] Accept and validate Coach calendar color in create/update APIs.
 
 ### 4.2 Athlete Management Backend
 
@@ -274,12 +282,13 @@
 - [x] Add API to get routine schedule detail.
 - [x] Add API to create routine schedule.
 - [x] Add API to update future routine schedule configuration.
+- [x] Add Administrator API to delete an incorrect untouched Routine Schedule and its Scheduled session while preserving progressed history.
 - [x] Add API to activate/deactivate routine schedule.
-- [x] Validate required coach, recurrence, start time, end time, and effective start date.
-- [x] Validate optional effective end date against start date.
+- [x] Validate required coach, start time, end time, and effective start date.
+- [x] Derive Routine Schedule display name from its selected training date without recurrence.
 - [x] Validate Routine schedule coach conflicts before save.
-- [x] Implement routine occurrence/session generation for applicable recurrence dates.
-- [x] Ensure recurring-schedule edits do not modify completed historical sessions.
+- [x] Generate exactly one Routine Training Session for the selected schedule date.
+- [x] Ensure schedule edits do not modify completed historical sessions.
 - [x] Ensure generated Routine sessions are identified as Routine throughout queries and reports.
 - [x] Confirm Routine APIs do not expose Group, Team, or Location fields.
 
@@ -336,7 +345,7 @@
 - [x] Calculate actual teaching duration from recorded actual time.
 - [x] Reject negative or invalid actual duration.
 - [x] Associate actual teaching record with actual coach.
-- [ ] Validate required session information before completion/submission. <!-- start-before-complete ordering enforced; attendance/log completeness waits on 4.8–4.10, final submit-gate on 4.15 -->
+- [x] Validate required session information before completion/submission. <!-- start-before-complete ordering enforced by CoachTeachingService; Private attendance completeness enforced by TrainingApprovalService.SubmitAsync (4.15) -->
 - [x] Preserve scheduled values when actual values are recorded.
 
 ### 4.8 Routine Attendance Backend
@@ -360,7 +369,7 @@
 - [x] Add API to retrieve all assigned athletes and their attendance state.
 - [x] Add API to record/update attendance for an assigned athlete.
 - [x] Support Present, Absent, Late, and Leave / Excused statuses.
-- [ ] Validate attendance status for every assigned athlete before final submission. <!-- IsComplete/RosterComplete flag exposed now; the actual submit-time block belongs to Approval (4.15) -->
+- [x] Validate attendance status for every assigned athlete before final submission. <!-- Enforced in TrainingApprovalService.SubmitAsync (4.15) -->
 - [x] Validate optional arrival time for Late attendance.
 - [x] Allow remarks for Absent and Leave / Excused records.
 - [x] Prevent duplicate attendance records for the same assigned athlete.
@@ -377,39 +386,39 @@
 
 ### 4.11 Substitute Coach Backend
 
-- [ ] Create substitute-coach request/response DTOs (`FR-SUB-001`–`005`).
-- [ ] Create Substitute Coach service.
-- [ ] Add API to assign a substitute coach.
-- [ ] Require substitution reason.
-- [ ] Validate substitute coach is active.
-- [ ] Validate substitute coach schedule conflicts.
-- [ ] Preserve original assigned coach.
-- [ ] Set/report actual coach without overwriting original assignment.
-- [ ] Record substitution history.
+- [x] Create substitute-coach request/response DTOs (`FR-SUB-001`–`005`).
+- [x] Create Substitute Coach service.
+- [x] Add API to assign a substitute coach.
+- [x] Require substitution reason.
+- [x] Validate substitute coach is active.
+- [x] Validate substitute coach schedule conflicts.
+- [x] Preserve original assigned coach.
+- [x] Set/report actual coach without overwriting original assignment.
+- [x] Record substitution history.
 
 ### 4.12 Cancellation Backend
 
-- [ ] Create cancellation request DTO (`FR-CR-001`–`003`).
-- [ ] Add service operation to cancel future/uncompleted sessions.
-- [ ] Add API to cancel a session.
-- [ ] Require cancellation reason.
-- [ ] Prevent cancellation of records that are no longer eligible for cancellation.
-- [ ] Preserve cancelled sessions in historical queries.
-- [ ] Exclude cancelled sessions from completed teaching-hour totals.
-- [ ] Record cancellation audit history.
+- [x] Create cancellation request DTO (`FR-CR-001`–`003`).
+- [x] Add service operation to cancel future/uncompleted sessions.
+- [x] Add API to cancel a session.
+- [x] Require cancellation reason.
+- [x] Prevent cancellation of records that are no longer eligible for cancellation.
+- [x] Preserve cancelled sessions in historical queries.
+- [x] Exclude cancelled sessions from completed teaching-hour totals.
+- [x] Record cancellation audit history.
 
 ### 4.13 Rescheduling Backend
 
-- [ ] Create reschedule request DTO (`FR-CR-004`–`007`).
-- [ ] Add service operation to reschedule eligible sessions.
-- [ ] Add API to reschedule a session.
-- [ ] Validate new date/time.
-- [ ] Validate coach conflict for replacement schedule.
-- [ ] Validate assigned athlete conflicts for Private replacement schedule.
-- [ ] Preserve original session as rescheduled history.
-- [ ] Link replacement session to original session.
-- [ ] Prevent original and replacement sessions from double-counting reports.
-- [ ] Record rescheduling audit history.
+- [x] Create reschedule request DTO (`FR-CR-004`–`007`).
+- [x] Add service operation to reschedule eligible sessions.
+- [x] Add API to reschedule a session.
+- [x] Validate new date/time. <!-- End-after-start via IValidatableObject, consistent with Routine/Private DTOs -->
+- [x] Validate coach conflict for replacement schedule.
+- [x] Validate assigned athlete conflicts for Private replacement schedule.
+- [x] Preserve original session as rescheduled history. <!-- Original row kept, Status -> Rescheduled -->
+- [x] Link replacement session to original session. <!-- Replacement.OriginalSessionId -->
+- [x] Prevent original and replacement sessions from double-counting reports. <!-- Rescheduled excluded from ISessionStatusService.CountsAsCompletedTeaching; Athlete Attendance Report (4.19) excludes Rescheduled sessions -->
+- [x] Record rescheduling audit history. <!-- AuditLog entry ("Reschedule") on the original TrainingSession -->
 
 ### 4.14 Schedule Conflict Backend
 
@@ -419,95 +428,95 @@
 - [x] Detect Private Training overlap with the coach's Routine Training. <!-- CheckCoachOverlapAsync queries all TrainingSessions regardless of type -->
 - [x] Reuse conflict validation for routine create/update.
 - [x] Reuse conflict validation for private create/update.
-- [ ] Reuse conflict validation for substitution.
-- [ ] Reuse conflict validation for rescheduling.
-- [ ] Add authorized conflict-override operation where permitted.
-- [ ] Require conflict-override reason.
-- [ ] Record conflict-override history.
+- [x] Reuse conflict validation for substitution.
+- [x] Reuse conflict validation for rescheduling. <!-- ReschedulingService reuses IScheduleConflictService -->
+- [x] Add authorized conflict-override operation where permitted. <!-- OverrideConflict/OverrideReason on Routine/Private create-update and Substitute Coach requests; Administrator-only per existing controller policies -->
+- [x] Require conflict-override reason.
+- [x] Record conflict-override history. <!-- ConflictOverrideHistory rows written by RoutineScheduleService/PrivateSessionService/SubstituteCoachService -->
 
 ### 4.15 Approval and Locking Backend
 
-- [ ] Create submission/approval action DTOs (`FR-APPROVAL-001`–`007`).
-- [ ] Create Training Approval service.
-- [ ] Add API for Coach to submit a Completed record.
-- [ ] Add API for Administrator to approve a submitted record.
-- [ ] Add API for Administrator to reject a submitted record.
-- [ ] Add API for Administrator to request revision.
-- [ ] Add API for authorized Administrator to unlock a Locked record.
-- [ ] Require unlock reason.
-- [ ] Change approved records to Locked state.
-- [ ] Enforce edit restrictions for Locked records.
-- [ ] Record every approval workflow action in history.
+- [x] Create submission/approval action DTOs (`FR-APPROVAL-001`–`007`).
+- [x] Create Training Approval service.
+- [x] Add API for Coach to submit a Completed record.
+- [x] Add API for Administrator to approve a submitted record.
+- [x] Add API for Administrator to reject a submitted record.
+- [x] Add API for Administrator to request revision.
+- [x] Add API for authorized Administrator to unlock a Locked record.
+- [x] Require unlock reason.
+- [x] Change approved records to Locked state. <!-- ApproveAsync transitions Submitted -> Approved -> Locked as one action; requirement.md defines no separate Lock action -->
+- [x] Enforce edit restrictions for Locked records. <!-- Already enforced via ISessionStatusService.IsEditableByCoach (Locked excluded) used by Attendance/TrainingLog/CoachTeaching services -->
+- [x] Record every approval workflow action in history. <!-- TrainingApprovalHistory row per Submit/Approve/Reject/RequestRevision/Unlock -->
 
 ### 4.16 Coach Dashboard Backend
 
-- [ ] Create Coach Dashboard response DTO (`FR-CDASH-001`–`003`).
-- [ ] Create Coach Dashboard service.
-- [ ] Add API for Coach today's sessions.
-- [ ] Add API for Coach upcoming sessions.
-- [ ] Add Coach completed/remaining session summary.
-- [ ] Add Routine/Private session summary.
-- [ ] Add pending/incomplete record summary.
-- [ ] Add monthly teaching-hour summary.
-- [ ] Restrict dashboard data to the signed-in Coach.
+- [x] Create Coach Dashboard response DTO (`FR-CDASH-001`–`003`).
+- [x] Create Coach Dashboard service.
+- [x] Add API for Coach today's sessions.
+- [x] Add API for Coach upcoming sessions.
+- [x] Add Coach completed/remaining session summary. <!-- Scoped to the current calendar month -->
+- [x] Add Routine/Private session summary. <!-- Scoped to the current calendar month -->
+- [x] Add pending/incomplete record summary. <!-- Overdue Scheduled/InProgress + not-yet-submitted Completed sessions -->
+- [x] Add monthly teaching-hour summary.
+- [x] Restrict dashboard data to the signed-in Coach. <!-- GET /api/dashboard/coach always scopes to _currentUser.CoachId -->
 
 ### 4.17 Administrator Dashboard Backend
 
-- [ ] Create Administrator Dashboard response DTO (`FR-ADASH-001`–`004`).
-- [ ] Create Administrator Dashboard service.
-- [ ] Add session KPI summary by date/date range.
-- [ ] Add completed/upcoming/cancelled counts.
-- [ ] Add Routine/Private counts.
-- [ ] Add Coaches Teaching Today summary.
-- [ ] Add athlete attendance summary.
-- [ ] Add coach teaching-hour summary.
-- [ ] Add coach filter support.
-- [ ] Add training-type filter support.
-- [ ] Include identifiers needed to open related operational records.
+- [x] Create Administrator Dashboard response DTO (`FR-ADASH-001`–`004`).
+- [x] Create Administrator Dashboard service.
+- [x] Add session KPI summary by date/date range. <!-- Unset range defaults to today -->
+- [x] Add completed/upcoming/cancelled counts.
+- [x] Add Routine/Private counts.
+- [x] Add Coaches Teaching Today summary.
+- [x] Add athlete attendance summary.
+- [x] Add coach teaching-hour summary.
+- [x] Add coach filter support.
+- [x] Add training-type filter support.
+- [x] Include identifiers needed to open related operational records. <!-- CoachTeachingTodayDto.TrainingSessionIds -->
 
 ### 4.18 Coach Teaching-Hour Report Backend
 
-- [ ] Create Coach Teaching-Hour report filter DTO (`FR-RPT-COACH-001`–`009`).
-- [ ] Create Coach Teaching-Hour report response DTO.
-- [ ] Create Coach Teaching-Hour report service.
-- [ ] Add report API with coach filter.
-- [ ] Add report API date-range filtering.
-- [ ] Add report API training-type filtering.
-- [ ] Calculate Routine teaching hours.
-- [ ] Calculate Private teaching hours.
-- [ ] Calculate total teaching hours.
-- [ ] Credit teaching time to actual coach after substitution.
-- [ ] Exclude Cancelled sessions.
-- [ ] Exclude rescheduled-original sessions.
-- [ ] Exclude Coach Absent sessions unless substitute completion qualifies.
-- [ ] Use finalized session records according to approval rules.
+- [x] Create Coach Teaching-Hour report filter DTO (`FR-RPT-COACH-001`–`009`).
+- [x] Create Coach Teaching-Hour report response DTO.
+- [x] Create Coach Teaching-Hour report service.
+- [x] Add report API with coach filter.
+- [x] Add report API date-range filtering.
+- [x] Add report API training-type filtering.
+- [x] Calculate Routine teaching hours.
+- [x] Calculate Private teaching hours.
+- [x] Calculate total teaching hours.
+- [x] Credit teaching time to actual coach after substitution.
+- [x] Exclude Cancelled sessions.
+- [x] Exclude rescheduled-original sessions.
+- [x] Exclude Coach Absent sessions unless substitute completion qualifies. <!-- All via ISessionStatusService.CountsAsCompletedTeaching, the single shared rule -->
+- [x] Use finalized session records according to approval rules. <!-- Same shared rule: Completed/Submitted/Approved/Locked count, per todo.md 4.5/4.6 design -->
 
 ### 4.19 Athlete Attendance Report Backend
 
-- [ ] Create Athlete Attendance report filter DTO (`FR-RPT-ATH-001`–`007`).
-- [ ] Create Athlete Attendance report response DTO.
-- [ ] Create Athlete Attendance report service.
-- [ ] Add report API with athlete filter.
-- [ ] Add report API date-range filtering.
-- [ ] Distinguish Routine and Private attendance in report results.
-- [ ] Calculate Private attendance status counts.
-- [ ] Report only explicitly recorded Routine attendance.
-- [ ] Do not infer Routine absence from non-selection.
-- [ ] Exclude duplicate counts caused by rescheduled-original sessions.
+- [x] Create Athlete Attendance report filter DTO (`FR-RPT-ATH-001`–`007`).
+- [x] Create Athlete Attendance report response DTO.
+- [x] Create Athlete Attendance report service.
+- [x] Add report API with athlete filter.
+- [x] Add report API date-range filtering.
+- [x] Distinguish Routine and Private attendance in report results.
+- [x] Calculate Private attendance status counts.
+- [x] Report only explicitly recorded Routine attendance.
+- [x] Do not infer Routine absence from non-selection.
+- [x] Exclude duplicate counts caused by rescheduled-original sessions. <!-- Rescheduled-status sessions excluded from the query entirely -->
 
 ### 4.20 History and Audit Backend
 
-- [ ] Create audit/history response DTOs (`FR-AUDIT-001`–`003`).
-- [ ] Create Audit service.
-- [ ] Add API to retrieve session business history.
-- [ ] Add API to retrieve approval history.
-- [ ] Add API to retrieve substitution history.
-- [ ] Add API to retrieve conflict-override history.
-- [ ] Capture schedule creation/change events.
-- [ ] Capture attendance change events.
-- [ ] Capture completion/submission events.
-- [ ] Capture cancellation/rescheduling events.
-- [ ] Preserve history when coach or athlete becomes inactive.
+- [x] Create audit/history response DTOs (`FR-AUDIT-001`–`003`).
+- [x] Create Audit service.
+- [x] Add API to retrieve session business history. <!-- GET /api/training-sessions/{id}/history -->
+- [x] Add API to retrieve approval history. <!-- GET .../history/approvals -->
+- [x] Add API to retrieve substitution history. <!-- GET .../history/substitutions -->
+- [x] Add API to retrieve conflict-override history. <!-- GET .../history/conflict-overrides -->
+- [x] Capture schedule creation/change events. <!-- RoutineSchedule/PrivateSession/TrainingSession CreatedDate+CreatedByUserId, UpdatedDate+UpdatedByUserId (AuditableEntity) -->
+- [x] Capture attendance change events. <!-- Attendance.RecordedByUserId/RecordedDate already identify actor+time per FR-AUDIT-001; no redundant AuditLog row needed -->
+- [x] Capture completion/submission events. <!-- Completion via TrainingSession's own Updated*/Actual* columns; Submission explicitly via TrainingApprovalHistory (ActionType.Submit) -->
+- [x] Capture cancellation/rescheduling events. <!-- Dedicated AuditLog ("Cancel"/"Reschedule") entries -->
+- [x] Preserve history when coach or athlete becomes inactive. <!-- Deactivation only sets IsActive=false (query filter is IsDeleted-only, see CoachConfiguration), so history navigations/snapshots remain resolvable -->
 
 ---
 
@@ -525,6 +534,9 @@
 - [x] Add Coach Code uniqueness error feedback.
 - [x] Add Coach activate/deactivate action.
 - [x] Add Coach-account linking control when applicable. <!-- Read-only display in Coach form; the link itself stays owned by User & Role Management (todo.md 3.4) per CoachDetailDto -->
+- [x] Add Coach color picker and color preview to Coach management.
+- [x] Replace Coach Type/Specialization inputs with bank account detail inputs (bank name, account number, account name) in the Coach form; drop the Coach Type column from the Coach list.
+- [x] Make the bank-name field a dropdown of Thai bank names with PromptPay listed first.
 - [x] Make Coach list and forms responsive.
 
 ### 5.2 Athlete Management Frontend
@@ -543,14 +555,24 @@
 ### 5.3 Routine Training Frontend
 
 - [x] Create Routine Schedule list page.
+- [x] Limit the Routine Schedule list to training date, time, Coach nickname, and edit/delete icon actions, ordered by training date.
+- [x] Create Routine Schedule monthly calendar view.
+- [x] Display each Routine Schedule only on its selected calendar date.
+- [x] Allow Administrator to select a calendar date and open the create form with date/day prefilled.
+- [x] Add previous month, next month, and current month navigation.
+- [x] Add responsive mobile calendar and selected-date agenda.
+- [x] Add loading, empty, and error states to Routine Schedule calendar.
+- [x] Show only Coach nickname without time in calendar entries and use the configured Coach color.
 - [x] Add Routine Schedule search/filter/pagination.
 - [x] Add loading, empty, and error states to Routine Schedule list.
 - [x] Create Routine Schedule create form.
 - [x] Create Routine Schedule edit form.
+- [x] Add confirmed delete actions to the Routine Schedule calendar and list.
 - [x] Add Coach selector using active coaches only.
-- [x] Add recurrence/day-of-week inputs.
-- [x] Add start/end time inputs.
-- [x] Add effective start/end date inputs.
+- [x] Derive Routine Schedule name from the selected date without exposing confusing inputs.
+- [x] Add start/end time inputs with defaults of 18:30 and 20:30.
+- [x] Add a single training-date input prefilled from the selected calendar date.
+- [x] Do not repeat a Routine Schedule beyond the single selected date.
 - [x] Add active/inactive control.
 - [x] Add schedule-conflict feedback. <!-- 409 response (RoutineScheduleSaveResult.conflicts) rendered as a message list in the form -->
 - [ ] Add authorized conflict-override UI only when backend permits override. <!-- Backend has no override operation yet (todo.md 4.14) — UI intentionally deferred until it exists -->
@@ -581,200 +603,200 @@
 
 ### 5.5 Coach Home Frontend
 
-- [ ] Create Coach Home page (`FR-CDASH-001`–`003`).
-- [ ] Create Today's Sessions section.
-- [ ] Create Upcoming Sessions section.
-- [ ] Display Routine/Private type for each session.
-- [ ] Display scheduled time and current status.
-- [ ] Display required next action for actionable sessions.
-- [ ] Add completed/remaining session summary.
-- [ ] Add monthly teaching-hour summary.
-- [ ] Add pending/incomplete training-record summary.
-- [ ] Add direct navigation from session card/list item to session detail.
-- [ ] Add loading state.
-- [ ] Add empty state when no sessions are scheduled.
-- [ ] Add API error state and retry action.
-- [ ] Optimize Coach Home for mobile-first use.
+- [x] Create Coach Home page (`FR-CDASH-001`–`003`).
+- [x] Create Today's Sessions section.
+- [x] Create Upcoming Sessions section.
+- [x] Display Routine/Private type for each session.
+- [x] Display scheduled time and current status.
+- [x] Display required next action for actionable sessions.
+- [x] Add completed/remaining session summary.
+- [x] Add monthly teaching-hour summary.
+- [x] Add pending/incomplete training-record summary.
+- [x] Add direct navigation from session card/list item to session detail.
+- [x] Add loading state.
+- [x] Add empty state when no sessions are scheduled.
+- [x] Add API error state and retry action.
+- [x] Optimize Coach Home for mobile-first use.
 
 ### 5.6 Coach Session Frontend
 
-- [ ] Create shared Coach Session page for Routine and Private sessions.
-- [ ] Create Session Summary section.
-- [ ] Display scheduled start/end separately from actual start/end.
-- [ ] Display assigned coach separately from actual coach.
-- [ ] Add Start/Check-in action.
-- [ ] Add End/Check-out action.
-- [ ] Display calculated actual teaching duration.
-- [ ] Disable invalid actions based on current session status.
-- [ ] Add Attendance section appropriate to training type.
-- [ ] Add Training Log section.
-- [ ] Add Complete action.
-- [ ] Add Submit action when applicable.
-- [ ] Display validation errors blocking completion/submission.
-- [ ] Display locked/read-only state for finalized records.
-- [ ] Add loading and API error states.
-- [ ] Make Coach Session flow responsive and optimized for mobile.
+- [x] Create shared Coach Session page for Routine and Private sessions.
+- [x] Create Session Summary section.
+- [x] Display scheduled start/end separately from actual start/end.
+- [x] Display assigned coach separately from actual coach.
+- [x] Add Start/Check-in action.
+- [x] Add End/Check-out action.
+- [x] Display calculated actual teaching duration.
+- [x] Disable invalid actions based on current session status.
+- [x] Add Attendance section appropriate to training type.
+- [x] Add Training Log section.
+- [x] Add Complete action.
+- [x] Add Submit action when applicable.
+- [x] Display validation errors blocking completion/submission.
+- [x] Display locked/read-only state for finalized records.
+- [x] Add loading and API error states.
+- [x] Make Coach Session flow responsive and optimized for mobile.
 
 ### 5.7 Routine Attendance Frontend
 
-- [ ] Create Routine Attendance component.
-- [ ] Add athlete search from active Athlete Master.
-- [ ] Add selected athlete to attendance list.
-- [ ] Prevent already-added athletes from duplicate selection.
-- [ ] Add Present status option.
-- [ ] Add Late status option.
-- [ ] Add arrival-time input for Late status.
-- [ ] Add attendance remark input.
-- [ ] Add editable attendance removal while session is editable.
-- [ ] Do not render a fixed roster.
-- [ ] Do not label unselected athletes as Absent.
-- [ ] Add saving/loading/error feedback.
-- [ ] Optimize attendance controls for touch/mobile use.
+- [x] Create Routine Attendance component.
+- [x] Add athlete search from active Athlete Master.
+- [x] Add selected athlete to attendance list.
+- [x] Prevent already-added athletes from duplicate selection.
+- [x] Add Present status option.
+- [x] Add Late status option.
+- [x] Add arrival-time input for Late status.
+- [x] Add attendance remark input.
+- [x] Add editable attendance removal while session is editable.
+- [x] Do not render a fixed roster.
+- [x] Do not label unselected athletes as Absent.
+- [x] Add saving/loading/error feedback.
+- [x] Optimize attendance controls for touch/mobile use.
 
 ### 5.8 Private Attendance Frontend
 
-- [ ] Create Private Attendance component.
-- [ ] Display all athletes assigned to the Private session.
-- [ ] Add Present status option.
-- [ ] Add Absent status option.
-- [ ] Add Late status option.
-- [ ] Add Leave / Excused status option.
-- [ ] Add arrival-time input for Late status.
-- [ ] Add remark input for Absent and Leave / Excused.
-- [ ] Highlight assigned athletes missing attendance status.
-- [ ] Prevent final submission until all assigned athletes have attendance status.
-- [ ] Add saving/loading/error feedback.
-- [ ] Optimize attendance controls for touch/mobile use.
+- [x] Create Private Attendance component.
+- [x] Display all athletes assigned to the Private session.
+- [x] Add Present status option.
+- [x] Add Absent status option.
+- [x] Add Late status option.
+- [x] Add Leave / Excused status option.
+- [x] Add arrival-time input for Late status.
+- [x] Add remark input for Absent and Leave / Excused.
+- [x] Highlight assigned athletes missing attendance status.
+- [x] Prevent final submission until all assigned athletes have attendance status.
+- [x] Add saving/loading/error feedback.
+- [x] Optimize attendance controls for touch/mobile use.
 
 ### 5.9 Training Log Frontend
 
-- [ ] Create Training Log form component.
-- [ ] Add Training Topic input.
-- [ ] Add Training Objective input.
-- [ ] Add Exercise / Drill input.
-- [ ] Add Training Focus input.
-- [ ] Add Training Intensity input.
-- [ ] Add Coach Notes input.
-- [ ] Add Athlete Notes input.
-- [ ] Add General Remarks input.
-- [ ] Disable editing when session is non-editable.
-- [ ] Add loading/saving/error feedback.
-- [ ] Make Training Log form responsive.
+- [x] Create Training Log form component.
+- [x] Add Training Topic input.
+- [x] Add Training Objective input.
+- [x] Add Exercise / Drill input.
+- [x] Add Training Focus input.
+- [x] Add Training Intensity input.
+- [x] Add Coach Notes input.
+- [x] Add Athlete Notes input.
+- [x] Add General Remarks input.
+- [x] Disable editing when session is non-editable.
+- [x] Add loading/saving/error feedback.
+- [x] Make Training Log form responsive.
 
 ### 5.10 Substitute Coach Frontend
 
-- [ ] Add substitute-coach action to eligible session screens.
-- [ ] Create substitute-coach dialog/form.
-- [ ] Add active substitute Coach selector.
-- [ ] Require substitution reason.
-- [ ] Display schedule-conflict validation feedback.
-- [ ] Display original assigned coach after substitution.
-- [ ] Display actual/substitute coach after substitution.
-- [ ] Display substitution history in session detail for authorized users.
+- [x] Add substitute-coach action to eligible session screens.
+- [x] Create substitute-coach dialog/form.
+- [x] Add active substitute Coach selector.
+- [x] Require substitution reason.
+- [x] Display schedule-conflict validation feedback.
+- [x] Display original assigned coach after substitution.
+- [x] Display actual/substitute coach after substitution.
+- [x] Display substitution history in session detail for authorized users.
 
 ### 5.11 Cancellation Frontend
 
-- [ ] Add Cancel action to eligible session screens.
-- [ ] Create cancellation confirmation dialog.
-- [ ] Require cancellation reason.
-- [ ] Display Cancelled status clearly after success.
-- [ ] Remove invalid operational actions from Cancelled sessions.
-- [ ] Add cancellation API loading/error feedback.
+- [x] Add Cancel action to eligible session screens.
+- [x] Create cancellation confirmation dialog.
+- [x] Require cancellation reason.
+- [x] Display Cancelled status clearly after success.
+- [x] Remove invalid operational actions from Cancelled sessions.
+- [x] Add cancellation API loading/error feedback.
 
 ### 5.12 Rescheduling Frontend
 
-- [ ] Add Reschedule action to eligible session screens.
-- [ ] Create reschedule form/dialog.
-- [ ] Add new date/start/end time inputs.
-- [ ] Display coach conflict feedback.
-- [ ] Display athlete conflict feedback for Private Training.
-- [ ] Display authorized conflict-override controls when permitted.
-- [ ] Require override reason when override is used.
-- [ ] Display link/reference between original and replacement sessions.
-- [ ] Add reschedule API loading/error feedback.
+- [x] Add Reschedule action to eligible session screens.
+- [x] Create reschedule form/dialog.
+- [x] Add new date/start/end time inputs.
+- [x] Display coach conflict feedback.
+- [x] Display athlete conflict feedback for Private Training.
+- [x] Display authorized conflict-override controls when permitted.
+- [x] Require override reason when override is used.
+- [x] Display link/reference between original and replacement sessions.
+- [x] Add reschedule API loading/error feedback.
 
 ### 5.13 Administrative Review Frontend
 
-- [ ] Create Submitted Training Records list page.
-- [ ] Add review-list search/filter/pagination.
-- [ ] Add loading, empty, and error states to review list.
-- [ ] Create Administrative Review detail page.
-- [ ] Display scheduled teaching information.
-- [ ] Display actual teaching information.
-- [ ] Display assigned coach and actual coach.
-- [ ] Display athlete attendance.
-- [ ] Display training log.
-- [ ] Display session status.
-- [ ] Display submission/approval history.
-- [ ] Add Approve action.
-- [ ] Add Reject action.
-- [ ] Add Request Revision action.
-- [ ] Add Unlock action for authorized Administrator.
-- [ ] Require unlock reason.
-- [ ] Refresh displayed status after workflow action.
-- [ ] Make review pages responsive.
+- [x] Create Submitted Training Records list page.
+- [x] Add review-list search/filter/pagination.
+- [x] Add loading, empty, and error states to review list.
+- [x] Create Administrative Review detail page.
+- [x] Display scheduled teaching information.
+- [x] Display actual teaching information.
+- [x] Display assigned coach and actual coach.
+- [x] Display athlete attendance.
+- [x] Display training log.
+- [x] Display session status.
+- [x] Display submission/approval history.
+- [x] Add Approve action.
+- [x] Add Reject action.
+- [x] Add Request Revision action.
+- [x] Add Unlock action for authorized Administrator.
+- [x] Require unlock reason.
+- [x] Refresh displayed status after workflow action.
+- [x] Make review pages responsive.
 
 ### 5.14 Administrator Dashboard Frontend
 
-- [ ] Create Administrator Dashboard page (`FR-ADASH-001`–`004`).
-- [ ] Create Training Sessions Today KPI card.
-- [ ] Create Completed Sessions KPI card.
-- [ ] Create Upcoming Sessions KPI card.
-- [ ] Create Cancelled Sessions KPI card.
-- [ ] Create Routine Sessions KPI card.
-- [ ] Create Private Sessions KPI card.
-- [ ] Create Coaches Teaching Today summary component.
-- [ ] Create Athlete Attendance Summary component.
-- [ ] Create Coach Teaching Hours summary component.
-- [ ] Add date/date-range filter.
-- [ ] Add Coach filter.
-- [ ] Add Training Type filter.
-- [ ] Add navigation from applicable dashboard items to related records.
-- [ ] Add loading state for dashboard data.
-- [ ] Add empty state where summary data is unavailable.
-- [ ] Add dashboard API error state and retry action.
-- [ ] Make dashboard responsive without horizontal overflow.
+- [x] Create Administrator Dashboard page (`FR-ADASH-001`–`004`).
+- [x] Create Training Sessions Today KPI card.
+- [x] Create Completed Sessions KPI card.
+- [x] Create Upcoming Sessions KPI card.
+- [x] Create Cancelled Sessions KPI card.
+- [x] Create Routine Sessions KPI card.
+- [x] Create Private Sessions KPI card.
+- [x] Create Coaches Teaching Today summary component.
+- [x] Create Athlete Attendance Summary component.
+- [x] Create Coach Teaching Hours summary component.
+- [x] Add date/date-range filter.
+- [x] Add Coach filter.
+- [x] Add Training Type filter.
+- [x] Add navigation from applicable dashboard items to related records.
+- [x] Add loading state for dashboard data.
+- [x] Add empty state where summary data is unavailable.
+- [x] Add dashboard API error state and retry action.
+- [x] Make dashboard responsive without horizontal overflow.
 
 ### 5.15 Coach Teaching-Hour Report Frontend
 
-- [ ] Create Coach Teaching-Hour Report page.
-- [ ] Add Coach filter.
-- [ ] Add date-range filter.
-- [ ] Add Training Type filter.
-- [ ] Display Routine teaching hours.
-- [ ] Display Private teaching hours.
-- [ ] Display total teaching hours.
-- [ ] Distinguish actual coach from originally assigned coach where relevant.
-- [ ] Add report loading state.
-- [ ] Add report empty state.
-- [ ] Add report error state.
-- [ ] Make report layout responsive.
+- [x] Create Coach Teaching-Hour Report page.
+- [x] Add Coach filter.
+- [x] Add date-range filter.
+- [x] Add Training Type filter.
+- [x] Display Routine teaching hours.
+- [x] Display Private teaching hours.
+- [x] Display total teaching hours.
+- [x] Distinguish actual coach from originally assigned coach where relevant.
+- [x] Add report loading state.
+- [x] Add report empty state.
+- [x] Add report error state.
+- [x] Make report layout responsive.
 
 ### 5.16 Athlete Attendance Report Frontend
 
-- [ ] Create Athlete Attendance Report page.
-- [ ] Add Athlete filter.
-- [ ] Add date-range filter.
-- [ ] Distinguish Routine and Private attendance records.
-- [ ] Display Private attendance status counts.
-- [ ] Display Routine recorded-attendance history without inferred absence.
-- [ ] Add report loading state.
-- [ ] Add report empty state.
-- [ ] Add report error state.
-- [ ] Make report layout responsive.
+- [x] Create Athlete Attendance Report page.
+- [x] Add Athlete filter.
+- [x] Add date-range filter.
+- [x] Distinguish Routine and Private attendance records.
+- [x] Display Private attendance status counts.
+- [x] Display Routine recorded-attendance history without inferred absence.
+- [x] Add report loading state.
+- [x] Add report empty state.
+- [x] Add report error state.
+- [x] Make report layout responsive.
 
 ### 5.17 History and Audit Frontend
 
-- [ ] Create session history/timeline component.
-- [ ] Display schedule changes.
-- [ ] Display cancellation/rescheduling history.
-- [ ] Display substitute-coach history.
-- [ ] Display attendance change history when authorized.
-- [ ] Display completion/submission/approval history.
-- [ ] Display conflict-override history.
-- [ ] Display responsible user and action date/time.
-- [ ] Add loading and error states for history data.
-- [ ] Make history/timeline responsive.
+- [x] Create session history/timeline component.
+- [x] Display schedule changes.
+- [x] Display cancellation/rescheduling history.
+- [x] Display substitute-coach history.
+- [x] Display attendance change history when authorized.
+- [x] Display completion/submission/approval history.
+- [x] Display conflict-override history.
+- [x] Display responsible user and action date/time.
+- [x] Add loading and error states for history data.
+- [x] Make history/timeline responsive.
 
 ---
 
@@ -796,31 +818,31 @@
 - [ ] Validate actual end time is later than actual start time.
 - [x] Reject negative actual teaching duration.
 - [ ] Validate effective Routine end date is not earlier than effective start date.
-- [ ] Validate active Coach selection for new schedules and substitutions.
+- [x] Validate active Coach selection for new schedules and substitutions.
 - [ ] Validate active Athlete selection for new Private assignments and Routine attendance.
 - [ ] Validate unique Coach Code.
 - [ ] Validate unique Athlete Code.
 - [ ] Validate no duplicate Private athlete assignment.
 - [ ] Validate no duplicate attendance entry per athlete/session.
 - [ ] Validate Private Training has at least one athlete.
-- [ ] Validate Private attendance completeness before final submission.
+- [x] Validate Private attendance completeness before final submission. <!-- Enforced in TrainingApprovalService.SubmitAsync (4.15) -->
 - [x] Validate Routine attendance uses only allowed statuses.
 - [x] Validate Private attendance uses only allowed statuses.
-- [ ] Validate cancellation eligibility and required reason.
-- [ ] Validate rescheduling eligibility.
-- [ ] Validate substitution reason.
-- [ ] Validate conflict-override reason when override is used.
-- [ ] Validate unlock reason.
+- [x] Validate cancellation eligibility and required reason.
+- [x] Validate rescheduling eligibility.
+- [x] Validate substitution reason.
+- [x] Validate conflict-override reason when override is used.
+- [x] Validate unlock reason.
 - [x] Validate session status transitions centrally.
-- [ ] Validate Locked record edit restrictions in service layer.
+- [x] Validate Locked record edit restrictions in service layer. <!-- ISessionStatusService.IsEditableByCoach excludes Locked; enforced by Attendance/TrainingLog/CoachTeaching services -->
 
 ### 7.2 Schedule Conflict Validation
 
-- [ ] Add unit-tested overlap rule for coach vs coach schedule.
-- [ ] Add unit-tested overlap rule for athlete vs athlete Private schedule.
-- [ ] Add unit-tested overlap rule for Private Training vs coach Routine Training.
-- [ ] Apply conflict checks consistently on create, update, substitution, and rescheduling.
-- [ ] Return conflict responses using appropriate `409 Conflict` behavior where applicable.
+- [x] Add unit-tested overlap rule for coach vs coach schedule. <!-- ScheduleConflictServiceTests -->
+- [x] Add unit-tested overlap rule for athlete vs athlete Private schedule. <!-- ScheduleConflictServiceTests -->
+- [x] Add unit-tested overlap rule for Private Training vs coach Routine Training. <!-- ScheduleConflictServiceTests -->
+- [x] Apply conflict checks consistently on create, update, substitution, and rescheduling.
+- [x] Return conflict responses using appropriate `409 Conflict` behavior where applicable.
 
 ### 7.3 API Error Handling
 
@@ -852,13 +874,13 @@
 
 ### 8.1 Authorization
 
-- [ ] Enforce Administrator-only access to administrative master-data changes.
-- [ ] Enforce Administrator-only approval/review actions unless another role is explicitly authorized.
-- [ ] Enforce authorized-user checks for cancellation, rescheduling, substitution, and conflict override.
+- [x] Enforce Administrator-only access to administrative master-data changes. <!-- Coach/Athlete/RoutineSchedules/PrivateSessions controllers are [Authorize(Roles = Administrator)] -->
+- [x] Enforce Administrator-only approval/review actions unless another role is explicitly authorized. <!-- Approve/Reject/RequestRevision/Unlock are Administrator-only; Submit explicitly also allows the acting Coach (FR-APPROVAL-001) -->
+- [x] Enforce authorized-user checks for cancellation, rescheduling, substitution, and conflict override. <!-- CancellationsController/ReschedulingController/SubstituteCoachesController/conflict-override paths are all Administrator-only -->
 - [x] Restrict Coach operational APIs to sessions relevant to the signed-in Coach.
-- [ ] Restrict Coach history and teaching-hour APIs to the signed-in Coach unless elevated permission exists.
-- [ ] Keep Management / Viewer operations read-only.
-- [ ] Enforce permission checks in backend services/controllers; do not rely only on frontend guards.
+- [x] Restrict Coach history and teaching-hour APIs to the signed-in Coach unless elevated permission exists. <!-- CoachDashboardController scopes to _currentUser.CoachId; HistoryController/AuditService reject a Coach viewing another coach's session; Coach Teaching-Hour Report is Administrator/ManagementViewer only -->
+- [x] Keep Management / Viewer operations read-only. <!-- ManagementViewer role is never granted on a write endpoint anywhere in the API -->
+- [x] Enforce permission checks in backend services/controllers; do not rely only on frontend guards.
 
 ### 8.2 Data and Transport Security
 
@@ -888,29 +910,29 @@
 - [x] Test User username/email uniqueness validation.
 - [x] Test Coach Code uniqueness validation.
 - [x] Test Athlete Code uniqueness validation.
-- [x] Test Routine recurrence/session generation.
-- [x] Test completed Routine history remains unchanged after recurring-schedule edits.
+- [x] Test single-date Routine Session generation.
+- [x] Test completed Routine history remains unchanged after schedule edits.
 - [x] Test coach schedule conflict detection.
 - [x] Test athlete Private schedule conflict detection.
 - [x] Test Private-vs-Routine coach conflict detection.
-- [ ] Test conflict override requires authorization and reason.
+- [x] Test conflict override requires authorization and reason.
 - [x] Test actual teaching duration calculation.
 - [x] Test invalid/negative actual duration rejection.
 - [x] Test Routine attendance duplicate prevention.
 - [x] Test Routine attendance never infers absent athletes.
 - [x] Test Private attendance duplicate prevention.
 - [x] Test Private attendance completeness before submission. <!-- completeness computation tested; the submission trigger itself is Approval (4.15) -->
-- [ ] Test substitute coach preserves original coach.
-- [ ] Test substitute coach receives actual teaching-hour credit.
+- [x] Test substitute coach preserves original coach.
+- [x] Test substitute coach receives actual teaching-hour credit.
 - [x] Test cancellation exclusion from teaching hours.
-- [ ] Test rescheduled-original exclusion from teaching hours and attendance totals. <!-- teaching-hours half tested; attendance-totals half waits on Attendance (4.8/4.9) -->
+- [x] Test rescheduled-original exclusion from teaching hours and attendance totals.
 - [x] Test Coach Absent teaching-hour rule.
 - [x] Test session status transition rules.
 - [x] Test Locked record edit restrictions.
-- [ ] Test approval/reject/revision/unlock history creation.
-- [ ] Test coach dashboard data is scoped to signed-in Coach.
-- [ ] Test teaching-hour report filters and totals.
-- [ ] Test athlete attendance report filters and totals.
+- [x] Test approval/reject/revision/unlock history creation.
+- [x] Test coach dashboard data is scoped to signed-in Coach.
+- [x] Test teaching-hour report filters and totals.
+- [x] Test athlete attendance report filters and totals.
 - [ ] Test historical identity is preserved after coach/athlete master changes.
 
 ### 9.2 Backend API Tests
@@ -998,15 +1020,15 @@
 - [x] Run `dotnet build` after Private Training backend implementation.
 - [x] Run `ng build` after Private Training frontend implementation.
 - [x] Run `dotnet build` after Training Session/Teaching backend implementation.
-- [ ] Run `ng build` after Coach Session frontend implementation.
+- [x] Run `ng build` after Coach Session frontend implementation.
 - [x] Run `dotnet build` after Attendance/Training Log backend implementation.
-- [ ] Run `ng build` after Attendance/Training Log frontend implementation.
-- [ ] Run `dotnet build` after substitution/cancellation/rescheduling/conflict implementation.
-- [ ] Run `ng build` after substitution/cancellation/rescheduling UI implementation.
-- [ ] Run `dotnet build` after approval/audit implementation.
-- [ ] Run `ng build` after administrative review/history UI implementation.
-- [ ] Run `dotnet build` after dashboard/report backend implementation.
-- [ ] Run `ng build` after dashboard/report frontend implementation.
+- [x] Run `ng build` after Attendance/Training Log frontend implementation.
+- [x] Run `dotnet build` after substitution/cancellation/rescheduling/conflict implementation.
+- [x] Run `ng build` after substitution/cancellation/rescheduling UI implementation.
+- [x] Run `dotnet build` after approval/audit implementation.
+- [x] Run `ng build` after administrative review/history UI implementation.
+- [x] Run `dotnet build` after dashboard/report backend implementation.
+- [x] Run `ng build` after dashboard/report frontend implementation.
 
 ### 10.2 Final Validation
 

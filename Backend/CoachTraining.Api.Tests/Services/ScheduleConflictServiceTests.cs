@@ -124,41 +124,41 @@ public class ScheduleConflictServiceTests
     }
 
     [Fact]
-    public async Task CheckRoutineTemplateOverlapAsync_WithSameDayOverlappingTimeAndDateRange_ReturnsConflict()
+    public async Task CheckRoutineTemplateOverlapAsync_WithSameDateAndOverlappingTime_ReturnsConflict()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
         db.RoutineSchedules.Add(new RoutineSchedule
         {
-            Name = "Existing", CoachId = coach.CoachId, DayOfWeek = DayOfWeek.Monday,
+            CoachId = coach.CoachId,
             StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(19, 0),
-            EffectiveStartDate = new DateOnly(2026, 1, 1), IsActive = true,
+            EffectiveStartDate = new DateOnly(2026, 1, 5), IsActive = true,
         });
         await db.SaveChangesAsync();
 
         var service = new ScheduleConflictService(db);
         var conflicts = await service.CheckRoutineTemplateOverlapAsync(
-            coach.CoachId, DayOfWeek.Monday, new TimeOnly(18, 0), new TimeOnly(20, 0), new DateOnly(2026, 2, 1), null);
+            coach.CoachId, new TimeOnly(18, 0), new TimeOnly(20, 0), new DateOnly(2026, 1, 5));
 
         Assert.Single(conflicts);
     }
 
     [Fact]
-    public async Task CheckRoutineTemplateOverlapAsync_WithDifferentDayOfWeek_ReturnsNoConflict()
+    public async Task CheckRoutineTemplateOverlapAsync_WithDifferentDate_ReturnsNoConflict()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
         db.RoutineSchedules.Add(new RoutineSchedule
         {
-            Name = "Existing", CoachId = coach.CoachId, DayOfWeek = DayOfWeek.Monday,
+            CoachId = coach.CoachId,
             StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(19, 0),
-            EffectiveStartDate = new DateOnly(2026, 1, 1), IsActive = true,
+            EffectiveStartDate = new DateOnly(2026, 1, 5), IsActive = true,
         });
         await db.SaveChangesAsync();
 
         var service = new ScheduleConflictService(db);
         var conflicts = await service.CheckRoutineTemplateOverlapAsync(
-            coach.CoachId, DayOfWeek.Tuesday, new TimeOnly(17, 0), new TimeOnly(19, 0), new DateOnly(2026, 1, 1), null);
+            coach.CoachId, new TimeOnly(17, 0), new TimeOnly(19, 0), new DateOnly(2026, 1, 12));
 
         Assert.Empty(conflicts);
     }
@@ -170,37 +170,37 @@ public class ScheduleConflictServiceTests
         var coach = await SeedCoachAsync(db);
         var schedule = new RoutineSchedule
         {
-            Name = "Existing", CoachId = coach.CoachId, DayOfWeek = DayOfWeek.Monday,
+            CoachId = coach.CoachId,
             StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(19, 0),
-            EffectiveStartDate = new DateOnly(2026, 1, 1), IsActive = true,
+            EffectiveStartDate = new DateOnly(2026, 1, 5), IsActive = true,
         };
         db.RoutineSchedules.Add(schedule);
         await db.SaveChangesAsync();
 
         var service = new ScheduleConflictService(db);
         var conflicts = await service.CheckRoutineTemplateOverlapAsync(
-            coach.CoachId, DayOfWeek.Monday, new TimeOnly(17, 0), new TimeOnly(19, 0), new DateOnly(2026, 1, 1), null,
+            coach.CoachId, new TimeOnly(17, 0), new TimeOnly(19, 0), new DateOnly(2026, 2, 2),
             excludeRoutineScheduleId: schedule.RoutineScheduleId);
 
         Assert.Empty(conflicts);
     }
 
     [Fact]
-    public async Task CheckRoutineTemplateOverlapAsync_WithNonOverlappingEffectiveDateRanges_ReturnsNoConflict()
+    public async Task CheckRoutineTemplateOverlapAsync_WithInactiveExistingSchedule_ReturnsNoConflict()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
         db.RoutineSchedules.Add(new RoutineSchedule
         {
-            Name = "Existing", CoachId = coach.CoachId, DayOfWeek = DayOfWeek.Monday,
+            CoachId = coach.CoachId,
             StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(19, 0),
-            EffectiveStartDate = new DateOnly(2026, 1, 1), EffectiveEndDate = new DateOnly(2026, 3, 1), IsActive = true,
+            EffectiveStartDate = new DateOnly(2026, 1, 5), IsActive = false,
         });
         await db.SaveChangesAsync();
 
         var service = new ScheduleConflictService(db);
         var conflicts = await service.CheckRoutineTemplateOverlapAsync(
-            coach.CoachId, DayOfWeek.Monday, new TimeOnly(17, 0), new TimeOnly(19, 0), new DateOnly(2026, 4, 1), null);
+            coach.CoachId, new TimeOnly(17, 0), new TimeOnly(19, 0), new DateOnly(2026, 2, 2));
 
         Assert.Empty(conflicts);
     }

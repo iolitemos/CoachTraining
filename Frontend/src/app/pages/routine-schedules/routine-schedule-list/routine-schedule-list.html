@@ -1,18 +1,30 @@
-<app-page-header title="จัดการตารางฝึกซ้อมประจำ" subtitle="ตารางฝึกซ้อมประจำที่เกิดซ้ำตามรอบสัปดาห์">
-  <a
-    actions
-    routerLink="/routine-schedules/new"
-    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-  >
-    เพิ่มตารางฝึกซ้อม
-  </a>
+<app-page-header title="จัดการตารางฝึกซ้อมประจำ" subtitle="ตารางฝึกซ้อมตามวันที่ที่กำหนด">
+  <div actions class="flex items-center gap-2">
+    <a
+      routerLink="/routine-schedules"
+      class="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+    >
+      ดูแบบปฏิทิน
+    </a>
+    <a
+      routerLink="/routine-schedules/new"
+      class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+    >
+      เพิ่มตารางฝึกซ้อม
+    </a>
+  </div>
 </app-page-header>
 
 <div class="mt-4">
-  <app-search-filter-toolbar placeholder="ค้นหาชื่อตาราง รหัสโค้ช หรือชื่อโค้ช" (search)="onSearch($event)" />
+  <app-search-filter-toolbar placeholder="ค้นหาชื่อเล่นโค้ช" (search)="onSearch($event)" />
 </div>
 
 <div class="mt-4">
+  @if (actionError()) {
+    <p class="mb-3 rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">
+      {{ actionError() }}
+    </p>
+  }
   @switch (state()) {
     @case ('loading') {
       <app-loading-indicator label="กำลังโหลดตารางฝึกซ้อม..." />
@@ -22,55 +34,53 @@
     }
     @case ('ready') {
       @if (schedules().length === 0) {
-        <app-empty-state title="ไม่พบตารางฝึกซ้อม" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มตารางฝึกซ้อมใหม่" />
+        <app-empty-state
+          title="ไม่พบตารางฝึกซ้อม"
+          description="ลองค้นหาด้วยคำอื่น หรือเพิ่มตารางฝึกซ้อมใหม่"
+        />
       } @else {
         <div class="overflow-x-auto rounded-xl border border-border bg-surface">
-          <table class="w-full min-w-160 text-left text-sm">
+          <table class="w-full min-w-120 text-left text-sm">
             <thead class="border-b border-border text-text-secondary">
               <tr>
-                <th class="px-4 py-3 font-medium">ชื่อตาราง</th>
-                <th class="px-4 py-3 font-medium">โค้ช</th>
-                <th class="px-4 py-3 font-medium">วัน</th>
+                <th class="px-4 py-3 font-medium">วันที่ฝึกซ้อม</th>
                 <th class="px-4 py-3 font-medium">เวลา</th>
-                <th class="px-4 py-3 font-medium">เริ่มมีผล</th>
-                <th class="px-4 py-3 font-medium">สิ้นสุด</th>
-                <th class="px-4 py-3 font-medium">สถานะ</th>
-                <th class="px-4 py-3 font-medium">การจัดการ</th>
+                <th class="px-4 py-3 font-medium">โค้ช</th>
+                <th class="px-4 py-3 text-center font-medium">การจัดการ</th>
               </tr>
             </thead>
             <tbody>
               @for (schedule of schedules(); track schedule.routineScheduleId) {
                 <tr class="border-b border-border last:border-0">
-                  <td class="px-4 py-3 font-medium text-text">{{ schedule.name }}</td>
-                  <td class="px-4 py-3 text-text-secondary">{{ schedule.coachCode }} — {{ schedule.coachFullName }}</td>
-                  <td class="px-4 py-3 text-text-secondary">{{ getDayOfWeekLabel(schedule.dayOfWeek) }}</td>
+                  <td class="px-4 py-3 font-medium text-text">{{ schedule.effectiveStartDate }}</td>
                   <td class="px-4 py-3 text-text-secondary">
                     {{ schedule.startTime.slice(0, 5) }} - {{ schedule.endTime.slice(0, 5) }}
                   </td>
-                  <td class="px-4 py-3 text-text-secondary">{{ schedule.effectiveStartDate }}</td>
-                  <td class="px-4 py-3 text-text-secondary">{{ schedule.effectiveEndDate || '-' }}</td>
-                  <td class="px-4 py-3">
+                  <td class="px-4 py-3 text-text-secondary">
                     <span
-                      class="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium"
-                      [class]="schedule.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
-                    >
-                      {{ schedule.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
-                    </span>
+                      class="mr-2 inline-block size-2.5 rounded-full"
+                      [style.background-color]="schedule.coachColorHex"
+                    ></span>
+                    {{ schedule.coachNickname || 'ไม่ระบุชื่อเล่น' }}
                   </td>
                   <td class="px-4 py-3">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center gap-2">
                       <a
                         [routerLink]="['/routine-schedules', schedule.routineScheduleId, 'edit']"
-                        class="text-primary-600 hover:underline"
+                        class="inline-flex size-9 items-center justify-center rounded-lg text-primary-600 transition-colors hover:bg-primary-50"
+                        aria-label="แก้ไขตารางฝึกซ้อม"
+                        title="แก้ไข"
                       >
-                        แก้ไข
+                        <svg lucidePencil [size]="17"></svg>
                       </a>
                       <button
                         type="button"
-                        class="text-danger hover:underline"
-                        (click)="requestStatusChange(schedule)"
+                        class="inline-flex size-9 items-center justify-center rounded-lg text-danger transition-colors hover:bg-danger-surface"
+                        aria-label="ลบตารางฝึกซ้อม"
+                        title="ลบ"
+                        (click)="requestDelete(schedule)"
                       >
-                        {{ schedule.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                        <svg lucideTrash2 [size]="17"></svg>
                       </button>
                     </div>
                   </td>
@@ -81,7 +91,12 @@
         </div>
 
         <div class="mt-4">
-          <app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" />
+          <app-pagination
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalCount]="totalCount()"
+            (pageChange)="onPageChange($event)"
+          />
         </div>
       }
     }
@@ -89,11 +104,16 @@
 </div>
 
 <app-confirmation-dialog
-  [open]="pendingStatusChange() !== null"
-  [danger]="!!pendingStatusChange()?.isActive"
-  [processing]="statusChangeProcessing()"
-  title="ยืนยันการเปลี่ยนสถานะ"
-  [message]="(pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งานตารางฝึกซ้อม ' : 'ต้องการเปิดใช้งานตารางฝึกซ้อม ') + (pendingStatusChange()?.name ?? '') + ' ใช่หรือไม่?'"
-  (confirmed)="confirmStatusChange()"
-  (cancelled)="cancelStatusChange()"
+  [open]="pendingDelete() !== null"
+  [danger]="true"
+  [processing]="deleteProcessing()"
+  title="ยืนยันการลบตารางฝึกซ้อม"
+  [message]="
+    'ต้องการลบ ' +
+    (pendingDelete() ? getRoutineScheduleDisplayName(pendingDelete()!) : '') +
+    ' ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้'
+  "
+  confirmLabel="ลบตาราง"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
 />

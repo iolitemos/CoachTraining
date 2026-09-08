@@ -39,6 +39,7 @@ describe('CoachForm', () => {
     expect(component).toBeTruthy();
     expect(component.isEditMode()).toBe(false);
     expect(component.loading()).toBe(false);
+    expect(component.form.controls.colorHex.value).toBe('#10B981');
   });
 
   it('should require coach code and full name before submit', async () => {

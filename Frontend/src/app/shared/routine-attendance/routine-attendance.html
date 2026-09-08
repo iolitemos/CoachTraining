@@ -1,0 +1,145 @@
+<div class="rounded-xl border border-border bg-surface p-4">
+  <div class="flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-text">การเข้าร่วมฝึกซ้อมประจำ</h3>
+    <span class="text-xs text-text-secondary">{{ attendees().length }} คน</span>
+  </div>
+  <p class="mt-1 text-xs text-text-secondary">
+    ค้นหาและเพิ่มเฉพาะนักกีฬาที่มาฝึกซ้อมจริง ระบบจะไม่ถือว่านักกีฬาที่ไม่ได้เลือกขาดฝึกซ้อม
+  </p>
+
+  @if (!readOnly()) {
+    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+      <div class="flex flex-1 items-center gap-2 rounded-lg border border-border px-3 py-2">
+        <svg lucideSearch [size]="16" class="text-text-secondary"></svg>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="search()"
+          placeholder="ค้นหาชื่อหรือรหัสนักกีฬา"
+          class="w-full bg-transparent text-sm text-text outline-none"
+        />
+      </div>
+      <button
+        type="button"
+        (click)="search()"
+        [disabled]="searching()"
+        class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+      >
+        {{ searching() ? 'กำลังค้นหา...' : 'ค้นหา' }}
+      </button>
+    </div>
+
+    @if (searchError()) {
+      <p class="mt-2 text-sm text-danger">{{ searchError() }}</p>
+    }
+
+    @if (searchResults().length > 0) {
+      <ul class="mt-2 divide-y divide-border rounded-lg border border-border">
+        @for (athlete of searchResults(); track athlete.athleteId) {
+          <li class="flex items-center justify-between px-3 py-2 text-sm">
+            <span class="text-text">{{ athlete.athleteCode }} — {{ athlete.fullName }}</span>
+            @if (isAdded(athlete.athleteId)) {
+              <span class="text-xs text-text-secondary">เพิ่มแล้ว</span>
+            } @else {
+              <button
+                type="button"
+                (click)="addAthlete(athlete)"
+                [disabled]="adding()"
+                class="inline-flex items-center gap-1 rounded-lg bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-60"
+              >
+                <svg lucideUserPlus [size]="14"></svg>
+                เพิ่ม
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  @if (actionError()) {
+    <p class="mt-3 text-sm text-danger">{{ actionError() }}</p>
+  }
+
+  <div class="mt-4">
+    @switch (state()) {
+      @case ('loading') {
+        <app-loading-indicator label="กำลังโหลดข้อมูลการเข้าร่วม..." />
+      }
+      @case ('error') {
+        <app-error-state message="ไม่สามารถโหลดข้อมูลการเข้าร่วมได้" (retry)="load()" />
+      }
+      @case ('ready') {
+        @if (attendees().length === 0) {
+          <p class="rounded-lg border border-dashed border-border p-4 text-center text-sm text-text-secondary">
+            ยังไม่มีนักกีฬาที่บันทึกการเข้าร่วม
+          </p>
+        } @else {
+          <ul class="divide-y divide-border rounded-lg border border-border">
+            @for (item of attendees(); track item.attendanceId) {
+              <li class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4">
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-text">{{ item.athleteCode }} — {{ item.fullName }}</p>
+                  <p class="text-xs text-text-secondary">บันทึกล่าสุด: {{ item.recordedDate | slice: 0 : 10 }} {{ item.recordedDate | slice: 11 : 16 }}</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                  <select
+                    [disabled]="readOnly() || isSaving(item.attendanceId)"
+                    [ngModel]="item.status"
+                    (ngModelChange)="updateStatus(item, $event)"
+                    class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                  >
+                    <option value="Present">มาเรียน</option>
+                    <option value="Late">มาสาย</option>
+                  </select>
+
+                  @if (item.status === 'Late') {
+                    <input
+                      type="time"
+                      [disabled]="readOnly() || isSaving(item.attendanceId)"
+                      [ngModel]="item.arrivalTime"
+                      (ngModelChange)="updateArrivalTime(item, $event)"
+                      class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                    />
+                  }
+
+                  <input
+                    type="text"
+                    placeholder="หมายเหตุ"
+                    [disabled]="readOnly() || isSaving(item.attendanceId)"
+                    [ngModel]="item.remark"
+                    (ngModelChange)="updateRemark(item, $event)"
+                    class="w-32 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-40"
+                  />
+
+                  @if (!readOnly()) {
+                    <button
+                      type="button"
+                      (click)="requestRemove(item)"
+                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-danger transition-colors hover:bg-danger-surface"
+                      aria-label="ลบการเข้าร่วม"
+                    >
+                      <svg lucideTrash2 [size]="16"></svg>
+                    </button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  </div>
+</div>
+
+<app-confirmation-dialog
+  [open]="removeTarget() !== null"
+  title="ยืนยันการลบการเข้าร่วม"
+  [message]="'ต้องการลบการเข้าร่วมของ ' + (removeTarget()?.fullName ?? '') + ' ใช่หรือไม่?'"
+  confirmLabel="ลบ"
+  [danger]="true"
+  [processing]="removing()"
+  (confirmed)="confirmRemove()"
+  (cancelled)="cancelRemove()"
+/>

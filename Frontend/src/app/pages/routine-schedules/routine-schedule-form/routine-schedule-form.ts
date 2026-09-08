@@ -6,7 +6,6 @@ import { PageHeader } from '../../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { CoachOption } from '../../../models/coach.model';
-import { DAY_OF_WEEK_OPTIONS } from '../../../models/routine-schedule.model';
 import { CoachService } from '../../../services/coach.service';
 import { RoutineScheduleService } from '../../../services/routine-schedule.service';
 
@@ -31,17 +30,11 @@ export class RoutineScheduleForm implements OnInit {
   conflictMessages = signal<string[]>([]);
 
   coachOptions = signal<CoachOption[]>([]);
-  dayOfWeekOptions = DAY_OF_WEEK_OPTIONS;
-
   form = this.fb.group({
-    name: ['', Validators.maxLength(200)],
     coachId: this.fb.control<number | null>(null, Validators.required),
-    dayOfWeek: ['', Validators.required],
-    startTime: ['', Validators.required],
-    endTime: ['', Validators.required],
-    effectiveStartDate: ['', Validators.required],
-    effectiveEndDate: [''],
-    recurrencePattern: ['Weekly'],
+    startTime: ['18:30', Validators.required],
+    endTime: ['20:30', Validators.required],
+    effectiveStartDate: [getTodayIsoDate(), Validators.required],
     remarks: [''],
   });
 
@@ -52,26 +45,26 @@ export class RoutineScheduleForm implements OnInit {
 
     if (isEdit) {
       this.routineScheduleId.set(Number(idParam));
+    } else {
+      this.prefillFromCalendar(this.route.snapshot.queryParamMap?.get('date'));
     }
 
     try {
       const [coachOptions, schedule] = await Promise.all([
         this.coachService.getActiveOptions(),
-        isEdit ? this.routineScheduleService.getById(this.routineScheduleId()!) : Promise.resolve(null),
+        isEdit
+          ? this.routineScheduleService.getById(this.routineScheduleId()!)
+          : Promise.resolve(null),
       ]);
 
       this.coachOptions.set(coachOptions);
 
       if (schedule) {
         this.form.patchValue({
-          name: schedule.name,
           coachId: schedule.coachId,
-          dayOfWeek: schedule.dayOfWeek,
           startTime: schedule.startTime.slice(0, 5),
           endTime: schedule.endTime.slice(0, 5),
           effectiveStartDate: schedule.effectiveStartDate,
-          effectiveEndDate: schedule.effectiveEndDate ?? '',
-          recurrencePattern: schedule.recurrencePattern,
           remarks: schedule.remarks ?? '',
         });
       }
@@ -80,6 +73,27 @@ export class RoutineScheduleForm implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private prefillFromCalendar(date: string | null | undefined): void {
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return;
+    }
+
+    const [year, month, day] = date.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, day);
+    if (
+      Number.isNaN(selectedDate.getTime()) ||
+      selectedDate.getFullYear() !== year ||
+      selectedDate.getMonth() !== month - 1 ||
+      selectedDate.getDate() !== day
+    ) {
+      return;
+    }
+
+    this.form.patchValue({
+      effectiveStartDate: date,
+    });
   }
 
   async onSubmit(): Promise<void> {
@@ -94,14 +108,10 @@ export class RoutineScheduleForm implements OnInit {
 
     const value = this.form.getRawValue();
     const payload = {
-      name: value.name || null,
       coachId: value.coachId!,
-      dayOfWeek: value.dayOfWeek!,
       startTime: value.startTime!,
       endTime: value.endTime!,
       effectiveStartDate: value.effectiveStartDate!,
-      effectiveEndDate: value.effectiveEndDate || null,
-      recurrencePattern: value.recurrencePattern || null,
       remarks: value.remarks || null,
     };
 
@@ -136,4 +146,12 @@ export class RoutineScheduleForm implements OnInit {
 
     this.errorMessage.set('บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
   }
+}
+
+function getTodayIsoDate(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

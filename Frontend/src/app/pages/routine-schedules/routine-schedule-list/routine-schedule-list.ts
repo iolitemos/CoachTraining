@@ -1,5 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LucidePencil, LucideTrash2 } from '@lucide/angular';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { SearchFilterToolbar } from '../../../shared/search-filter-toolbar/search-filter-toolbar';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
@@ -7,8 +9,12 @@ import { EmptyState } from '../../../shared/empty-state/empty-state';
 import { ErrorState } from '../../../shared/error-state/error-state';
 import { Pagination } from '../../../shared/pagination/pagination';
 import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
-import { getDayOfWeekLabel, RoutineScheduleListItem } from '../../../models/routine-schedule.model';
+import {
+  getRoutineScheduleDisplayName,
+  RoutineScheduleListItem,
+} from '../../../models/routine-schedule.model';
 import { RoutineScheduleService } from '../../../services/routine-schedule.service';
+import { ApiErrorBody } from '../../../models/paged-result.model';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -23,6 +29,8 @@ type ViewState = 'loading' | 'error' | 'ready';
     ErrorState,
     Pagination,
     ConfirmationDialog,
+    LucidePencil,
+    LucideTrash2,
   ],
   templateUrl: './routine-schedule-list.html',
   styleUrl: './routine-schedule-list.css',
@@ -35,10 +43,11 @@ export class RoutineScheduleList implements OnInit {
   totalCount = signal(0);
   search = signal('');
 
-  pendingStatusChange = signal<RoutineScheduleListItem | null>(null);
-  statusChangeProcessing = signal(false);
+  pendingDelete = signal<RoutineScheduleListItem | null>(null);
+  deleteProcessing = signal(false);
+  actionError = signal<string | null>(null);
 
-  getDayOfWeekLabel = getDayOfWeekLabel;
+  getRoutineScheduleDisplayName = getRoutineScheduleDisplayName;
 
   constructor(private readonly routineScheduleService: RoutineScheduleService) {}
 
@@ -49,7 +58,11 @@ export class RoutineScheduleList implements OnInit {
   async load(): Promise<void> {
     this.state.set('loading');
     try {
-      const result = await this.routineScheduleService.list(this.page(), this.pageSize(), this.search());
+      const result = await this.routineScheduleService.list(
+        this.page(),
+        this.pageSize(),
+        this.search(),
+      );
       this.schedules.set(result.items);
       this.totalCount.set(result.totalCount);
       this.state.set('ready');
@@ -69,27 +82,34 @@ export class RoutineScheduleList implements OnInit {
     void this.load();
   }
 
-  requestStatusChange(schedule: RoutineScheduleListItem): void {
-    this.pendingStatusChange.set(schedule);
+  requestDelete(schedule: RoutineScheduleListItem): void {
+    this.actionError.set(null);
+    this.pendingDelete.set(schedule);
   }
 
-  cancelStatusChange(): void {
-    this.pendingStatusChange.set(null);
+  cancelDelete(): void {
+    this.pendingDelete.set(null);
   }
 
-  async confirmStatusChange(): Promise<void> {
-    const schedule = this.pendingStatusChange();
+  async confirmDelete(): Promise<void> {
+    const schedule = this.pendingDelete();
     if (!schedule) {
       return;
     }
 
-    this.statusChangeProcessing.set(true);
+    this.deleteProcessing.set(true);
+    this.actionError.set(null);
     try {
-      await this.routineScheduleService.setStatus(schedule.routineScheduleId, !schedule.isActive);
-      this.pendingStatusChange.set(null);
+      await this.routineScheduleService.delete(schedule.routineScheduleId);
+      this.pendingDelete.set(null);
       await this.load();
+    } catch (error) {
+      const body =
+        error instanceof HttpErrorResponse ? (error.error as ApiErrorBody | undefined) : undefined;
+      this.actionError.set(body?.message ?? 'ไม่สามารถลบตารางฝึกซ้อมได้ กรุณาลองใหม่อีกครั้ง');
+      this.pendingDelete.set(null);
     } finally {
-      this.statusChangeProcessing.set(false);
+      this.deleteProcessing.set(false);
     }
   }
 }

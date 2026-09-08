@@ -1,52 +1,261 @@
-<div class="flex min-h-screen items-center justify-center bg-background px-4">
-  <div class="w-full max-w-sm rounded-xl bg-surface p-6 shadow-sm">
-    <h1 class="text-center text-lg font-semibold text-text">ระบบจัดการฝึกซ้อมและเช็คชื่อนักกีฬา</h1>
-    <p class="mt-1 text-center text-sm text-text-secondary">เข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+<main class="login-page grid min-h-screen overflow-hidden xl:grid-cols-[55%_45%]">
+  <section
+    class="login-visual relative order-2 hidden min-h-[390px] overflow-hidden text-white md:flex xl:order-1 xl:min-h-screen"
+    aria-labelledby="login-visual-heading"
+  >
+    <img
+      src="/table-tennis-login-hero.jpg"
+      alt="นักกีฬากำลังฝึกตีเทเบิลเทนนิสในสนามฝึกซ้อม"
+      class="absolute inset-0 h-full w-full object-cover object-[center_64%] xl:object-[center_58%]"
+    />
+    <div class="login-visual-overlay absolute inset-0"></div>
+    <div
+      class="login-visual-curve pointer-events-none absolute -right-36 -top-52 h-[34rem] w-[34rem] rounded-full border-[82px] border-blue-300/20"
+    ></div>
+    <div
+      class="pointer-events-none absolute -bottom-48 -left-48 h-[34rem] w-[34rem] rounded-full border-[76px] border-blue-400/10"
+    ></div>
 
-    <form class="mt-6 flex flex-col gap-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div
+      class="relative z-10 flex w-full flex-col justify-between px-10 py-10 lg:px-14 xl:px-[clamp(3rem,6vw,6.5rem)] xl:py-[clamp(3.25rem,6vh,5.5rem)]"
+    >
       <div>
-        <label for="username" class="mb-1 block text-sm font-medium text-text">
-          ชื่อผู้ใช้ <span class="text-danger">*</span>
-        </label>
-        <input
-          id="username"
-          type="text"
-          formControlName="username"
-          autocomplete="username"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-        />
-        @if (form.controls.username.invalid && form.controls.username.touched) {
-          <p class="mt-1 text-xs text-danger">กรุณากรอกชื่อผู้ใช้</p>
-        }
+        <p class="mb-5 text-xs font-medium uppercase tracking-[0.3em] text-blue-100 xl:text-sm">
+          TRAIN <span class="px-2 text-blue-300">•</span> TRACK
+          <span class="px-2 text-blue-300">•</span> GROW
+        </p>
+        <h1
+          id="login-visual-heading"
+          class="max-w-lg text-4xl font-bold leading-[1.18] tracking-tight xl:text-[clamp(3.3rem,4vw,5rem)]"
+        >
+          ระบบบริหาร<br />การฝึกซ้อม
+        </h1>
+        <div class="my-6 h-1 w-20 rounded-full bg-blue-300"></div>
+        <p class="text-xl font-medium text-white xl:text-2xl">เข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+        <p class="mt-2 max-w-lg text-sm leading-7 text-blue-100 xl:text-base">
+          จัดการการฝึกซ้อม เช็คชื่อนักกีฬา และติดตามพัฒนาการ
+        </p>
       </div>
 
-      <div>
-        <label for="password" class="mb-1 block text-sm font-medium text-text">
-          รหัสผ่าน <span class="text-danger">*</span>
-        </label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          autocomplete="current-password"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-        />
-        @if (form.controls.password.invalid && form.controls.password.touched) {
-          <p class="mt-1 text-xs text-danger">กรุณากรอกรหัสผ่าน</p>
-        }
+      <div class="mt-8 grid grid-cols-3 gap-6 xl:max-w-xl xl:grid-cols-1 xl:gap-5">
+        <div class="flex items-center gap-4">
+          <span
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-400/20 text-blue-100 ring-1 ring-white/15 xl:h-14 xl:w-14"
+          >
+            <svg lucideCalendarDays [size]="25" aria-hidden="true"></svg>
+          </span>
+          <div>
+            <h2 class="font-semibold text-white">จัดตารางฝึกซ้อม</h2>
+            <p class="mt-0.5 text-xs leading-5 text-blue-100 xl:text-sm">วางแผนและติดตามได้ง่าย</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <span
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-400/20 text-blue-100 ring-1 ring-white/15 xl:h-14 xl:w-14"
+          >
+            <svg lucideUsers [size]="25" aria-hidden="true"></svg>
+          </span>
+          <div>
+            <h2 class="font-semibold text-white">เช็คชื่อนักกีฬา</h2>
+            <p class="mt-0.5 text-xs leading-5 text-blue-100 xl:text-sm">
+              บันทึกการเข้าฝึกซ้อมแบบเรียลไทม์
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <span
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-400/20 text-blue-100 ring-1 ring-white/15 xl:h-14 xl:w-14"
+          >
+            <svg lucideChartNoAxesColumnIncreasing [size]="25" aria-hidden="true"></svg>
+          </span>
+          <div>
+            <h2 class="font-semibold text-white">ติดตามพัฒนาการ</h2>
+            <p class="mt-0.5 text-xs leading-5 text-blue-100 xl:text-sm">
+              เห็นความก้าวหน้าของนักกีฬาอย่างชัดเจน
+            </p>
+          </div>
+        </div>
       </div>
 
-      @if (errorMessage()) {
-        <p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">{{ errorMessage() }}</p>
-      }
-
-      <button
-        type="submit"
-        [disabled]="submitting()"
-        class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+      <blockquote
+        class="mt-10 hidden border-l-2 border-blue-300 pl-5 text-xs font-medium uppercase leading-6 tracking-[0.26em] text-blue-100 xl:block"
       >
-        {{ submitting() ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
-      </button>
-    </form>
-  </div>
-</div>
+        “ Better Players<br />Brighter Tomorrows ”
+      </blockquote>
+    </div>
+  </section>
+
+  <section
+    class="login-form-panel relative order-1 flex min-h-screen items-center justify-center overflow-hidden px-5 py-8 sm:px-8 md:px-12 xl:order-2 xl:px-[clamp(2.5rem,4vw,5rem)]"
+  >
+    <div
+      class="login-form-orb pointer-events-none absolute -right-36 -top-40 h-[29rem] w-[29rem] rounded-full"
+    ></div>
+    <div
+      class="pointer-events-none absolute -bottom-48 -left-44 h-[30rem] w-[30rem] rounded-full border-[72px] border-blue-100/80"
+    ></div>
+
+    <div
+      class="login-card relative z-10 w-full max-w-[600px] rounded-[30px] border border-white bg-white px-5 py-8 shadow-[0_24px_70px_-28px_rgba(15,42,95,0.28)] sm:px-10 sm:py-10 md:px-14 md:py-12 xl:px-[clamp(2.75rem,4vw,3.75rem)] xl:py-8"
+    >
+      <header class="text-center">
+        <div
+          class="mx-auto flex h-[92px] w-[92px] items-center justify-center rounded-full border-[5px] border-blue-50 bg-white p-1 shadow-[0_8px_24px_-12px_rgba(37,99,235,0.4)] sm:h-[104px] sm:w-[104px] xl:h-[88px] xl:w-[88px]"
+        >
+          <img
+            src="/logo-spinning-star.png"
+            alt="โลโก้ Spinning Star"
+            width="104"
+            height="104"
+            class="h-full w-full rounded-full object-cover"
+          />
+        </div>
+        <h2 class="mt-5 text-xl font-bold tracking-tight text-[#0F2A5F] sm:text-2xl xl:mt-3">
+          ระบบบริหารการฝึกซ้อม
+        </h2>
+        <p class="mt-1.5 text-sm text-[#64748B] sm:text-base">เข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+      </header>
+
+      <form
+        class="mt-8 flex flex-col gap-5 sm:mt-10 xl:mt-6 xl:gap-3"
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        novalidate
+      >
+        <div>
+          <label
+            for="username"
+            class="mb-2 block text-sm font-semibold text-[#111827] sm:text-base"
+          >
+            ชื่อผู้ใช้ <span class="text-[#EF4444]" aria-hidden="true">*</span
+            ><span class="sr-only">จำเป็น</span>
+          </label>
+          <div class="relative">
+            <svg
+              lucideUserRound
+              [size]="21"
+              class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B]"
+              aria-hidden="true"
+            ></svg>
+            <input
+              id="username"
+              type="text"
+              formControlName="username"
+              autocomplete="username"
+              placeholder="กรอกชื่อผู้ใช้"
+              [attr.aria-invalid]="form.controls.username.invalid && form.controls.username.touched"
+              [attr.aria-describedby]="
+                form.controls.username.invalid && form.controls.username.touched
+                  ? 'username-error'
+                  : null
+              "
+              class="login-input h-14 w-full rounded-[13px] border border-[#DCE5F2] bg-white pl-12 pr-4 text-[15px] text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100/70"
+            />
+          </div>
+          @if (form.controls.username.invalid && form.controls.username.touched) {
+            <p id="username-error" class="mt-1.5 text-sm text-[#EF4444]">กรุณากรอกชื่อผู้ใช้</p>
+          }
+        </div>
+
+        <div>
+          <label
+            for="password"
+            class="mb-2 block text-sm font-semibold text-[#111827] sm:text-base"
+          >
+            รหัสผ่าน <span class="text-[#EF4444]" aria-hidden="true">*</span
+            ><span class="sr-only">จำเป็น</span>
+          </label>
+          <div class="relative">
+            <svg
+              lucideLockKeyhole
+              [size]="21"
+              class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B]"
+              aria-hidden="true"
+            ></svg>
+            <input
+              id="password"
+              [type]="passwordVisible() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="กรอกรหัสผ่าน"
+              [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched"
+              [attr.aria-describedby]="
+                form.controls.password.invalid && form.controls.password.touched
+                  ? 'password-error'
+                  : null
+              "
+              class="login-input h-14 w-full rounded-[13px] border border-[#DCE5F2] bg-white pl-12 pr-12 text-[15px] text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100/70"
+            />
+            <button
+              type="button"
+              class="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-[#64748B] transition hover:bg-blue-50 hover:text-[#2563EB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="passwordVisible() ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+              [attr.aria-pressed]="passwordVisible()"
+            >
+              @if (passwordVisible()) {
+                <svg lucideEyeOff [size]="20" aria-hidden="true"></svg>
+              } @else {
+                <svg lucideEye [size]="20" aria-hidden="true"></svg>
+              }
+            </button>
+          </div>
+          @if (form.controls.password.invalid && form.controls.password.touched) {
+            <p id="password-error" class="mt-1.5 text-sm text-[#EF4444]">กรุณากรอกรหัสผ่าน</p>
+          }
+          <div class="mt-2 flex justify-end">
+            <button
+              type="button"
+              class="rounded text-sm font-medium text-[#2563EB] transition hover:text-[#1D4ED8] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
+            >
+              ลืมรหัสผ่าน?
+            </button>
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <p
+            class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-[#EF4444]"
+            role="alert"
+          >
+            {{ errorMessage() }}
+          </p>
+        }
+
+        <button
+          type="submit"
+          [disabled]="submitting()"
+          class="login-submit mt-1 flex h-14 w-full items-center justify-center gap-2 rounded-[13px] px-5 text-base font-semibold text-white transition duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 sm:h-[58px]"
+        >
+          @if (submitting()) {
+            <svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4Z"
+              ></path>
+            </svg>
+          }
+          {{ submitting() ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ' }}
+          @if (!submitting()) {
+            <svg lucideArrowRight [size]="20" aria-hidden="true"></svg>
+          }
+        </button>
+      </form>
+
+      <div class="mt-8 flex items-center gap-4 text-sm text-[#64748B] xl:mt-5" aria-hidden="true">
+        <span class="h-px flex-1 bg-[#DCE5F2]"></span>
+        <span class="shrink-0">ยินดีต้อนรับกลับมา</span>
+        <span class="h-px flex-1 bg-[#DCE5F2]"></span>
+      </div>
+    </div>
+  </section>
+</main>

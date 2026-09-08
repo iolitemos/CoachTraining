@@ -30,7 +30,10 @@ describe('RoutineScheduleList', () => {
 
     httpMock
       .expectOne((r) => r.url.endsWith('/routine-schedules'))
-      .flush({ message: 'Success', data: { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 } });
+      .flush({
+        message: 'Success',
+        data: { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+      });
 
     await loadPromise;
 
@@ -48,5 +51,43 @@ describe('RoutineScheduleList', () => {
     await loadPromise;
 
     expect(component.state()).toBe('error');
+  });
+
+  it('should delete a selected schedule and reload the list', async () => {
+    component.pendingDelete.set({
+      routineScheduleId: 7,
+      coachId: 1,
+      coachCode: 'C001',
+      coachFullName: 'Coach One',
+      coachNickname: 'หนึ่ง',
+      coachColorHex: '#0EA5E9',
+      startTime: '18:30:00',
+      endTime: '20:30:00',
+      effectiveStartDate: '2026-09-02',
+      isActive: true,
+    });
+
+    const deletePromise = component.confirmDelete();
+    httpMock
+      .expectOne((r) => r.url.endsWith('/routine-schedules/7') && r.method === 'DELETE')
+      .flush({
+        message: 'ลบตารางฝึกซ้อมสำเร็จ',
+        data: {},
+      });
+    await new Promise((resolve) => setTimeout(resolve));
+    const reloadRequests = httpMock.match(
+      (r) => r.url.endsWith('/routine-schedules') && r.method === 'GET',
+    );
+    expect(reloadRequests.length).toBeGreaterThan(0);
+    reloadRequests.forEach((request) =>
+      request.flush({
+        message: 'Success',
+        data: { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 },
+      }),
+    );
+    await deletePromise;
+
+    expect(component.pendingDelete()).toBeNull();
+    expect(component.state()).toBe('ready');
   });
 });

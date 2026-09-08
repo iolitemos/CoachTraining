@@ -26,6 +26,13 @@ public class PrivateSessionUpdateDto : IValidatableObject
     [MinLength(1, ErrorMessage = "กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน")]
     public List<int> AthleteIds { get; set; } = [];
 
+    /// <summary>FR-CONFLICT-004 — Administrator confirms proceeding despite a detected coach/athlete conflict.</summary>
+    public bool OverrideConflict { get; set; }
+
+    /// <summary>Required when <see cref="OverrideConflict"/> is true (FR-CONFLICT-004/005).</summary>
+    [MaxLength(1000, ErrorMessage = "เหตุผลต้องมีความยาวไม่เกิน 1,000 ตัวอักษร")]
+    public string? OverrideReason { get; set; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (EndTime <= StartTime)
@@ -36,6 +43,11 @@ public class PrivateSessionUpdateDto : IValidatableObject
         if (AthleteIds.Distinct().Count() != AthleteIds.Count)
         {
             yield return new ValidationResult("พบนักกีฬาซ้ำในรายการที่เลือก", [nameof(AthleteIds)]);
+        }
+
+        if (OverrideConflict && string.IsNullOrWhiteSpace(OverrideReason))
+        {
+            yield return new ValidationResult("กรุณาระบุเหตุผลในการยืนยันดำเนินการทั้งที่มีตารางทับซ้อน", [nameof(OverrideReason)]);
         }
     }
 }

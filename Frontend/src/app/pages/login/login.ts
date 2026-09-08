@@ -2,12 +2,32 @@ import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import {
+  LucideArrowRight,
+  LucideCalendarDays,
+  LucideChartNoAxesColumnIncreasing,
+  LucideEye,
+  LucideEyeOff,
+  LucideLockKeyhole,
+  LucideUserRound,
+  LucideUsers,
+} from '@lucide/angular';
 import { AuthService } from '../../services/auth.service';
 import { ApiErrorBody } from '../../models/paged-result.model';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [
+    ReactiveFormsModule,
+    LucideArrowRight,
+    LucideCalendarDays,
+    LucideChartNoAxesColumnIncreasing,
+    LucideEye,
+    LucideEyeOff,
+    LucideLockKeyhole,
+    LucideUserRound,
+    LucideUsers,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -23,6 +43,11 @@ export class Login {
 
   submitting = signal(false);
   errorMessage = signal<string | null>(null);
+  passwordVisible = signal(false);
+
+  togglePasswordVisibility(): void {
+    this.passwordVisible.update((visible) => !visible);
+  }
 
   async onSubmit(): Promise<void> {
     if (this.form.invalid || this.submitting()) {
@@ -40,7 +65,8 @@ export class Login {
       });
       await this.router.navigateByUrl('/');
     } catch (error) {
-      const body = error instanceof HttpErrorResponse ? (error.error as ApiErrorBody | undefined) : undefined;
+      const body =
+        error instanceof HttpErrorResponse ? (error.error as ApiErrorBody | undefined) : undefined;
       this.errorMessage.set(body?.message ?? 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     } finally {
       this.submitting.set(false);

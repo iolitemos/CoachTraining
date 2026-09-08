@@ -1,26 +1,24 @@
 <app-page-header
   [title]="isEditMode() ? 'แก้ไขตารางฝึกซ้อมประจำ' : 'เพิ่มตารางฝึกซ้อมประจำ'"
-  subtitle="กำหนดรอบฝึกซ้อมประจำสัปดาห์ของโค้ช"
+  subtitle="เลือกโค้ช วันที่ และเวลาฝึกซ้อม"
 >
-  <a actions routerLink="/routine-schedules" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
+  <a
+    actions
+    routerLink="/routine-schedules"
+    class="text-sm font-medium text-text-secondary hover:underline"
+    >ย้อนกลับ</a
+  >
 </app-page-header>
 
 <div class="mt-4 max-w-xl">
   @if (loading()) {
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
-    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div>
-        <label for="name" class="mb-1 block text-sm font-medium text-text">ชื่อตารางฝึกซ้อม</label>
-        <input
-          id="name"
-          type="text"
-          formControlName="name"
-          placeholder="เว้นว่างเพื่อตั้งชื่ออัตโนมัติจากวันและเวลา"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-        />
-      </div>
-
+    <form
+      class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+    >
       <div>
         <label for="coachId" class="mb-1 block text-sm font-medium text-text">
           โค้ช <span class="text-danger">*</span>
@@ -37,25 +35,6 @@
         </select>
         @if (form.controls.coachId.invalid && form.controls.coachId.touched) {
           <p class="mt-1 text-xs text-danger">กรุณาเลือกโค้ช</p>
-        }
-      </div>
-
-      <div>
-        <label for="dayOfWeek" class="mb-1 block text-sm font-medium text-text">
-          วันในสัปดาห์ <span class="text-danger">*</span>
-        </label>
-        <select
-          id="dayOfWeek"
-          formControlName="dayOfWeek"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-        >
-          <option value="">— เลือกวัน —</option>
-          @for (day of dayOfWeekOptions; track day.value) {
-            <option [value]="day.value">{{ day.label }}</option>
-          }
-        </select>
-        @if (form.controls.dayOfWeek.invalid && form.controls.dayOfWeek.touched) {
-          <p class="mt-1 text-xs text-danger">กรุณาเลือกวันในสัปดาห์</p>
         }
       </div>
 
@@ -91,41 +70,19 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label for="effectiveStartDate" class="mb-1 block text-sm font-medium text-text">
-            วันที่เริ่มมีผล <span class="text-danger">*</span>
-          </label>
-          <input
-            id="effectiveStartDate"
-            type="date"
-            formControlName="effectiveStartDate"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-          />
-          @if (form.controls.effectiveStartDate.invalid && form.controls.effectiveStartDate.touched) {
-            <p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่เริ่มมีผล</p>
-          }
-        </div>
-
-        <div>
-          <label for="effectiveEndDate" class="mb-1 block text-sm font-medium text-text">วันที่สิ้นสุด (ถ้ามี)</label>
-          <input
-            id="effectiveEndDate"
-            type="date"
-            formControlName="effectiveEndDate"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-          />
-        </div>
-      </div>
-
       <div>
-        <label for="recurrencePattern" class="mb-1 block text-sm font-medium text-text">รูปแบบการเกิดซ้ำ</label>
+        <label for="effectiveStartDate" class="mb-1 block text-sm font-medium text-text">
+          วันที่ฝึกซ้อม <span class="text-danger">*</span>
+        </label>
         <input
-          id="recurrencePattern"
-          type="text"
-          formControlName="recurrencePattern"
+          id="effectiveStartDate"
+          type="date"
+          formControlName="effectiveStartDate"
           class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
         />
+        @if (form.controls.effectiveStartDate.invalid && form.controls.effectiveStartDate.touched) {
+          <p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่ฝึกซ้อม</p>
+        }
       </div>
 
       <div>
@@ -148,7 +105,9 @@
           </ul>
         </div>
       } @else if (errorMessage()) {
-        <p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">{{ errorMessage() }}</p>
+        <p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">
+          {{ errorMessage() }}
+        </p>
       }
 
       <button

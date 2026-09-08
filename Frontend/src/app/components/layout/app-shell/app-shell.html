@@ -1,81 +1,139 @@
-<div class="min-h-screen bg-background">
+<div class="flex min-h-screen flex-col bg-background">
   <!-- Top bar -->
-  <header class="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-surface px-4">
+  <header class="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface/90 px-4 backdrop-blur-md">
     <button
       type="button"
-      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary hover:bg-secondary-50 md:hidden"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700) md:hidden"
       (click)="toggleSidebar()"
       aria-label="เปิดเมนู"
     >
       <svg lucideMenu [size]="20"></svg>
     </button>
-    <span class="flex-1 text-sm font-semibold text-text sm:text-base">ระบบจัดการฝึกซ้อมและเช็คชื่อนักกีฬา</span>
+
+    <div class="flex flex-1 items-center gap-2.5">
+      <img src="/logo-spinning-star.png" alt="" class="h-8 w-8 rounded-full object-cover shadow-sm ring-2 ring-(--shell-accent-100)" />
+      <span class="text-sm font-semibold text-text sm:text-base">ระบบบริหารการฝึกซ้อม</span>
+    </div>
 
     @if (authService.currentUser(); as user) {
       <div class="flex items-center gap-3">
-        <span class="hidden text-sm text-text-secondary sm:inline">{{ user.fullName }}</span>
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="shell-avatar flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white">
+            {{ userInitial(user.fullName) }}
+          </div>
+          <span class="text-sm text-text-secondary">{{ user.fullName }}</span>
+        </div>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-text-secondary hover:bg-secondary-50"
+          class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           (click)="logout()"
         >
           <svg lucideLogOut [size]="16"></svg>
-          ออกจากระบบ
+          <span class="hidden sm:inline">ออกจากระบบ</span>
         </button>
       </div>
     }
   </header>
 
-  <div class="flex">
+  <div class="flex flex-1">
     <!-- Desktop sidebar -->
-    <aside class="hidden w-56 shrink-0 border-r border-border bg-surface md:block">
+    <aside class="hidden w-60 shrink-0 border-r border-border bg-surface md:block">
       <nav class="flex flex-col gap-1 p-3">
+        <p class="px-3 pb-1 pt-1 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">เมนู</p>
         <a
           routerLink="/"
-          routerLinkActive="bg-primary-50 text-primary-700"
+          routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
           [routerLinkActiveOptions]="{ exact: true }"
-          class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+          class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
         >
           <svg lucideLayoutDashboard [size]="18"></svg>
           หน้าหลัก
         </a>
+        @if (authService.hasRole(appRole.Coach)) {
+          <a
+            routerLink="/coach/home"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideCalendarHeart [size]="18"></svg>
+            หน้าหลักโค้ช
+          </a>
+        }
+        @if (authService.hasRole(appRole.Administrator, appRole.ManagementViewer)) {
+          <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">แดชบอร์ด</p>
+          <a
+            routerLink="/admin-dashboard"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideLayoutDashboard [size]="18"></svg>
+            แดชบอร์ดผู้ดูแลระบบ
+          </a>
+          <a
+            routerLink="/reports/coach-teaching-hours"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideFileBarChart [size]="18"></svg>
+            รายงานชั่วโมงสอน
+          </a>
+          <a
+            routerLink="/reports/athlete-attendance"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideClipboardList [size]="18"></svg>
+            รายงานการเข้าร่วม
+          </a>
+        }
         @if (authService.hasRole(appRole.Administrator)) {
-          <a
-            routerLink="/coaches"
-            routerLinkActive="bg-primary-50 text-primary-700"
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
-          >
-            <svg lucideUserCheck [size]="18"></svg>
-            จัดการโค้ช
-          </a>
-          <a
-            routerLink="/athletes"
-            routerLinkActive="bg-primary-50 text-primary-700"
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
-          >
-            <svg lucideDumbbell [size]="18"></svg>
-            จัดการนักกีฬา
-          </a>
+          <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">ตาราง</p>
           <a
             routerLink="/routine-schedules"
-            routerLinkActive="bg-primary-50 text-primary-700"
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideRepeat [size]="18"></svg>
             ตารางฝึกซ้อมประจำ
           </a>
           <a
             routerLink="/private-sessions"
-            routerLinkActive="bg-primary-50 text-primary-700"
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideCalendarHeart [size]="18"></svg>
             จัดการฝึกซ้อมส่วนตัว
           </a>
           <a
+            routerLink="/review"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideClipboardCheck [size]="18"></svg>
+            ตรวจสอบและอนุมัติ
+          </a>
+
+          <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
+          <a
+            routerLink="/coaches"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideUserCheck [size]="18"></svg>
+            จัดการโค้ช
+          </a>
+          <a
+            routerLink="/athletes"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideDumbbell [size]="18"></svg>
+            จัดการนักกีฬา
+          </a>
+          <a
             routerLink="/users"
-            routerLinkActive="bg-primary-50 text-primary-700"
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideUsers [size]="18"></svg>
             จัดการผู้ใช้งาน
@@ -90,10 +148,13 @@
         <div class="absolute inset-0 bg-black/40" (click)="closeSidebar()"></div>
         <aside class="relative flex h-full w-64 flex-col gap-1 bg-surface p-3 shadow-lg">
           <div class="mb-2 flex items-center justify-between">
-            <span class="text-sm font-semibold text-text">เมนู</span>
+            <div class="flex items-center gap-2">
+              <img src="/logo-spinning-star.png" alt="" class="h-7 w-7 rounded-full object-cover shadow-sm ring-2 ring-(--shell-accent-100)" />
+              <span class="text-sm font-semibold text-text">เมนู</span>
+            </div>
             <button
               type="button"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary hover:bg-secondary-50"
+              class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
               (click)="closeSidebar()"
               aria-label="ปิดเมนู"
             >
@@ -102,56 +163,109 @@
           </div>
           <a
             routerLink="/"
-            routerLinkActive="bg-primary-50 text-primary-700"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
             [routerLinkActiveOptions]="{ exact: true }"
             (click)="closeSidebar()"
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideLayoutDashboard [size]="18"></svg>
             หน้าหลัก
           </a>
+          @if (authService.hasRole(appRole.Coach)) {
+            <a
+              routerLink="/coach/home"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideCalendarHeart [size]="18"></svg>
+              หน้าหลักโค้ช
+            </a>
+          }
+          @if (authService.hasRole(appRole.Administrator, appRole.ManagementViewer)) {
+            <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">แดชบอร์ด</p>
+            <a
+              routerLink="/admin-dashboard"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideLayoutDashboard [size]="18"></svg>
+              แดชบอร์ดผู้ดูแลระบบ
+            </a>
+            <a
+              routerLink="/reports/coach-teaching-hours"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideFileBarChart [size]="18"></svg>
+              รายงานชั่วโมงสอน
+            </a>
+            <a
+              routerLink="/reports/athlete-attendance"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideClipboardList [size]="18"></svg>
+              รายงานการเข้าร่วม
+            </a>
+          }
           @if (authService.hasRole(appRole.Administrator)) {
-            <a
-              routerLink="/coaches"
-              routerLinkActive="bg-primary-50 text-primary-700"
-              (click)="closeSidebar()"
-              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
-            >
-              <svg lucideUserCheck [size]="18"></svg>
-              จัดการโค้ช
-            </a>
-            <a
-              routerLink="/athletes"
-              routerLinkActive="bg-primary-50 text-primary-700"
-              (click)="closeSidebar()"
-              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
-            >
-              <svg lucideDumbbell [size]="18"></svg>
-              จัดการนักกีฬา
-            </a>
+            <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">ตาราง</p>
             <a
               routerLink="/routine-schedules"
-              routerLinkActive="bg-primary-50 text-primary-700"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
               (click)="closeSidebar()"
-              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
               <svg lucideRepeat [size]="18"></svg>
               ตารางฝึกซ้อมประจำ
             </a>
             <a
               routerLink="/private-sessions"
-              routerLinkActive="bg-primary-50 text-primary-700"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
               (click)="closeSidebar()"
-              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
               <svg lucideCalendarHeart [size]="18"></svg>
               จัดการฝึกซ้อมส่วนตัว
             </a>
             <a
-              routerLink="/users"
-              routerLinkActive="bg-primary-50 text-primary-700"
+              routerLink="/review"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
               (click)="closeSidebar()"
-              class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideClipboardCheck [size]="18"></svg>
+              ตรวจสอบและอนุมัติ
+            </a>
+
+            <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
+            <a
+              routerLink="/coaches"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideUserCheck [size]="18"></svg>
+              จัดการโค้ช
+            </a>
+            <a
+              routerLink="/athletes"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideDumbbell [size]="18"></svg>
+              จัดการนักกีฬา
+            </a>
+            <a
+              routerLink="/users"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
               <svg lucideUsers [size]="18"></svg>
               จัดการผู้ใช้งาน

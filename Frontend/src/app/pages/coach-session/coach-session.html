@@ -1,0 +1,293 @@
+<app-page-header title="รายละเอียดเซสชันฝึกซ้อม" subtitle="ขั้นตอนการฝึกซ้อม ตั้งแต่เริ่มจนถึงส่งตรวจ">
+  @if (isAdministrator) {
+    <a actions routerLink="/review" class="text-sm text-primary-600 hover:underline">ย้อนกลับรายการตรวจสอบ</a>
+  } @else {
+    <a actions routerLink="/coach/home" class="text-sm text-primary-600 hover:underline">ย้อนกลับหน้าหลัก</a>
+  }
+</app-page-header>
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดข้อมูลเซสชัน..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดข้อมูลเซสชันได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (session(); as s) {
+        @if (actionError()) {
+          <div class="mb-4 rounded-lg border border-danger/30 bg-danger-surface p-3 text-sm text-danger">
+            {{ actionError() }}
+          </div>
+        }
+
+        @if (isLocked(s.status)) {
+          <div class="mb-4 flex items-center gap-2 rounded-lg border border-border bg-secondary-100 p-3 text-sm text-text-secondary">
+            <svg lucideLock [size]="16"></svg>
+            บันทึกนี้อยู่ในสถานะที่ไม่สามารถแก้ไขได้อีกต่อไป
+          </div>
+        }
+
+        @if (s.originalSessionId) {
+          <div class="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-warning">
+            <svg lucideCalendarClock [size]="16"></svg>
+            เซสชันนี้เกิดจากการเลื่อนตาราง —
+            <a [routerLink]="['/coach/sessions', s.originalSessionId]" class="underline">ดูเซสชันต้นฉบับ</a>
+          </div>
+        }
+
+        @if (replacementSessionId(); as replacementId) {
+          <div class="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-warning">
+            <svg lucideCalendarClock [size]="16"></svg>
+            เลื่อนเซสชันนี้ไปแล้ว —
+            <a [routerLink]="['/coach/sessions', replacementId]" class="underline">ดูเซสชันใหม่</a>
+          </div>
+        }
+
+        <!-- 1. Session Summary -->
+        <section class="rounded-xl border border-border bg-surface p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-sm font-semibold text-text">สรุปเซสชัน</h2>
+            <app-status-badge [status]="s.status" />
+          </div>
+          <dl class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <dt class="text-text-secondary">ประเภทการฝึกซ้อม</dt>
+              <dd class="font-medium text-text">{{ s.trainingType === 'Routine' ? 'ฝึกซ้อมประจำ' : 'ฝึกซ้อมส่วนตัว' }}</dd>
+            </div>
+            <div>
+              <dt class="text-text-secondary">วันที่ / เวลาตามกำหนด</dt>
+              <dd class="font-medium text-text">
+                {{ s.sessionDate }} · {{ s.scheduledStartDateTime | slice: 11 : 16 }} - {{ s.scheduledEndDateTime | slice: 11 : 16 }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-text-secondary">โค้ชที่มอบหมาย</dt>
+              <dd class="font-medium text-text">{{ s.assignedCoachCode }} — {{ s.assignedCoachName }}</dd>
+            </div>
+            <div>
+              <dt class="text-text-secondary">โค้ชที่สอนจริง</dt>
+              <dd class="font-medium text-text">
+                {{ s.actualCoachCode ? s.actualCoachCode + ' — ' + s.actualCoachName : '-' }}
+              </dd>
+            </div>
+            @if (s.location) {
+              <div>
+                <dt class="text-text-secondary">สถานที่</dt>
+                <dd class="font-medium text-text">{{ s.location }}</dd>
+              </div>
+            }
+            @if (s.cancellationReason) {
+              <div class="sm:col-span-2">
+                <dt class="text-text-secondary">เหตุผลการยกเลิก</dt>
+                <dd class="font-medium text-danger">{{ s.cancellationReason }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        <!-- 2. Start / Actual Teaching Information -->
+        <section class="mt-4 rounded-xl border border-border bg-surface p-4">
+          <h2 class="text-sm font-semibold text-text">เริ่มฝึกซ้อม / ข้อมูลการสอนจริง</h2>
+          <dl class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <dt class="text-text-secondary">เวลาเริ่มจริง</dt>
+              <dd class="font-medium text-text">{{ s.actualStartDateTime ? (s.actualStartDateTime | slice: 11 : 16) : '-' }}</dd>
+            </div>
+            <div>
+              <dt class="text-text-secondary">เวลาสิ้นสุดจริง</dt>
+              <dd class="font-medium text-text">{{ s.actualEndDateTime ? (s.actualEndDateTime | slice: 11 : 16) : '-' }}</dd>
+            </div>
+            @if (s.actualDurationMinutes !== null) {
+              <div>
+                <dt class="text-text-secondary">ระยะเวลาสอนจริง</dt>
+                <dd class="font-medium text-text">{{ s.actualDurationMinutes }} นาที</dd>
+              </div>
+            }
+          </dl>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            @if (canStart(s.status)) {
+              <button
+                type="button"
+                (click)="start()"
+                [disabled]="starting()"
+                class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+              >
+                <svg lucidePlay [size]="16"></svg>
+                {{ starting() ? 'กำลังบันทึก...' : 'เริ่มฝึกซ้อม' }}
+              </button>
+            }
+            @if (isAdministrator && canSubstitute(s.status)) {
+              <button
+                type="button"
+                (click)="openSubstituteDialog()"
+                class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+              >
+                <svg lucideRepeat [size]="16"></svg>
+                กำหนดโค้ชตัวแทน
+              </button>
+            }
+            @if (isAdministrator && canReschedule(s.status)) {
+              <button
+                type="button"
+                (click)="openRescheduleDialog()"
+                class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+              >
+                <svg lucideCalendarClock [size]="16"></svg>
+                เลื่อนเซสชัน
+              </button>
+            }
+            @if (isAdministrator && canCancel(s.status)) {
+              <button
+                type="button"
+                (click)="openCancellationDialog()"
+                class="inline-flex items-center gap-2 rounded-lg border border-danger/40 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-surface"
+              >
+                <svg lucideX [size]="16"></svg>
+                ยกเลิกเซสชัน
+              </button>
+            }
+          </div>
+        </section>
+
+        <!-- 3. Athlete Attendance -->
+        <section class="mt-4">
+          @if (s.trainingType === 'Routine') {
+            <app-routine-attendance [trainingSessionId]="s.trainingSessionId" [readOnly]="isLocked(s.status)" />
+          } @else {
+            <app-private-attendance
+              [trainingSessionId]="s.trainingSessionId"
+              [readOnly]="isLocked(s.status)"
+              (completeChange)="onPrivateAttendanceCompleteChange($event)"
+            />
+          }
+        </section>
+
+        <!-- 4. Training Log -->
+        <section class="mt-4">
+          <app-training-log-form
+            [trainingSessionId]="s.trainingSessionId"
+            [initialLog]="s.trainingLog"
+            [readOnly]="isLocked(s.status)"
+            (saved)="onLogSaved($event)"
+          />
+        </section>
+
+        <!-- 5 & 6. Complete / Submit -->
+        <section class="mt-4 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm text-text-secondary">เมื่อฝึกซ้อมเสร็จสิ้นแล้ว ให้กดเสร็จสิ้น จากนั้นส่งตรวจเพื่อรออนุมัติ</p>
+          <div class="flex flex-wrap gap-2">
+            @if (canComplete(s.status)) {
+              <button
+                type="button"
+                (click)="complete()"
+                [disabled]="completing()"
+                class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+              >
+                <svg lucideCircleCheckBig [size]="16"></svg>
+                {{ completing() ? 'กำลังบันทึก...' : 'เสร็จสิ้นฝึกซ้อม' }}
+              </button>
+            }
+            @if (canSubmit(s.status)) {
+              <button
+                type="button"
+                (click)="submit()"
+                [disabled]="submitting() || !privateAttendanceComplete()"
+                class="inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+              >
+                <svg lucideSend [size]="16"></svg>
+                {{ submitting() ? 'กำลังส่ง...' : 'ส่งตรวจ' }}
+              </button>
+            }
+          </div>
+        </section>
+
+        @if (canSubmit(s.status) && !privateAttendanceComplete()) {
+          <p class="mt-2 text-right text-xs text-warning">กรุณาบันทึกสถานะการเข้าร่วมของนักกีฬาทุกคนก่อนส่งตรวจ</p>
+        }
+
+        <!-- Administrative Review -->
+        @if (isAdministrator && (canReviewSubmission(s.status) || canUnlock(s.status))) {
+          <section class="mt-4 rounded-xl border border-border bg-surface p-4">
+            <h2 class="text-sm font-semibold text-text">ตรวจสอบและอนุมัติ</h2>
+            <div class="mt-3 flex flex-wrap gap-2">
+              @if (canReviewSubmission(s.status)) {
+                <button
+                  type="button"
+                  (click)="openApprovalDialog('Approve')"
+                  class="inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
+                >
+                  <svg lucideCircleCheckBig [size]="16"></svg>
+                  อนุมัติ
+                </button>
+                <button
+                  type="button"
+                  (click)="openApprovalDialog('RequestRevision')"
+                  class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+                >
+                  ขอให้แก้ไข
+                </button>
+                <button
+                  type="button"
+                  (click)="openApprovalDialog('Reject')"
+                  class="inline-flex items-center gap-2 rounded-lg border border-danger/40 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-surface"
+                >
+                  <svg lucideX [size]="16"></svg>
+                  ตีกลับ
+                </button>
+              }
+              @if (canUnlock(s.status)) {
+                <button
+                  type="button"
+                  (click)="openApprovalDialog('Unlock')"
+                  class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+                >
+                  <svg lucideLock [size]="16"></svg>
+                  ปลดล็อก
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Session History -->
+        <section class="mt-4">
+          <app-session-history-timeline #historyTimeline [trainingSessionId]="s.trainingSessionId" />
+        </section>
+
+        @if (isAdministrator) {
+          <app-approval-action-dialog
+            [trainingSessionId]="s.trainingSessionId"
+            [action]="approvalDialogAction()"
+            (completed)="onApprovalActionCompleted($event); historyTimeline.reload()"
+            (dismissed)="closeApprovalDialog()"
+          />
+
+          <app-substitute-coach-dialog
+            [trainingSessionId]="s.trainingSessionId"
+            [open]="substituteDialogOpen()"
+            [excludeCoachId]="s.assignedCoachId"
+            (assigned)="onSubstitutionAssigned($event); historyTimeline.reload()"
+            (cancelled)="closeSubstituteDialog()"
+          />
+
+          <app-reschedule-dialog
+            [trainingSessionId]="s.trainingSessionId"
+            [open]="rescheduleDialogOpen()"
+            (rescheduled)="onRescheduled($event); historyTimeline.reload()"
+            (dismissed)="closeRescheduleDialog()"
+          />
+
+          <app-cancellation-dialog
+            [trainingSessionId]="s.trainingSessionId"
+            [open]="cancellationDialogOpen()"
+            (confirmed)="onCancellationConfirmed($event); historyTimeline.reload()"
+            (dismissed)="closeCancellationDialog()"
+          />
+        }
+      }
+    }
+  }
+</div>

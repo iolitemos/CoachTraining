@@ -1,7 +1,7 @@
 using CoachTraining.Api.Data;
 using CoachTraining.Api.DTOs.Common;
+using CoachTraining.Api.DTOs.Conflicts;
 using CoachTraining.Api.DTOs.RoutineSchedules;
-using CoachTraining.Api.Helpers;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +11,6 @@ namespace CoachTraining.Api.Services;
 /// <summary>Routine Training Management (requirement.md 4.4, todo.md 4.3).</summary>
 public class RoutineScheduleService : IRoutineScheduleService
 {
-    /// <summary>Default lookahead window generated automatically when a schedule is created.</summary>
-    private const int DefaultGenerationHorizonDays = 28;
-
-    /// <summary>Upper bound on a single generation request, to keep it a bounded, predictable operation.</summary>
-    private const int MaxGenerationHorizonDays = 180;
-
     private readonly ApplicationDbContext _db;
     private readonly IScheduleConflictService _conflictService;
     private readonly ILogger<RoutineScheduleService> _logger;
@@ -36,17 +30,18 @@ public class RoutineScheduleService : IRoutineScheduleService
         {
             var search = request.Search.Trim().ToUpper();
             query = query.Where(rs =>
-                rs.Name.ToUpper().Contains(search) ||
                 rs.Coach.CoachCode.ToUpper().Contains(search) ||
-                rs.Coach.FullName.ToUpper().Contains(search));
+                rs.Coach.FullName.ToUpper().Contains(search) ||
+                (rs.Coach.Nickname != null && rs.Coach.Nickname.ToUpper().Contains(search)));
         }
 
         var totalCount = await query.CountAsync();
 
         var items = await query
-            .OrderBy(rs => rs.Coach.CoachCode)
-            .ThenBy(rs => rs.DayOfWeek)
+            .OrderBy(rs => rs.EffectiveStartDate)
             .ThenBy(rs => rs.StartTime)
+            .ThenBy(rs => rs.Coach.Nickname)
+            .ThenBy(rs => rs.Coach.CoachCode)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(rs => MapToListItem(rs))
@@ -77,23 +72,23 @@ public class RoutineScheduleService : IRoutineScheduleService
             }
 
             var conflicts = await _conflictService.CheckRoutineTemplateOverlapAsync(
-                dto.CoachId, dto.DayOfWeek, dto.StartTime, dto.EndTime, dto.EffectiveStartDate, dto.EffectiveEndDate);
+                dto.CoachId, dto.StartTime, dto.EndTime, dto.EffectiveStartDate);
 
-            if (conflicts.Count > 0)
+            // FR-CONFLICT-004: an authorized Administrator (this controller is
+            // Administrator-only) may proceed past a detected conflict only by
+            // supplying an override reason; otherwise the conflict still blocks.
+            var overrideReason = conflicts.Count > 0 && dto.OverrideConflict ? dto.OverrideReason?.Trim() : null;
+            if (conflicts.Count > 0 && string.IsNullOrWhiteSpace(overrideReason))
             {
                 return new RoutineScheduleSaveResult { Error = "พบตารางฝึกซ้อมของโค้ชทับซ้อนกัน", Conflicts = conflicts };
             }
 
             var schedule = new RoutineSchedule
             {
-                Name = string.IsNullOrWhiteSpace(dto.Name) ? BuildDefaultName(dto.DayOfWeek, dto.StartTime, dto.EndTime) : dto.Name,
                 CoachId = dto.CoachId,
-                DayOfWeek = dto.DayOfWeek,
                 StartTime = dto.StartTime,
                 EndTime = dto.EndTime,
                 EffectiveStartDate = dto.EffectiveStartDate,
-                EffectiveEndDate = dto.EffectiveEndDate,
-                RecurrencePattern = string.IsNullOrWhiteSpace(dto.RecurrencePattern) ? "Weekly" : dto.RecurrencePattern,
                 Remarks = dto.Remarks,
                 IsActive = true,
                 CreatedByUserId = actionByUserId,
@@ -106,8 +101,11 @@ public class RoutineScheduleService : IRoutineScheduleService
             _db.RoutineSchedules.Add(schedule);
             await _db.SaveChangesAsync();
 
-            var throughDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(DefaultGenerationHorizonDays);
-            var generation = await GenerateOccurrencesAsync(schedule, coach, throughDate, actionByUserId);
+            // FR-CONFLICT-005 — the override itself remains identifiable in history.
+            await RecordConflictOverrideAsync(conflicts, overrideReason, routineScheduleId: schedule.RoutineScheduleId, actionByUserId);
+
+            var generation = await GenerateOccurrencesAsync(
+                schedule, coach, schedule.EffectiveStartDate, actionByUserId);
 
             await transaction.CommitAsync();
 
@@ -144,29 +142,29 @@ public class RoutineScheduleService : IRoutineScheduleService
         }
 
         var conflicts = await _conflictService.CheckRoutineTemplateOverlapAsync(
-            dto.CoachId, dto.DayOfWeek, dto.StartTime, dto.EndTime, dto.EffectiveStartDate, dto.EffectiveEndDate,
+            dto.CoachId, dto.StartTime, dto.EndTime, dto.EffectiveStartDate,
             excludeRoutineScheduleId: routineScheduleId);
 
-        if (conflicts.Count > 0)
+        var overrideReason = conflicts.Count > 0 && dto.OverrideConflict ? dto.OverrideReason?.Trim() : null;
+        if (conflicts.Count > 0 && string.IsNullOrWhiteSpace(overrideReason))
         {
             return new RoutineScheduleSaveResult { Error = "พบตารางฝึกซ้อมของโค้ชทับซ้อนกัน", Conflicts = conflicts };
         }
 
         // FR-ROUTINE-007: only the schedule template changes here — already generated
         // TrainingSession rows (past or future) are never modified by this update.
-        schedule.Name = string.IsNullOrWhiteSpace(dto.Name) ? BuildDefaultName(dto.DayOfWeek, dto.StartTime, dto.EndTime) : dto.Name;
         schedule.CoachId = dto.CoachId;
-        schedule.DayOfWeek = dto.DayOfWeek;
         schedule.StartTime = dto.StartTime;
         schedule.EndTime = dto.EndTime;
         schedule.EffectiveStartDate = dto.EffectiveStartDate;
-        schedule.EffectiveEndDate = dto.EffectiveEndDate;
-        schedule.RecurrencePattern = string.IsNullOrWhiteSpace(dto.RecurrencePattern) ? "Weekly" : dto.RecurrencePattern;
         schedule.Remarks = dto.Remarks;
         schedule.UpdatedByUserId = actionByUserId;
         schedule.UpdatedDate = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+
+        // FR-CONFLICT-005 — the override itself remains identifiable in history.
+        await RecordConflictOverrideAsync(conflicts, overrideReason, routineScheduleId: schedule.RoutineScheduleId, actionByUserId);
 
         return new RoutineScheduleSaveResult { Schedule = MapToDetail(schedule, coach) };
     }
@@ -187,6 +185,54 @@ public class RoutineScheduleService : IRoutineScheduleService
 
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<(bool Found, string? Error)> DeleteAsync(int routineScheduleId, int actionByUserId)
+    {
+        var schedule = await _db.RoutineSchedules
+            .FirstOrDefaultAsync(rs => rs.RoutineScheduleId == routineScheduleId);
+        if (schedule is null)
+        {
+            return (false, null);
+        }
+
+        var sessions = await _db.TrainingSessions
+            .Where(s => s.RoutineScheduleId == routineScheduleId)
+            .ToListAsync();
+
+        if (sessions.Any(s => s.Status != SessionStatus.Scheduled))
+        {
+            return (true, "ไม่สามารถลบตารางที่เริ่มดำเนินการหรือมีประวัติการฝึกแล้วได้");
+        }
+
+        var sessionIds = sessions.Select(s => s.TrainingSessionId).ToList();
+        if (sessionIds.Count > 0)
+        {
+            var hasHistory = await _db.Attendances.AnyAsync(x => sessionIds.Contains(x.TrainingSessionId)) ||
+                await _db.TrainingLogs.AnyAsync(x => sessionIds.Contains(x.TrainingSessionId)) ||
+                await _db.CoachSubstitutionHistories.AnyAsync(x => sessionIds.Contains(x.TrainingSessionId)) ||
+                await _db.TrainingApprovalHistories.AnyAsync(x => sessionIds.Contains(x.TrainingSessionId)) ||
+                await _db.ConflictOverrideHistories.AnyAsync(x =>
+                    x.TrainingSessionId != null && sessionIds.Contains(x.TrainingSessionId.Value)) ||
+                await _db.TrainingSessions.AnyAsync(x =>
+                    x.OriginalSessionId != null && sessionIds.Contains(x.OriginalSessionId.Value));
+
+            if (hasHistory)
+            {
+                return (true, "ไม่สามารถลบตารางที่มีข้อมูลการเข้าร่วม บันทึก หรือประวัติการดำเนินการแล้วได้");
+            }
+        }
+
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        _db.TrainingSessions.RemoveRange(sessions);
+        schedule.IsDeleted = true;
+        schedule.IsActive = false;
+        schedule.UpdatedByUserId = actionByUserId;
+        schedule.UpdatedDate = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        return (true, null);
     }
 
     public async Task<(GenerateSessionsResult? Result, string? Error)> GenerateSessionsAsync(int routineScheduleId, DateOnly throughDate, int actionByUserId)
@@ -210,83 +256,65 @@ public class RoutineScheduleService : IRoutineScheduleService
     {
         var result = new GenerateSessionsResult();
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        var rangeStart = schedule.EffectiveStartDate > today ? schedule.EffectiveStartDate : today;
-
-        var rangeEnd = throughDateRequested;
-        if (schedule.EffectiveEndDate is not null && schedule.EffectiveEndDate.Value < rangeEnd)
-        {
-            rangeEnd = schedule.EffectiveEndDate.Value;
-        }
-        var maxEnd = rangeStart.AddDays(MaxGenerationHorizonDays);
-        if (rangeEnd > maxEnd)
-        {
-            rangeEnd = maxEnd;
-        }
-
-        if (rangeEnd < rangeStart)
+        var sessionDate = schedule.EffectiveStartDate;
+        if (throughDateRequested < sessionDate)
         {
             return result;
         }
 
-        var existingDates = (await _db.TrainingSessions
-            .Where(s => s.RoutineScheduleId == schedule.RoutineScheduleId && s.SessionDate >= rangeStart && s.SessionDate <= rangeEnd)
-            .Select(s => s.SessionDate)
-            .ToListAsync())
-            .ToHashSet();
-
-        for (var date = rangeStart; date <= rangeEnd; date = date.AddDays(1))
+        var alreadyExists = await _db.TrainingSessions.AnyAsync(s =>
+            s.RoutineScheduleId == schedule.RoutineScheduleId &&
+            s.SessionDate == sessionDate);
+        if (alreadyExists)
         {
-            if (date.DayOfWeek != schedule.DayOfWeek || existingDates.Contains(date))
-            {
-                continue;
-            }
-
-            var scheduledStart = date.ToDateTime(schedule.StartTime);
-            var scheduledEnd = date.ToDateTime(schedule.EndTime);
-
-            var conflicts = await _conflictService.CheckCoachOverlapAsync(schedule.CoachId, scheduledStart, scheduledEnd);
-            if (conflicts.Count > 0)
-            {
-                result.SkippedDueToConflict.Add(new SkippedOccurrence { SessionDate = date, Reason = conflicts[0].Message });
-                continue;
-            }
-
-            _db.TrainingSessions.Add(new TrainingSession
-            {
-                TrainingType = TrainingType.Routine,
-                RoutineScheduleId = schedule.RoutineScheduleId,
-                SessionDate = date,
-                ScheduledStartDateTime = scheduledStart,
-                ScheduledEndDateTime = scheduledEnd,
-                AssignedCoachId = schedule.CoachId,
-                AssignedCoachCodeSnapshot = coach.CoachCode,
-                AssignedCoachNameSnapshot = coach.FullName,
-                Status = SessionStatus.Scheduled,
-                CreatedByUserId = actionByUserId,
-            });
-            result.GeneratedCount++;
+            return result;
         }
+
+        var scheduledStart = sessionDate.ToDateTime(schedule.StartTime);
+        var scheduledEnd = sessionDate.ToDateTime(schedule.EndTime);
+
+        var conflicts = await _conflictService.CheckCoachOverlapAsync(
+            schedule.CoachId, scheduledStart, scheduledEnd);
+        if (conflicts.Count > 0)
+        {
+            result.SkippedDueToConflict.Add(new SkippedOccurrence
+            {
+                SessionDate = sessionDate,
+                Reason = conflicts[0].Message,
+            });
+            return result;
+        }
+
+        _db.TrainingSessions.Add(new TrainingSession
+        {
+            TrainingType = TrainingType.Routine,
+            RoutineScheduleId = schedule.RoutineScheduleId,
+            SessionDate = sessionDate,
+            ScheduledStartDateTime = scheduledStart,
+            ScheduledEndDateTime = scheduledEnd,
+            AssignedCoachId = schedule.CoachId,
+            AssignedCoachCodeSnapshot = coach.CoachCode,
+            AssignedCoachNameSnapshot = coach.FullName,
+            Status = SessionStatus.Scheduled,
+            CreatedByUserId = actionByUserId,
+        });
+        result.GeneratedCount = 1;
 
         await _db.SaveChangesAsync();
         return result;
     }
 
-    private static string BuildDefaultName(DayOfWeek dayOfWeek, TimeOnly startTime, TimeOnly endTime) =>
-        $"ฝึกซ้อมวัน{ThaiDateHelper.DayName(dayOfWeek)} {startTime:HH:mm}-{endTime:HH:mm}";
-
     private static RoutineScheduleListItemDto MapToListItem(RoutineSchedule schedule) => new()
     {
         RoutineScheduleId = schedule.RoutineScheduleId,
-        Name = schedule.Name,
         CoachId = schedule.CoachId,
         CoachCode = schedule.Coach.CoachCode,
         CoachFullName = schedule.Coach.FullName,
-        DayOfWeek = schedule.DayOfWeek,
+        CoachNickname = schedule.Coach.Nickname,
+        CoachColorHex = schedule.Coach.ColorHex,
         StartTime = schedule.StartTime,
         EndTime = schedule.EndTime,
         EffectiveStartDate = schedule.EffectiveStartDate,
-        EffectiveEndDate = schedule.EffectiveEndDate,
         IsActive = schedule.IsActive,
     };
 
@@ -295,17 +323,38 @@ public class RoutineScheduleService : IRoutineScheduleService
     private static RoutineScheduleDetailDto MapToDetail(RoutineSchedule schedule, Coach coach) => new()
     {
         RoutineScheduleId = schedule.RoutineScheduleId,
-        Name = schedule.Name,
         CoachId = schedule.CoachId,
         CoachCode = coach.CoachCode,
         CoachFullName = coach.FullName,
-        DayOfWeek = schedule.DayOfWeek,
         StartTime = schedule.StartTime,
         EndTime = schedule.EndTime,
         EffectiveStartDate = schedule.EffectiveStartDate,
-        EffectiveEndDate = schedule.EffectiveEndDate,
-        RecurrencePattern = schedule.RecurrencePattern,
         IsActive = schedule.IsActive,
         Remarks = schedule.Remarks,
     };
+
+    /// <summary>FR-CONFLICT-004/005 — records one history row per detected conflict once an
+    /// authorized Administrator has supplied an override reason. No-op when there is
+    /// nothing to override.</summary>
+    private async Task RecordConflictOverrideAsync(
+        List<RoutineTemplateConflictDetail> conflicts, string? overrideReason, int routineScheduleId, int actionByUserId)
+    {
+        if (conflicts.Count == 0 || string.IsNullOrWhiteSpace(overrideReason))
+        {
+            return;
+        }
+
+        foreach (var _ in conflicts)
+        {
+            _db.ConflictOverrideHistories.Add(new ConflictOverrideHistory
+            {
+                ConflictType = ConflictType.CoachOverlap,
+                RoutineScheduleId = routineScheduleId,
+                Reason = overrideReason,
+                ActionByUserId = actionByUserId,
+            });
+        }
+
+        await _db.SaveChangesAsync();
+    }
 }

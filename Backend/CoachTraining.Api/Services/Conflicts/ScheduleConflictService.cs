@@ -101,22 +101,17 @@ public class ScheduleConflictService : IScheduleConflictService
 
     public async Task<List<RoutineTemplateConflictDetail>> CheckRoutineTemplateOverlapAsync(
         int coachId,
-        DayOfWeek dayOfWeek,
         TimeOnly startTime,
         TimeOnly endTime,
         DateOnly effectiveStartDate,
-        DateOnly? effectiveEndDate,
         int? excludeRoutineScheduleId = null)
     {
         var query = _db.RoutineSchedules.Where(rs =>
             rs.CoachId == coachId &&
             rs.IsActive &&
-            rs.DayOfWeek == dayOfWeek &&
+            rs.EffectiveStartDate == effectiveStartDate &&
             rs.StartTime < endTime &&
-            startTime < rs.EndTime &&
-            // Effective date ranges overlap (open-ended end date treated as "forever").
-            rs.EffectiveStartDate <= (effectiveEndDate ?? DateOnly.MaxValue) &&
-            effectiveStartDate <= (rs.EffectiveEndDate ?? DateOnly.MaxValue));
+            startTime < rs.EndTime);
 
         if (excludeRoutineScheduleId is not null)
         {
@@ -124,14 +119,18 @@ public class ScheduleConflictService : IScheduleConflictService
         }
 
         var overlapping = await query
-            .Select(rs => new { rs.RoutineScheduleId, rs.Name, rs.StartTime, rs.EndTime })
+            .Select(rs => new { rs.RoutineScheduleId, rs.EffectiveStartDate, rs.StartTime, rs.EndTime })
             .ToListAsync();
 
-        return overlapping.Select(rs => new RoutineTemplateConflictDetail
+        return overlapping
+            .Select(rs => new RoutineTemplateConflictDetail
         {
             ConflictingRoutineScheduleId = rs.RoutineScheduleId,
-            ConflictingRoutineScheduleName = rs.Name,
-            Message = $"โค้ชมีตารางฝึกซ้อมประจำ \"{rs.Name}\" ทับซ้อนในวัน{ThaiDateHelper.DayName(dayOfWeek)} เวลา {rs.StartTime:HH:mm}-{rs.EndTime:HH:mm}",
+            ConflictingRoutineScheduleName = BuildRoutineScheduleName(rs.EffectiveStartDate, rs.StartTime, rs.EndTime),
+            Message = $"โค้ชมีตารางฝึกซ้อมทับซ้อนในวันที่ {effectiveStartDate:dd/MM/yyyy} เวลา {rs.StartTime:HH:mm}-{rs.EndTime:HH:mm}",
         }).ToList();
     }
+
+    private static string BuildRoutineScheduleName(DateOnly effectiveStartDate, TimeOnly startTime, TimeOnly endTime) =>
+        $"ฝึกซ้อมวันที่ {effectiveStartDate:dd/MM/yyyy} {startTime:HH:mm}-{endTime:HH:mm}";
 }

@@ -35,4 +35,13 @@ describe('Login', () => {
     expect(component.form.controls.username.touched).toBe(true);
     httpMock.expectNone(() => true);
   });
+
+  it('should toggle password visibility without changing the form value', () => {
+    component.form.controls.password.setValue('secret-password');
+
+    component.togglePasswordVisibility();
+
+    expect(component.passwordVisible()).toBe(true);
+    expect(component.form.controls.password.value).toBe('secret-password');
+  });
 });

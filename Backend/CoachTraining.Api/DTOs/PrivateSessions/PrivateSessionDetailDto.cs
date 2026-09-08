@@ -14,6 +14,11 @@ public class PrivateSessionDetailDto
     public string? Location { get; set; }
     public string? Remarks { get; set; }
     public SessionStatus Status { get; set; }
+
+    /// <summary>FR-CONFLICT-004/005 — set when this session was saved despite a detected conflict.</summary>
+    public bool IsConflictOverridden { get; set; }
+    public string? ConflictOverrideReason { get; set; }
+
     public List<PrivateSessionAthleteDto> Athletes { get; set; } = [];
 }
 

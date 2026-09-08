@@ -39,10 +39,11 @@ public class CoachTeachingService : ICoachTeachingService
                 return new TeachingActionResult { Error = $"ไม่สามารถเริ่มฝึกซ้อมได้ในสถานะปัจจุบัน ({session.Status})" };
             }
 
-            // FR-TEACH-005 — associate the record with whoever is actually teaching.
-            // A pure Administrator (no linked Coach) is assumed to act on behalf of
-            // the originally assigned coach; a signed-in Coach becomes the actual coach.
-            if (currentCoachId is not null)
+            // FR-TEACH-005 / FR-SUB-003–004 — preserve an actual coach already
+            // designated by the substitution workflow. Otherwise the signed-in
+            // assigned Coach becomes actual; a pure Administrator acts on behalf
+            // of the original assignment.
+            if (session.ActualCoachId is null && currentCoachId is not null)
             {
                 var actingCoach = await _db.Coaches.FirstOrDefaultAsync(c => c.CoachId == currentCoachId);
                 if (actingCoach is null)
@@ -54,7 +55,7 @@ public class CoachTeachingService : ICoachTeachingService
                 session.ActualCoachCodeSnapshot = actingCoach.CoachCode;
                 session.ActualCoachNameSnapshot = actingCoach.FullName;
             }
-            else
+            else if (session.ActualCoachId is null)
             {
                 session.ActualCoachId = session.AssignedCoachId;
                 session.ActualCoachCodeSnapshot = session.AssignedCoachCodeSnapshot;
@@ -127,5 +128,5 @@ public class CoachTeachingService : ICoachTeachingService
     }
 
     private static bool IsAuthorizedForSession(int assignedCoachId, int? actualCoachId, bool isPrivilegedRole, int? currentCoachId) =>
-        isPrivilegedRole || assignedCoachId == currentCoachId || actualCoachId == currentCoachId;
+        isPrivilegedRole || (actualCoachId ?? assignedCoachId) == currentCoachId;
 }

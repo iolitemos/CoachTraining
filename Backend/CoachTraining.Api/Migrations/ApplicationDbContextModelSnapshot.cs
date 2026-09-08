@@ -198,14 +198,27 @@ namespace CoachTraining.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CoachId"));
 
+                    b.Property<string>("BankAccountName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("BankName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("CoachCode")
                         .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<string>("CoachType")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.Property<string>("ColorHex")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
 
                     b.Property<int?>("CreatedByUserId")
                         .HasColumnType("integer");
@@ -238,10 +251,6 @@ namespace CoachTraining.Api.Migrations
 
                     b.Property<string>("Remarks")
                         .HasColumnType("text");
-
-                    b.Property<string>("Specialization")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
 
                     b.Property<int?>("UpdatedByUserId")
                         .HasColumnType("integer");
@@ -436,12 +445,6 @@ namespace CoachTraining.Api.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("DayOfWeek")
-                        .HasColumnType("integer");
-
-                    b.Property<DateOnly?>("EffectiveEndDate")
-                        .HasColumnType("date");
-
                     b.Property<DateOnly>("EffectiveStartDate")
                         .HasColumnType("date");
 
@@ -453,16 +456,6 @@ namespace CoachTraining.Api.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("RecurrencePattern")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Remarks")
                         .HasColumnType("text");
@@ -478,7 +471,7 @@ namespace CoachTraining.Api.Migrations
 
                     b.HasKey("RoutineScheduleId");
 
-                    b.HasIndex("CoachId", "DayOfWeek", "IsActive");
+                    b.HasIndex("CoachId", "EffectiveStartDate", "IsActive");
 
                     b.ToTable("RoutineSchedules");
                 });

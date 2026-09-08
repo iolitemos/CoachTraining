@@ -7,6 +7,28 @@ import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indi
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { CoachService } from '../../../services/coach.service';
 
+/** Thai bank/transfer-channel options for the coach bank-account field. PromptPay listed
+ * first since it is the most common payout channel. */
+export const BANK_NAME_OPTIONS: string[] = [
+  'พร้อมเพย์',
+  'ธนาคารกรุงเทพ',
+  'ธนาคารกสิกรไทย',
+  'ธนาคารกรุงไทย',
+  'ธนาคารไทยพาณิชย์',
+  'ธนาคารกรุงศรีอยุธยา',
+  'ธนาคารทหารไทยธนชาต',
+  'ธนาคารเกียรตินาคินภัทร',
+  'ธนาคารซีไอเอ็มบีไทย',
+  'ธนาคารทิสโก้',
+  'ธนาคารยูโอบี',
+  'ธนาคารไทยเครดิต',
+  'ธนาคารแลนด์ แอนด์ เฮ้าส์',
+  'ธนาคารออมสิน',
+  'ธนาคารอาคารสงเคราะห์',
+  'ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร',
+  'ธนาคารอิสลามแห่งประเทศไทย',
+];
+
 @Component({
   selector: 'app-coach-form',
   imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator],
@@ -26,14 +48,18 @@ export class CoachForm implements OnInit {
   errorMessage = signal<string | null>(null);
   linkedUsername = signal<string | null>(null);
 
+  readonly bankNameOptions = BANK_NAME_OPTIONS;
+
   form = this.fb.group({
     coachCode: ['', [Validators.required, Validators.maxLength(30)]],
     fullName: ['', [Validators.required, Validators.maxLength(200)]],
     nickname: ['', Validators.maxLength(100)],
+    colorHex: ['#10B981', [Validators.required, Validators.pattern(/^#[0-9A-Fa-f]{6}$/)]],
     phoneNumber: ['', Validators.maxLength(30)],
     email: ['', [Validators.email, Validators.maxLength(200)]],
-    coachType: ['', Validators.maxLength(100)],
-    specialization: ['', Validators.maxLength(200)],
+    bankName: ['', Validators.maxLength(100)],
+    bankAccountNumber: ['', Validators.maxLength(30)],
+    bankAccountName: ['', Validators.maxLength(200)],
     remarks: [''],
   });
 
@@ -53,10 +79,12 @@ export class CoachForm implements OnInit {
           coachCode: coach.coachCode,
           fullName: coach.fullName,
           nickname: coach.nickname ?? '',
+          colorHex: coach.colorHex,
           phoneNumber: coach.phoneNumber ?? '',
           email: coach.email ?? '',
-          coachType: coach.coachType ?? '',
-          specialization: coach.specialization ?? '',
+          bankName: coach.bankName ?? '',
+          bankAccountNumber: coach.bankAccountNumber ?? '',
+          bankAccountName: coach.bankAccountName ?? '',
           remarks: coach.remarks ?? '',
         });
         this.linkedUsername.set(coach.linkedUsername);
@@ -82,10 +110,12 @@ export class CoachForm implements OnInit {
     const payload = {
       fullName: value.fullName!,
       nickname: value.nickname || null,
+      colorHex: value.colorHex!,
       phoneNumber: value.phoneNumber || null,
       email: value.email || null,
-      coachType: value.coachType || null,
-      specialization: value.specialization || null,
+      bankName: value.bankName || null,
+      bankAccountNumber: value.bankAccountNumber || null,
+      bankAccountName: value.bankAccountName || null,
       remarks: value.remarks || null,
     };
 
@@ -98,7 +128,8 @@ export class CoachForm implements OnInit {
 
       await this.router.navigateByUrl('/coaches');
     } catch (error) {
-      const body = error instanceof HttpErrorResponse ? (error.error as ApiErrorBody | undefined) : undefined;
+      const body =
+        error instanceof HttpErrorResponse ? (error.error as ApiErrorBody | undefined) : undefined;
       this.errorMessage.set(body?.message ?? 'บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
     } finally {
       this.submitting.set(false);

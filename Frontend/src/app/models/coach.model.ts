@@ -4,9 +4,9 @@ export interface CoachListItem {
   coachCode: string;
   fullName: string;
   nickname: string | null;
+  colorHex: string;
   phoneNumber: string | null;
   email: string | null;
-  coachType: string | null;
   isActive: boolean;
   linkedUsername: string | null;
 }
@@ -16,10 +16,13 @@ export interface CoachDetail {
   coachCode: string;
   fullName: string;
   nickname: string | null;
+  colorHex: string;
   phoneNumber: string | null;
   email: string | null;
-  coachType: string | null;
-  specialization: string | null;
+  /** Reference data for teaching-compensation payment only — no rate/payment processing. */
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  bankAccountName: string | null;
   isActive: boolean;
   remarks: string | null;
   /** Read-only — the link itself is managed from User & Role Management. */
@@ -31,10 +34,12 @@ export interface CoachCreateRequest {
   coachCode: string;
   fullName: string;
   nickname: string | null;
+  colorHex: string;
   phoneNumber: string | null;
   email: string | null;
-  coachType: string | null;
-  specialization: string | null;
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  bankAccountName: string | null;
   remarks: string | null;
 }
 

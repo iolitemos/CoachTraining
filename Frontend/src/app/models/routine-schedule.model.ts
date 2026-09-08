@@ -1,63 +1,53 @@
 /** Routine Training Management (requirement.md 4.4, FR-ROUTINE-001–009).
  * Deliberately has no Group, Team, or Location field — see CLAUDE.md 4.2. */
 
-export const DAY_OF_WEEK_OPTIONS = [
-  { value: 'Monday', label: 'จันทร์' },
-  { value: 'Tuesday', label: 'อังคาร' },
-  { value: 'Wednesday', label: 'พุธ' },
-  { value: 'Thursday', label: 'พฤหัสบดี' },
-  { value: 'Friday', label: 'ศุกร์' },
-  { value: 'Saturday', label: 'เสาร์' },
-  { value: 'Sunday', label: 'อาทิตย์' },
-] as const;
+const DAY_OF_WEEK_LABELS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 
-const DAY_OF_WEEK_LABELS: Record<string, string> = Object.fromEntries(
-  DAY_OF_WEEK_OPTIONS.map((option) => [option.value, option.label]),
-);
+export function getDayOfWeekLabelFromDate(date: string): string {
+  return DAY_OF_WEEK_LABELS[getLocalDateDayOfWeek(date)];
+}
 
-export function getDayOfWeekLabel(dayOfWeek: string): string {
-  return DAY_OF_WEEK_LABELS[dayOfWeek] ?? dayOfWeek;
+export function getRoutineScheduleDisplayName(
+  schedule: Pick<RoutineScheduleListItem, 'effectiveStartDate' | 'startTime' | 'endTime'>,
+): string {
+  return `ฝึกซ้อมวันที่ ${schedule.effectiveStartDate} ${schedule.startTime.slice(0, 5)}-${schedule.endTime.slice(0, 5)}`;
+}
+
+export function getLocalDateDayOfWeek(date: string): number {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Date(year, month - 1, day).getDay();
 }
 
 export interface RoutineScheduleListItem {
   routineScheduleId: number;
-  name: string;
   coachId: number;
   coachCode: string;
   coachFullName: string;
-  dayOfWeek: string;
+  coachNickname: string | null;
+  coachColorHex: string;
   startTime: string;
   endTime: string;
   effectiveStartDate: string;
-  effectiveEndDate: string | null;
   isActive: boolean;
 }
 
 export interface RoutineScheduleDetail {
   routineScheduleId: number;
-  name: string;
   coachId: number;
   coachCode: string;
   coachFullName: string;
-  dayOfWeek: string;
   startTime: string;
   endTime: string;
   effectiveStartDate: string;
-  effectiveEndDate: string | null;
-  recurrencePattern: string;
   isActive: boolean;
   remarks: string | null;
 }
 
 export interface RoutineScheduleSaveRequest {
-  name: string | null;
   coachId: number;
-  dayOfWeek: string;
   startTime: string;
   endTime: string;
   effectiveStartDate: string;
-  effectiveEndDate: string | null;
-  recurrencePattern: string | null;
   remarks: string | null;
 }
 

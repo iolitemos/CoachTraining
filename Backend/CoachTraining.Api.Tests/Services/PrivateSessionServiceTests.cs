@@ -203,6 +203,58 @@ public class PrivateSessionServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_WithCoachConflictAndNoOverrideReason_ReturnsConflicts()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var athleteA = await SeedAthleteAsync(db, "A001");
+        var athleteB = await SeedAthleteAsync(db, "A002");
+        var service = CreateService(db);
+
+        await service.CreateAsync(
+            BuildCreateDto(coach.CoachId, [athleteA.AthleteId], new DateOnly(2026, 1, 5), new TimeOnly(17, 0), new TimeOnly(19, 0)),
+            actionByUserId: 1);
+
+        // FR-CONFLICT-004: OverrideConflict alone, without a reason, must not bypass the conflict.
+        var dto = BuildCreateDto(coach.CoachId, [athleteB.AthleteId], new DateOnly(2026, 1, 5), new TimeOnly(18, 0), new TimeOnly(20, 0));
+        dto.OverrideConflict = true;
+        var result = await service.CreateAsync(dto, actionByUserId: 1);
+
+        Assert.Null(result.Session);
+        Assert.NotEmpty(result.Conflicts);
+        Assert.Equal(1, await db.TrainingSessions.CountAsync());
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithCoachConflictAndOverrideReason_PersistsSessionAndRecordsHistory()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var athleteA = await SeedAthleteAsync(db, "A001");
+        var athleteB = await SeedAthleteAsync(db, "A002");
+        var service = CreateService(db);
+
+        await service.CreateAsync(
+            BuildCreateDto(coach.CoachId, [athleteA.AthleteId], new DateOnly(2026, 1, 5), new TimeOnly(17, 0), new TimeOnly(19, 0)),
+            actionByUserId: 1);
+
+        var dto = BuildCreateDto(coach.CoachId, [athleteB.AthleteId], new DateOnly(2026, 1, 5), new TimeOnly(18, 0), new TimeOnly(20, 0));
+        dto.OverrideConflict = true;
+        dto.OverrideReason = "ผู้บริหารอนุมัติให้สอนซ้อนเวลา";
+        var result = await service.CreateAsync(dto, actionByUserId: 7);
+
+        Assert.Null(result.Error);
+        Assert.NotNull(result.Session);
+        Assert.True(result.Session!.IsConflictOverridden);
+        Assert.Equal("ผู้บริหารอนุมัติให้สอนซ้อนเวลา", result.Session.ConflictOverrideReason);
+        Assert.Equal(2, await db.TrainingSessions.CountAsync());
+
+        var overrideHistory = await db.ConflictOverrideHistories.SingleAsync();
+        Assert.Equal(result.Session.TrainingSessionId, overrideHistory.TrainingSessionId);
+        Assert.Equal(7, overrideHistory.ActionByUserId);
+    }
+
+    [Fact]
     public async Task UpdateAsync_OnNonScheduledSession_ReturnsError()
     {
         using var db = TestDbContextFactory.Create();

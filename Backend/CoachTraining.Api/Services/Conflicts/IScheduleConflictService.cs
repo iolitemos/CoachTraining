@@ -35,15 +35,13 @@ public interface IScheduleConflictService
 
     /// <summary>
     /// Finds other active Routine Training schedules for the same coach whose
-    /// day-of-week, time-of-day, and effective date range overlap this one
+    /// derived day-of-week and time-of-day overlap this one
     /// (FR-ROUTINE-008) — a template-level check, independent of any generated sessions.
     /// </summary>
     Task<List<RoutineTemplateConflictDetail>> CheckRoutineTemplateOverlapAsync(
         int coachId,
-        DayOfWeek dayOfWeek,
         TimeOnly startTime,
         TimeOnly endTime,
         DateOnly effectiveStartDate,
-        DateOnly? effectiveEndDate,
         int? excludeRoutineScheduleId = null);
 }

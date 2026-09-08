@@ -1,0 +1,192 @@
+<app-page-header title="แดชบอร์ดผู้ดูแลระบบ" subtitle="ภาพรวมเซสชันฝึกซ้อม การเข้าร่วม และชั่วโมงสอนของโค้ช" />
+
+<div class="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-surface p-3">
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">ตั้งแต่วันที่</span>
+    <input type="date" [(ngModel)]="startDate" class="rounded-lg border border-border bg-surface px-3 py-2 text-text" />
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">ถึงวันที่</span>
+    <input type="date" [(ngModel)]="endDate" class="rounded-lg border border-border bg-surface px-3 py-2 text-text" />
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">โค้ช</span>
+    <select [(ngModel)]="coachId" class="rounded-lg border border-border bg-surface px-3 py-2 text-text">
+      <option [ngValue]="null">ทั้งหมด</option>
+      @for (coach of coachOptions(); track coach.coachId) {
+        <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">ประเภทการฝึกซ้อม</span>
+    <select [(ngModel)]="trainingType" class="rounded-lg border border-border bg-surface px-3 py-2 text-text">
+      <option value="">ทั้งหมด</option>
+      <option value="Routine">ฝึกซ้อมประจำ</option>
+      <option value="Private">ฝึกซ้อมส่วนตัว</option>
+    </select>
+  </label>
+
+  <button
+    type="button"
+    (click)="applyFilters()"
+    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+  >
+    ค้นหา
+  </button>
+</div>
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดข้อมูลแดชบอร์ด..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดข้อมูลแดชบอร์ดได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (dashboard(); as d) {
+        <!-- KPI cards -->
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideCalendarCheck2 [size]="16"></svg>
+              <span class="text-xs">เซสชันวันนี้</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.sessionsTodayCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideCircleCheckBig [size]="16"></svg>
+              <span class="text-xs">เสร็จสิ้น</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.completedCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideHourglass [size]="16"></svg>
+              <span class="text-xs">กำลังจะถึง</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.upcomingCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideCalendarX [size]="16"></svg>
+              <span class="text-xs">ยกเลิก</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.cancelledCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideRepeat [size]="16"></svg>
+              <span class="text-xs">ฝึกซ้อมประจำ</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.routineCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideDumbbell [size]="16"></svg>
+              <span class="text-xs">ฝึกซ้อมส่วนตัว</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.privateCount }}</p>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <!-- Coaches Teaching Today -->
+          <section class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2">
+              <svg lucideUsers [size]="16" class="text-text-secondary"></svg>
+              <h2 class="text-sm font-semibold text-text">โค้ชที่สอนวันนี้</h2>
+            </div>
+            @if (d.coachesTeachingToday.length === 0) {
+              <div class="mt-3">
+                <app-empty-state title="ไม่มีโค้ชที่สอนวันนี้" description="ยังไม่มีเซสชันฝึกซ้อมที่กำหนดไว้สำหรับวันนี้" />
+              </div>
+            } @else {
+              <ul class="mt-3 flex flex-col gap-2">
+                @for (coach of d.coachesTeachingToday; track coach.coachId) {
+                  <li class="rounded-lg border border-border p-2.5 text-sm">
+                    <div class="flex items-center justify-between">
+                      <span class="font-medium text-text">{{ coach.coachCode }} — {{ coach.coachFullName }}</span>
+                      <span class="text-text-secondary">{{ coach.sessionCount }} เซสชัน</span>
+                    </div>
+                    <div class="mt-1.5 flex flex-wrap gap-1.5">
+                      @for (sessionId of coach.trainingSessionIds; track sessionId) {
+                        <a
+                          [routerLink]="['/coach/sessions', sessionId]"
+                          class="rounded-full bg-secondary-100 px-2.5 py-0.5 text-xs text-text-secondary transition-colors hover:bg-secondary-200"
+                        >
+                          #{{ sessionId }}
+                        </a>
+                      }
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <!-- Athlete Attendance Summary -->
+          <section class="rounded-xl border border-border bg-surface p-4">
+            <h2 class="text-sm font-semibold text-text">สรุปการเข้าร่วมของนักกีฬา</h2>
+            <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div class="rounded-lg bg-success-surface p-3 text-center">
+                <p class="text-lg font-semibold text-success">{{ d.attendanceSummary.presentCount }}</p>
+                <p class="text-xs text-text-secondary">มาเรียน</p>
+              </div>
+              <div class="rounded-lg bg-danger-surface p-3 text-center">
+                <p class="text-lg font-semibold text-danger">{{ d.attendanceSummary.absentCount }}</p>
+                <p class="text-xs text-text-secondary">ขาด</p>
+              </div>
+              <div class="rounded-lg bg-warning-surface p-3 text-center">
+                <p class="text-lg font-semibold text-warning">{{ d.attendanceSummary.lateCount }}</p>
+                <p class="text-xs text-text-secondary">มาสาย</p>
+              </div>
+              <div class="rounded-lg bg-secondary-100 p-3 text-center">
+                <p class="text-lg font-semibold text-text">{{ d.attendanceSummary.excusedCount }}</p>
+                <p class="text-xs text-text-secondary">ลา</p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Coach Teaching Hours -->
+        <section class="mt-4 rounded-xl border border-border bg-surface p-4">
+          <h2 class="text-sm font-semibold text-text">ชั่วโมงสอนของโค้ช</h2>
+          @if (d.coachTeachingHours.length === 0) {
+            <div class="mt-3">
+              <app-empty-state title="ไม่มีข้อมูลชั่วโมงสอน" description="ยังไม่มีเซสชันที่เสร็จสิ้นในช่วงเวลาที่เลือก" />
+            </div>
+          } @else {
+            <div class="mt-3 overflow-x-auto">
+              <table class="w-full min-w-120 text-left text-sm">
+                <thead class="border-b border-border text-text-secondary">
+                  <tr>
+                    <th class="px-3 py-2 font-medium">โค้ช</th>
+                    <th class="px-3 py-2 font-medium">ฝึกซ้อมประจำ (ชม.)</th>
+                    <th class="px-3 py-2 font-medium">ฝึกซ้อมส่วนตัว (ชม.)</th>
+                    <th class="px-3 py-2 font-medium">รวม (ชม.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of d.coachTeachingHours; track row.coachId) {
+                    <tr class="border-b border-border last:border-0">
+                      <td class="px-3 py-2 font-medium text-text">{{ row.coachCode }} — {{ row.coachFullName }}</td>
+                      <td class="px-3 py-2 text-text-secondary">{{ row.routineHours }}</td>
+                      <td class="px-3 py-2 text-text-secondary">{{ row.privateHours }}</td>
+                      <td class="px-3 py-2 font-medium text-text">{{ row.totalHours }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      }
+    }
+  }
+</div>

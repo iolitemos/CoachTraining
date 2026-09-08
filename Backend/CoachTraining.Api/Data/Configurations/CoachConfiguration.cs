@@ -13,10 +13,12 @@ public class CoachConfiguration : IEntityTypeConfiguration<Coach>
         builder.Property(c => c.CoachCode).HasMaxLength(30).IsRequired();
         builder.Property(c => c.FullName).HasMaxLength(200).IsRequired();
         builder.Property(c => c.Nickname).HasMaxLength(100);
+        builder.Property(c => c.ColorHex).HasMaxLength(7).IsRequired();
         builder.Property(c => c.PhoneNumber).HasMaxLength(30);
         builder.Property(c => c.Email).HasMaxLength(200);
-        builder.Property(c => c.CoachType).HasMaxLength(100);
-        builder.Property(c => c.Specialization).HasMaxLength(200);
+        builder.Property(c => c.BankName).HasMaxLength(100);
+        builder.Property(c => c.BankAccountNumber).HasMaxLength(30);
+        builder.Property(c => c.BankAccountName).HasMaxLength(200);
 
         builder.HasIndex(c => c.CoachCode).IsUnique();
 

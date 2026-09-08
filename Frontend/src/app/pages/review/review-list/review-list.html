@@ -1,0 +1,118 @@
+<app-page-header title="ตรวจสอบและอนุมัติ" subtitle="รายการเซสชันฝึกซ้อมที่ส่งตรวจและรออนุมัติ" />
+
+<div class="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-surface p-3">
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">สถานะ</span>
+    <select
+      [(ngModel)]="status"
+      class="rounded-lg border border-border bg-surface px-3 py-2 text-text"
+    >
+      <option value="Submitted">ส่งตรวจแล้ว</option>
+      <option value="Approved">อนุมัติแล้ว</option>
+      <option value="Locked">ล็อกแล้ว</option>
+      <option value="">ทั้งหมด</option>
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">ประเภทการฝึกซ้อม</span>
+    <select
+      [(ngModel)]="trainingType"
+      class="rounded-lg border border-border bg-surface px-3 py-2 text-text"
+    >
+      <option value="">ทั้งหมด</option>
+      <option value="Routine">ฝึกซ้อมประจำ</option>
+      <option value="Private">ฝึกซ้อมส่วนตัว</option>
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">โค้ช</span>
+    <select
+      [(ngModel)]="coachId"
+      class="rounded-lg border border-border bg-surface px-3 py-2 text-text"
+    >
+      <option [ngValue]="null">ทั้งหมด</option>
+      @for (coach of coachOptions(); track coach.coachId) {
+        <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">ตั้งแต่วันที่</span>
+    <input type="date" [(ngModel)]="dateFrom" class="rounded-lg border border-border bg-surface px-3 py-2 text-text" />
+  </label>
+
+  <label class="flex flex-col gap-1 text-sm">
+    <span class="text-text-secondary">ถึงวันที่</span>
+    <input type="date" [(ngModel)]="dateTo" class="rounded-lg border border-border bg-surface px-3 py-2 text-text" />
+  </label>
+
+  <button
+    type="button"
+    (click)="applyFilters()"
+    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+  >
+    ค้นหา
+  </button>
+</div>
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดรายการ..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดรายการได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (sessions().length === 0) {
+        <app-empty-state title="ไม่พบเซสชันที่ตรงเงื่อนไข" description="ลองปรับตัวกรองแล้วค้นหาอีกครั้ง" />
+      } @else {
+        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table class="w-full min-w-160 text-left text-sm">
+            <thead class="border-b border-border text-text-secondary">
+              <tr>
+                <th class="px-4 py-3 font-medium">วันที่</th>
+                <th class="px-4 py-3 font-medium">เวลา</th>
+                <th class="px-4 py-3 font-medium">ประเภท</th>
+                <th class="px-4 py-3 font-medium">โค้ชที่มอบหมาย</th>
+                <th class="px-4 py-3 font-medium">โค้ชที่สอนจริง</th>
+                <th class="px-4 py-3 font-medium">สถานะ</th>
+                <th class="px-4 py-3 font-medium">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (session of sessions(); track session.trainingSessionId) {
+                <tr class="border-b border-border last:border-0">
+                  <td class="px-4 py-3 font-medium text-text">{{ session.sessionDate }}</td>
+                  <td class="px-4 py-3 text-text-secondary">
+                    {{ session.scheduledStartDateTime | slice: 11 : 16 }} - {{ session.scheduledEndDateTime | slice: 11 : 16 }}
+                  </td>
+                  <td class="px-4 py-3 text-text-secondary">{{ trainingTypeLabel(session.trainingType) }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ session.assignedCoachCode }} — {{ session.assignedCoachName }}</td>
+                  <td class="px-4 py-3 text-text-secondary">
+                    {{ session.actualCoachCode ? session.actualCoachCode + ' — ' + session.actualCoachName : '-' }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <app-status-badge [status]="session.status" />
+                  </td>
+                  <td class="px-4 py-3">
+                    <a [routerLink]="['/coach/sessions', session.trainingSessionId]" class="text-primary-600 hover:underline">
+                      ตรวจสอบ
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4">
+          <app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" />
+        </div>
+      }
+    }
+  }
+</div>

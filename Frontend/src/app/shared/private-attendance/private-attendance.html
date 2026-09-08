@@ -1,0 +1,87 @@
+<div class="rounded-xl border border-border bg-surface p-4">
+  <div class="flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-text">การเข้าร่วมฝึกซ้อมส่วนตัว</h3>
+    @if (!isComplete() && athletes().length > 0) {
+      <span class="inline-flex items-center gap-1 rounded-full bg-warning-surface px-2.5 py-1 text-xs font-medium text-warning">
+        <svg lucideCircleAlert [size]="14"></svg>
+        ยังบันทึกไม่ครบ
+      </span>
+    }
+  </div>
+  <p class="mt-1 text-xs text-text-secondary">ต้องบันทึกสถานะการเข้าร่วมของนักกีฬาทุกคนก่อนส่งตรวจ</p>
+
+  @if (actionError()) {
+    <p class="mt-3 text-sm text-danger">{{ actionError() }}</p>
+  }
+
+  <div class="mt-4">
+    @switch (state()) {
+      @case ('loading') {
+        <app-loading-indicator label="กำลังโหลดข้อมูลการเข้าร่วม..." />
+      }
+      @case ('error') {
+        <app-error-state message="ไม่สามารถโหลดข้อมูลการเข้าร่วมได้" (retry)="load()" />
+      }
+      @case ('ready') {
+        @if (athletes().length === 0) {
+          <p class="rounded-lg border border-dashed border-border p-4 text-center text-sm text-text-secondary">
+            ไม่มีนักกีฬาที่มอบหมายให้เซสชันนี้
+          </p>
+        } @else {
+          <ul class="divide-y divide-border rounded-lg border border-border">
+            @for (item of athletes(); track item.athleteId) {
+              <li class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4" [class.bg-warning-surface]="!item.status">
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium text-text">{{ item.athleteCode }} — {{ item.fullName }}</p>
+                  @if (!item.status) {
+                    <p class="text-xs text-warning">ยังไม่ได้บันทึกสถานะ</p>
+                  } @else if (item.recordedDate) {
+                    <p class="text-xs text-text-secondary">
+                      บันทึกล่าสุด: {{ item.recordedDate | slice: 0 : 10 }} {{ item.recordedDate | slice: 11 : 16 }}
+                    </p>
+                  }
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                  <select
+                    [disabled]="readOnly() || isSaving(item.athleteId)"
+                    [ngModel]="item.status"
+                    (ngModelChange)="updateStatus(item, $event)"
+                    class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                  >
+                    <option [ngValue]="null" disabled>เลือกสถานะ</option>
+                    <option value="Present">มาเรียน</option>
+                    <option value="Absent">ขาด</option>
+                    <option value="Late">มาสาย</option>
+                    <option value="Excused">ลา</option>
+                  </select>
+
+                  @if (item.status === 'Late') {
+                    <input
+                      type="time"
+                      [disabled]="readOnly() || isSaving(item.athleteId)"
+                      [ngModel]="item.arrivalTime"
+                      (ngModelChange)="updateArrivalTime(item, $event)"
+                      class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                    />
+                  }
+
+                  @if (needsRemark(item.status)) {
+                    <input
+                      type="text"
+                      placeholder="หมายเหตุ"
+                      [disabled]="readOnly() || isSaving(item.athleteId)"
+                      [ngModel]="item.remark"
+                      (ngModelChange)="updateRemark(item, $event)"
+                      class="w-32 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-40"
+                    />
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  </div>
+</div>

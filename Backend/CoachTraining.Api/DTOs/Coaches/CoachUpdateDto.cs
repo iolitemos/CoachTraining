@@ -13,6 +13,10 @@ public class CoachUpdateDto
     [MaxLength(100)]
     public string? Nickname { get; set; }
 
+    [Required(ErrorMessage = "กรุณาเลือกสีประจำตัวโค้ช")]
+    [RegularExpression("^#[0-9A-Fa-f]{6}$", ErrorMessage = "รูปแบบสีประจำตัวโค้ชไม่ถูกต้อง")]
+    public string ColorHex { get; set; } = "#10B981";
+
     [MaxLength(30)]
     public string? PhoneNumber { get; set; }
 
@@ -21,10 +25,13 @@ public class CoachUpdateDto
     public string? Email { get; set; }
 
     [MaxLength(100)]
-    public string? CoachType { get; set; }
+    public string? BankName { get; set; }
+
+    [MaxLength(30)]
+    public string? BankAccountNumber { get; set; }
 
     [MaxLength(200)]
-    public string? Specialization { get; set; }
+    public string? BankAccountName { get; set; }
 
     public string? Remarks { get; set; }
 }

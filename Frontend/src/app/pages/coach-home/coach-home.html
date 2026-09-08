@@ -1,0 +1,130 @@
+<app-page-header title="หน้าหลักโค้ช" subtitle="ภาพรวมเซสชันฝึกซ้อมและงานที่ต้องดำเนินการ" />
+
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดข้อมูลหน้าหลัก..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดข้อมูลหน้าหลักได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (dashboard(); as d) {
+        <!-- Summary cards -->
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideCircleCheckBig [size]="16"></svg>
+              <span class="text-xs">เสร็จสิ้นเดือนนี้</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.completedSessionCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideHourglass [size]="16"></svg>
+              <span class="text-xs">คงเหลือเดือนนี้</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.remainingSessionCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideClipboardCheck [size]="16"></svg>
+              <span class="text-xs">รอดำเนินการ</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.pendingActionCount }}</p>
+          </div>
+          <div class="rounded-xl border border-border bg-surface p-4">
+            <div class="flex items-center gap-2 text-text-secondary">
+              <svg lucideDumbbell [size]="16"></svg>
+              <span class="text-xs">ชั่วโมงสอนเดือนนี้</span>
+            </div>
+            <p class="mt-1 text-xl font-semibold text-text">{{ d.monthlyTeachingHours }} ชม.</p>
+          </div>
+        </div>
+
+        <div class="mt-3 flex flex-wrap gap-3 text-xs text-text-secondary">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-secondary-100 px-3 py-1">
+            <svg lucideRepeat [size]="14"></svg>
+            ฝึกซ้อมประจำ {{ d.routineSessionCount }} ครั้ง
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-secondary-100 px-3 py-1">
+            <svg lucideCalendarCheck2 [size]="14"></svg>
+            ฝึกซ้อมส่วนตัว {{ d.privateSessionCount }} ครั้ง
+          </span>
+        </div>
+
+        @if (d.todaySessions.length === 0 && d.upcomingSessions.length === 0) {
+          <div class="mt-6">
+            <app-empty-state title="ไม่มีเซสชันฝึกซ้อม" description="ยังไม่มีเซสชันฝึกซ้อมที่กำหนดไว้สำหรับวันนี้หรือช่วงถัดไป" />
+          </div>
+        } @else {
+          <!-- Today -->
+          <section class="mt-6">
+            <h2 class="text-sm font-semibold text-text">เซสชันวันนี้</h2>
+            @if (d.todaySessions.length === 0) {
+              <p class="mt-2 rounded-lg border border-dashed border-border p-3 text-sm text-text-secondary">
+                ไม่มีเซสชันฝึกซ้อมวันนี้
+              </p>
+            } @else {
+              <ul class="mt-2 flex flex-col gap-2">
+                @for (session of d.todaySessions; track session.trainingSessionId) {
+                  <li>
+                    <a
+                      [routerLink]="['/coach/sessions', session.trainingSessionId]"
+                      class="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary-300"
+                    >
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class="text-xs font-medium text-text-secondary">{{ trainingTypeLabel(session) }}</span>
+                          <app-status-badge [status]="session.status" />
+                        </div>
+                        <p class="mt-1 text-sm font-medium text-text">{{ timeRange(session) }}</p>
+                        @if (session.requiredNextAction) {
+                          <p class="mt-1 text-xs text-primary-700">{{ session.requiredNextAction }}</p>
+                        }
+                      </div>
+                      <svg lucideArrowRight [size]="18" class="shrink-0 text-text-secondary"></svg>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <!-- Upcoming -->
+          <section class="mt-6">
+            <h2 class="text-sm font-semibold text-text">เซสชันถัดไป</h2>
+            @if (d.upcomingSessions.length === 0) {
+              <p class="mt-2 rounded-lg border border-dashed border-border p-3 text-sm text-text-secondary">
+                ไม่มีเซสชันฝึกซ้อมถัดไป
+              </p>
+            } @else {
+              <ul class="mt-2 flex flex-col gap-2">
+                @for (session of d.upcomingSessions; track session.trainingSessionId) {
+                  <li>
+                    <a
+                      [routerLink]="['/coach/sessions', session.trainingSessionId]"
+                      class="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary-300"
+                    >
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class="text-xs font-medium text-text-secondary">{{ trainingTypeLabel(session) }}</span>
+                          <app-status-badge [status]="session.status" />
+                        </div>
+                        <p class="mt-1 text-sm font-medium text-text">{{ session.sessionDate }} · {{ timeRange(session) }}</p>
+                        @if (session.requiredNextAction) {
+                          <p class="mt-1 text-xs text-primary-700">{{ session.requiredNextAction }}</p>
+                        }
+                      </div>
+                      <svg lucideArrowRight [size]="18" class="shrink-0 text-text-secondary"></svg>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        }
+      }
+    }
+  }
+</div>

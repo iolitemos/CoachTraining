@@ -1,7 +1,7 @@
 namespace CoachTraining.Api.DTOs.Conflicts;
 
-/// <summary>A conflict between two recurring Routine Training schedules (same coach,
-/// overlapping day-of-week/time/effective-date-range) — FR-ROUTINE-008.</summary>
+/// <summary>A conflict between two Routine Training schedules for the same coach,
+/// selected date, and overlapping time.</summary>
 public class RoutineTemplateConflictDetail
 {
     public int ConflictingRoutineScheduleId { get; set; }

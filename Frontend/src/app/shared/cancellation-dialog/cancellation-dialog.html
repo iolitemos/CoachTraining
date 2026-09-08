@@ -1,0 +1,42 @@
+@if (open()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-md rounded-xl bg-surface p-5 shadow-lg">
+      <h2 class="text-base font-semibold text-text">ยืนยันการยกเลิกเซสชัน</h2>
+      <p class="mt-1 text-xs text-text-secondary">
+        เซสชันที่ยกเลิกจะยังคงอยู่ในประวัติ แต่จะไม่นับเป็นชั่วโมงสอนที่เสร็จสิ้น
+      </p>
+
+      @if (errorMessage()) {
+        <p class="mt-3 text-sm text-danger">{{ errorMessage() }}</p>
+      }
+
+      <label class="mt-4 flex flex-col gap-1 text-sm">
+        <span class="text-text-secondary">เหตุผลในการยกเลิก <span class="text-danger">*</span></span>
+        <textarea
+          rows="3"
+          [(ngModel)]="reason"
+          class="rounded-lg border border-border bg-surface px-3 py-2 text-text"
+        ></textarea>
+      </label>
+
+      <div class="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          (click)="dismiss()"
+          [disabled]="submitting()"
+          class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100 disabled:opacity-60"
+        >
+          ปิด
+        </button>
+        <button
+          type="button"
+          (click)="confirmCancel()"
+          [disabled]="submitting()"
+          class="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+        >
+          {{ submitting() ? 'กำลังยกเลิก...' : 'ยืนยันยกเลิกเซสชัน' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

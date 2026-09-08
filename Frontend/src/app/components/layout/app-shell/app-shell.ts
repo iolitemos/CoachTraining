@@ -2,7 +2,10 @@ import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
   LucideCalendarHeart,
+  LucideClipboardCheck,
+  LucideClipboardList,
   LucideDumbbell,
+  LucideFileBarChart,
   LucideLayoutDashboard,
   LucideLogOut,
   LucideMenu,
@@ -34,6 +37,9 @@ import { AuthService } from '../../../services/auth.service';
     LucideDumbbell,
     LucideRepeat,
     LucideCalendarHeart,
+    LucideClipboardCheck,
+    LucideFileBarChart,
+    LucideClipboardList,
     LucideLogOut,
   ],
   templateUrl: './app-shell.html',
@@ -56,5 +62,9 @@ export class AppShell {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  userInitial(fullName: string | undefined): string {
+    return fullName?.trim().charAt(0).toUpperCase() ?? '';
   }
 }

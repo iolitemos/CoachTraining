@@ -98,8 +98,7 @@ Core data:
 - Nickname
 - Contact Information
 - Email
-- Coach Type
-- Coaching Specialization
+- Bank Account Details (bank name, account number, account name) — reference data for teaching-compensation payment only; no rate calculation or payment processing (Coach Compensation Management remains out of scope)
 - Active / Inactive Status
 - Remarks
 
