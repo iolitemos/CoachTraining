@@ -16,6 +16,7 @@ import { EmptyState } from '../../shared/empty-state/empty-state';
 import { StatusBadge } from '../../shared/status-badge/status-badge';
 import { CoachDashboardResponse, CoachDashboardSession } from '../../models/coach-dashboard.model';
 import { CoachDashboardService } from '../../services/coach-dashboard.service';
+import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -40,6 +41,7 @@ type ViewState = 'loading' | 'error' | 'ready';
     LucideDumbbell,
     LucideHourglass,
     LucideRepeat,
+    DisplayDatePipe,
   ],
   templateUrl: './coach-home.html',
   styleUrl: './coach-home.css',

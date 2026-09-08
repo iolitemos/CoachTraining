@@ -59,7 +59,7 @@
             <div>
               <dt class="text-text-secondary">วันที่ / เวลาตามกำหนด</dt>
               <dd class="font-medium text-text">
-                {{ s.sessionDate }} · {{ s.scheduledStartDateTime | slice: 11 : 16 }} - {{ s.scheduledEndDateTime | slice: 11 : 16 }}
+                {{ s.sessionDate | displayDate }} · {{ s.scheduledStartDateTime | slice: 11 : 16 }} - {{ s.scheduledEndDateTime | slice: 11 : 16 }}
               </dd>
             </div>
             <div>

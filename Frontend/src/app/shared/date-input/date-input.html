@@ -1,0 +1,19 @@
+<div
+  class="relative flex min-h-10 min-w-38 items-center rounded-lg border border-border bg-surface px-3 py-2 text-sm focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500"
+  [class.bg-secondary-50]="disabled()"
+>
+  <span [class.text-text]="value()" [class.text-text-secondary]="!value()">
+    {{ value() ? (value() | displayDate) : 'เลือกวันที่' }}
+  </span>
+  <svg lucideCalendarDays [size]="16" class="ml-auto text-text-secondary"></svg>
+  <input
+    [id]="inputId()"
+    type="date"
+    [value]="value()"
+    [disabled]="disabled()"
+    [attr.aria-label]="ariaLabel()"
+    (input)="updateValue($event)"
+    (blur)="markTouched()"
+    class="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+  />
+</div>

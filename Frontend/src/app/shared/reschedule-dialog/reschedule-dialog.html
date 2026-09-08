@@ -22,11 +22,7 @@
       <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="flex flex-col gap-1 text-sm sm:col-span-2">
           <span class="text-text-secondary">วันที่ฝึกซ้อมใหม่ <span class="text-danger">*</span></span>
-          <input
-            type="date"
-            [(ngModel)]="sessionDate"
-            class="rounded-lg border border-border bg-surface px-3 py-2 text-text"
-          />
+          <app-date-input [(ngModel)]="sessionDate" ariaLabel="วันที่ฝึกซ้อมใหม่" />
         </label>
         <label class="flex flex-col gap-1 text-sm">
           <span class="text-text-secondary">เวลาเริ่ม <span class="text-danger">*</span></span>

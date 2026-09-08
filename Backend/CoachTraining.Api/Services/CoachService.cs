@@ -135,8 +135,15 @@ public class CoachService : ICoachService
     public async Task<List<CoachOptionDto>> GetActiveOptionsAsync() =>
         await _db.Coaches
             .Where(c => c.IsActive)
-            .OrderBy(c => c.FullName)
-            .Select(c => new CoachOptionDto { CoachId = c.CoachId, CoachCode = c.CoachCode, FullName = c.FullName })
+            .OrderBy(c => c.Nickname ?? c.FullName)
+            .Select(c => new CoachOptionDto
+            {
+                CoachId = c.CoachId,
+                CoachCode = c.CoachCode,
+                FullName = c.FullName,
+                Nickname = c.Nickname,
+                ColorHex = c.ColorHex,
+            })
             .ToListAsync();
 
     private static CoachListItemDto MapToListItem(Coach coach) => new()

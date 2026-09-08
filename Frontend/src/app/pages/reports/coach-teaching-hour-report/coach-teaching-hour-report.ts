@@ -9,19 +9,35 @@ import { TrainingType } from '../../../models/training-session.model';
 import { CoachTeachingHourReportResponse } from '../../../models/coach-teaching-hour-report.model';
 import { CoachService } from '../../../services/coach.service';
 import { CoachTeachingHourReportService } from '../../../services/coach-teaching-hour-report.service';
+import { DateInput } from '../../../shared/date-input/date-input';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
+function currentMonthRange(): { startDate: string; endDate: string } {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const format = (date: Date): string => {
+    const monthPart = String(date.getMonth() + 1).padStart(2, '0');
+    const dayPart = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${monthPart}-${dayPart}`;
+  };
+
+  return {
+    startDate: format(new Date(year, month, 1)),
+    endDate: format(new Date(year, month + 1, 0)),
+  };
+}
+
 /**
- * Coach Teaching-Hour Report (requirement.md 6.18, FR-RPT-COACH-001–009,
- * todo.md 5.15). Hours are credited to the coach who actually taught each
- * session — a substitute coach's hours, not the originally assigned coach's
+ * Coach teaching-day report. Days are credited to the coach who actually taught each
+ * session — a substitute coach's days, not the originally assigned coach's
  * (FR-SUB, requirement.md 4.4) — noted in the page so the distinction reads
  * clearly even though the report itself aggregates by actual coach only.
  */
 @Component({
   selector: 'app-coach-teaching-hour-report',
-  imports: [FormsModule, PageHeader, LoadingIndicator, EmptyState, ErrorState],
+  imports: [FormsModule, PageHeader, LoadingIndicator, EmptyState, ErrorState, DateInput],
   templateUrl: './coach-teaching-hour-report.html',
   styleUrl: './coach-teaching-hour-report.css',
 })
@@ -31,8 +47,8 @@ export class CoachTeachingHourReport implements OnInit {
   coachOptions = signal<CoachOption[]>([]);
 
   coachId: number | null = null;
-  startDate = '';
-  endDate = '';
+  startDate = currentMonthRange().startDate;
+  endDate = currentMonthRange().endDate;
   trainingType: TrainingType | '' = '';
 
   constructor(

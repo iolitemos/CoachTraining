@@ -37,7 +37,7 @@
                     <p class="text-xs text-warning">ยังไม่ได้บันทึกสถานะ</p>
                   } @else if (item.recordedDate) {
                     <p class="text-xs text-text-secondary">
-                      บันทึกล่าสุด: {{ item.recordedDate | slice: 0 : 10 }} {{ item.recordedDate | slice: 11 : 16 }}
+                      บันทึกล่าสุด: {{ item.recordedDate | displayDate }} {{ item.recordedDate | slice: 11 : 16 }}
                     </p>
                   }
                 </div>

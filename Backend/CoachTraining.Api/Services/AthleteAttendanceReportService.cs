@@ -22,6 +22,7 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
             // original time; its attendance (if any was recorded before the move)
             // must not double-count against the replacement session.
             .Where(a => a.TrainingSession.Status != SessionStatus.Rescheduled)
+            .Where(a => a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late)
             .AsQueryable();
 
         if (filter.AthleteId is not null)
@@ -45,6 +46,7 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
                 a.AthleteId,
                 a.AthleteCodeSnapshot,
                 a.AthleteNameSnapshot,
+                a.Athlete.Nickname,
                 a.TrainingSessionId,
                 a.TrainingSession.TrainingType,
                 a.TrainingSession.SessionDate,
@@ -55,18 +57,15 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
             .ToListAsync();
 
         var items = records
-            .GroupBy(r => new { r.AthleteId, r.AthleteCodeSnapshot, r.AthleteNameSnapshot })
+            .GroupBy(r => new { r.AthleteId, r.AthleteCodeSnapshot, r.AthleteNameSnapshot, r.Nickname })
             .Select(g => new AthleteAttendanceReportItemDto
             {
                 AthleteId = g.Key.AthleteId,
                 AthleteCode = g.Key.AthleteCodeSnapshot,
                 FullName = g.Key.AthleteNameSnapshot,
-                RoutinePresentCount = g.Count(r => r.TrainingType == TrainingType.Routine && r.Status == AttendanceStatus.Present),
-                RoutineLateCount = g.Count(r => r.TrainingType == TrainingType.Routine && r.Status == AttendanceStatus.Late),
-                PrivatePresentCount = g.Count(r => r.TrainingType == TrainingType.Private && r.Status == AttendanceStatus.Present),
-                PrivateAbsentCount = g.Count(r => r.TrainingType == TrainingType.Private && r.Status == AttendanceStatus.Absent),
-                PrivateLateCount = g.Count(r => r.TrainingType == TrainingType.Private && r.Status == AttendanceStatus.Late),
-                PrivateExcusedCount = g.Count(r => r.TrainingType == TrainingType.Private && r.Status == AttendanceStatus.Excused),
+                Nickname = g.Key.Nickname,
+                RoutineAttendanceCount = g.Count(r => r.TrainingType == TrainingType.Routine),
+                PrivateAttendanceCount = g.Count(r => r.TrainingType == TrainingType.Private),
                 Records = g
                     .OrderByDescending(r => r.SessionDate)
                     .Select(r => new AthleteAttendanceRecordDto
@@ -80,7 +79,7 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
                     })
                     .ToList(),
             })
-            .OrderBy(i => i.FullName)
+            .OrderBy(i => i.Nickname ?? i.FullName)
             .ToList();
 
         return new AthleteAttendanceReportResponseDto { Items = items };

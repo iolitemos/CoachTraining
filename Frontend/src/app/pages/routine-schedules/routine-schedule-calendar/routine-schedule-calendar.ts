@@ -9,6 +9,7 @@ import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indi
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
 import { ApiErrorBody } from '../../../models/paged-result.model';
+import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -25,7 +26,7 @@ const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.
 
 @Component({
   selector: 'app-routine-schedule-calendar',
-  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, ConfirmationDialog],
+  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, ConfirmationDialog, DisplayDatePipe],
   templateUrl: './routine-schedule-calendar.html',
   styleUrl: './routine-schedule-calendar.css',
 })

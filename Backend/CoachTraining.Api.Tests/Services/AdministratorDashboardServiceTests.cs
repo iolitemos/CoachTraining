@@ -13,7 +13,14 @@ public class AdministratorDashboardServiceTests
 
     private static async Task<Coach> SeedCoachAsync(Data.ApplicationDbContext db, string code = "C001")
     {
-        var coach = new Coach { CoachCode = code, FullName = $"Coach {code}", IsActive = true };
+        var coach = new Coach
+        {
+            CoachCode = code,
+            FullName = $"Coach {code}",
+            Nickname = $"Nick {code}",
+            ColorHex = "#10B981",
+            IsActive = true,
+        };
         db.Coaches.Add(coach);
         await db.SaveChangesAsync();
         return coach;
@@ -21,7 +28,13 @@ public class AdministratorDashboardServiceTests
 
     private static async Task<Athlete> SeedAthleteAsync(Data.ApplicationDbContext db, string code = "A001")
     {
-        var athlete = new Athlete { AthleteCode = code, FullName = $"Athlete {code}", IsActive = true };
+        var athlete = new Athlete
+        {
+            AthleteCode = code,
+            FullName = $"Athlete {code}",
+            Nickname = $"Student {code}",
+            IsActive = true,
+        };
         db.Athletes.Add(athlete);
         await db.SaveChangesAsync();
         return athlete;
@@ -100,7 +113,10 @@ public class AdministratorDashboardServiceTests
         substituted.ActualCoachCodeSnapshot = substituteCoach.CoachCode;
         substituted.ActualCoachNameSnapshot = substituteCoach.FullName;
 
-        db.TrainingSessions.AddRange(substituted, BuildSession(assignedCoach, today, SessionStatus.Scheduled));
+        db.TrainingSessions.AddRange(
+            substituted,
+            BuildSession(assignedCoach, today, SessionStatus.Scheduled),
+            BuildSession(assignedCoach, today, SessionStatus.Scheduled, TrainingType.Private));
         await db.SaveChangesAsync();
 
         var service = CreateService(db);
@@ -108,51 +124,49 @@ public class AdministratorDashboardServiceTests
 
         var substituteEntry = Assert.Single(result.CoachesTeachingToday, c => c.CoachId == substituteCoach.CoachId);
         Assert.Equal(1, substituteEntry.SessionCount);
-        var assignedEntry = Assert.Single(result.CoachesTeachingToday, c => c.CoachId == assignedCoach.CoachId);
-        Assert.Equal(1, assignedEntry.SessionCount);
+        Assert.Equal("Nick C002", substituteEntry.CoachNickname);
+        Assert.Equal("#10B981", substituteEntry.CoachColorHex);
+        Assert.Equal(TrainingType.Routine, substituteEntry.TrainingType);
+
+        var assignedEntries = result.CoachesTeachingToday.Where(c => c.CoachId == assignedCoach.CoachId).ToList();
+        Assert.Equal(2, assignedEntries.Count);
+        Assert.Contains(assignedEntries, c => c.TrainingType == TrainingType.Routine && c.SessionCount == 1);
+        Assert.Contains(assignedEntries, c => c.TrainingType == TrainingType.Private && c.SessionCount == 1);
     }
 
     [Fact]
-    public async Task GetDashboardAsync_AggregatesAttendanceSummaryAcrossRange()
+    public async Task GetDashboardAsync_ListsParticipationOnlyAndSplitsAttendanceByTrainingType()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
         var athlete = await SeedAthleteAsync(db);
-        var session = BuildSession(coach, new DateOnly(2026, 1, 5), SessionStatus.Completed, type: TrainingType.Private);
-        db.TrainingSessions.Add(session);
+        var routineSession = BuildSession(coach, new DateOnly(2026, 1, 5), SessionStatus.Completed);
+        var privateSession = BuildSession(coach, new DateOnly(2026, 1, 6), SessionStatus.Completed, type: TrainingType.Private);
+        db.TrainingSessions.AddRange(routineSession, privateSession);
         await db.SaveChangesAsync();
 
         db.Attendances.AddRange(
-            new Attendance { TrainingSessionId = session.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Present },
-            new Attendance { TrainingSessionId = session.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Late });
+            new Attendance { TrainingSessionId = routineSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Present },
+            new Attendance { TrainingSessionId = privateSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Late });
         await db.SaveChangesAsync();
 
         var service = CreateService(db);
         var filter = new AdministratorDashboardFilterRequest { StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 1, 31) };
         var result = await service.GetDashboardAsync(filter, new DateTime(2026, 1, 10, 9, 0, 0));
 
-        Assert.Equal(1, result.AttendanceSummary.PresentCount);
-        Assert.Equal(1, result.AttendanceSummary.LateCount);
-    }
+        Assert.Equal(1, result.AttendanceSummary.Routine.TotalAttendance);
+        Assert.Equal("Student A001", Assert.Single(result.AttendanceSummary.Routine.Athletes).AthleteName);
+        Assert.Equal(1, result.AttendanceSummary.Private.TotalAttendance);
+        Assert.Equal("Student A001", Assert.Single(result.AttendanceSummary.Private.Athletes).AthleteName);
 
-    [Fact]
-    public async Task GetDashboardAsync_ComputesCoachTeachingHoursSplitByType()
-    {
-        using var db = TestDbContextFactory.Create();
-        var coach = await SeedCoachAsync(db);
+        Assert.Equal(31, result.AttendanceSummary.Routine.DailySummaries.Count);
+        var routineDay = Assert.Single(result.AttendanceSummary.Routine.DailySummaries, d => d.Date == new DateOnly(2026, 1, 5));
+        Assert.Equal(1, routineDay.TotalAttendance);
+        Assert.Equal(1, Assert.Single(routineDay.Attendances).AttendanceCount);
+        Assert.Equal("Nick C001", Assert.Single(routineDay.Coaches).CoachNickname);
 
-        db.TrainingSessions.AddRange(
-            BuildSession(coach, new DateOnly(2026, 1, 5), SessionStatus.Completed, actualStart: new DateTime(2026, 1, 5, 17, 0, 0), actualEnd: new DateTime(2026, 1, 5, 19, 0, 0)),
-            BuildSession(coach, new DateOnly(2026, 1, 6), SessionStatus.Completed, type: TrainingType.Private, actualStart: new DateTime(2026, 1, 6, 17, 0, 0), actualEnd: new DateTime(2026, 1, 6, 18, 0, 0)));
-        await db.SaveChangesAsync();
-
-        var service = CreateService(db);
-        var filter = new AdministratorDashboardFilterRequest { StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 1, 31) };
-        var result = await service.GetDashboardAsync(filter, new DateTime(2026, 1, 10, 9, 0, 0));
-
-        var entry = Assert.Single(result.CoachTeachingHours);
-        Assert.Equal(2m, entry.RoutineHours);
-        Assert.Equal(1m, entry.PrivateHours);
-        Assert.Equal(3m, entry.TotalHours);
+        var privateDay = Assert.Single(result.AttendanceSummary.Private.DailySummaries, d => d.Date == new DateOnly(2026, 1, 6));
+        Assert.Equal(1, privateDay.TotalAttendance);
+        Assert.Equal("Nick C001", Assert.Single(privateDay.Coaches).CoachNickname);
     }
 }

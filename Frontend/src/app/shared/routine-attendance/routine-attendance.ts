@@ -9,6 +9,7 @@ import { AthleteOption } from '../../models/athlete.model';
 import { RoutineAttendanceItem, RoutineAttendanceStatus } from '../../models/routine-attendance.model';
 import { AthleteService } from '../../services/athlete.service';
 import { RoutineAttendanceService } from '../../services/routine-attendance.service';
+import { DisplayDatePipe } from '../display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -19,7 +20,7 @@ type ViewState = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-routine-attendance',
-  imports: [FormsModule, SlicePipe, LoadingIndicator, ErrorState, ConfirmationDialog, LucideSearch, LucideUserPlus, LucideTrash2],
+  imports: [FormsModule, SlicePipe, LoadingIndicator, ErrorState, ConfirmationDialog, LucideSearch, LucideUserPlus, LucideTrash2, DisplayDatePipe],
   templateUrl: './routine-attendance.html',
   styleUrl: './routine-attendance.css',
 })

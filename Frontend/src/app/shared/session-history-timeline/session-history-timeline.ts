@@ -15,6 +15,7 @@ import { getApprovalActionLabel } from '../../models/approval.model';
 import { HistoryService } from '../../services/history.service';
 import { ApprovalService } from '../../services/approval.service';
 import { SubstituteCoachService } from '../../services/substitute-coach.service';
+import { DisplayDatePipe } from '../display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -50,6 +51,7 @@ const CONFLICT_TYPE_LABELS_TH: Record<ConflictType, string> = {
     LucideClipboardCheck,
     LucideCircleAlert,
     LucideCalendarClock,
+    DisplayDatePipe,
   ],
   templateUrl: './session-history-timeline.html',
   styleUrl: './session-history-timeline.css',

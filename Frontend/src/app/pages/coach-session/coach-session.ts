@@ -23,6 +23,7 @@ import { CancellationDialog } from '../../shared/cancellation-dialog/cancellatio
 import { RescheduleDialog } from '../../shared/reschedule-dialog/reschedule-dialog';
 import { ApprovalActionDialog } from '../../shared/approval-action-dialog/approval-action-dialog';
 import { SessionHistoryTimeline } from '../../shared/session-history-timeline/session-history-timeline';
+import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 import { ApiErrorBody } from '../../models/paged-result.model';
 import { TrainingLog, TrainingSessionDetail } from '../../models/training-session.model';
 import { SubstituteCoachResponse } from '../../models/substitute-coach.model';
@@ -63,6 +64,7 @@ const NON_EDITABLE_STATUSES = ['Submitted', 'Approved', 'Locked', 'Cancelled', '
     RescheduleDialog,
     ApprovalActionDialog,
     SessionHistoryTimeline,
+    DisplayDatePipe,
     LucidePlay,
     LucideCircleCheckBig,
     LucideSend,

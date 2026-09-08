@@ -1,22 +1,24 @@
 import { TrainingType } from './training-session.model';
 
-/** One coach's teaching-hour totals for the filtered range (FR-RPT-COACH-001–009). */
+/** One coach's distinct teaching-day totals for the filtered range. */
 export interface CoachTeachingHourReportItem {
   coachId: number;
   coachCode: string;
   coachFullName: string;
+  coachNickname: string | null;
+  coachColorHex: string;
   sessionCount: number;
-  routineHours: number;
-  privateHours: number;
-  totalHours: number;
+  routineDays: number;
+  privateDays: number;
+  totalDays: number;
 }
 
 /** Coach Teaching-Hour Report response (requirement.md 6.18, todo.md 4.18/5.15). */
 export interface CoachTeachingHourReportResponse {
   items: CoachTeachingHourReportItem[];
-  totalRoutineHours: number;
-  totalPrivateHours: number;
-  grandTotalHours: number;
+  totalRoutineDays: number;
+  totalPrivateDays: number;
+  grandTotalDays: number;
 }
 
 export interface CoachTeachingHourReportFilter {

@@ -47,12 +47,13 @@ public class CoachTeachingHourReportService : ICoachTeachingHourReportService
             .Select(s => new
             {
                 s.TrainingType,
+                s.SessionDate,
                 s.Status,
-                s.ActualStartDateTime,
-                s.ActualEndDateTime,
                 CreditedCoachId = s.ActualCoachId ?? s.AssignedCoachId,
                 CreditedCoachCode = s.ActualCoachId != null ? s.ActualCoachCodeSnapshot! : s.AssignedCoachCodeSnapshot,
                 CreditedCoachName = s.ActualCoachId != null ? s.ActualCoachNameSnapshot! : s.AssignedCoachNameSnapshot,
+                CreditedCoachNickname = s.ActualCoachId != null ? s.ActualCoach!.Nickname : s.AssignedCoach.Nickname,
+                CreditedCoachColorHex = s.ActualCoachId != null ? s.ActualCoach!.ColorHex : s.AssignedCoach.ColorHex,
             })
             .ToListAsync();
 
@@ -61,35 +62,50 @@ public class CoachTeachingHourReportService : ICoachTeachingHourReportService
         // sessions, and only counts sessions that reached Completed or a later
         // finalized status per the approval rules.
         var items = sessions
-            .Where(s => _sessionStatusService.CountsAsCompletedTeaching(s.Status) && s.ActualStartDateTime is not null && s.ActualEndDateTime is not null)
-            .GroupBy(s => new { s.CreditedCoachId, s.CreditedCoachCode, s.CreditedCoachName })
+            .Where(s => _sessionStatusService.CountsAsCompletedTeaching(s.Status))
+            .GroupBy(s => new
+            {
+                s.CreditedCoachId,
+                s.CreditedCoachCode,
+                s.CreditedCoachName,
+                s.CreditedCoachNickname,
+                s.CreditedCoachColorHex,
+            })
             .Select(g =>
             {
-                var routineHours = Math.Round((decimal)g.Where(s => s.TrainingType == TrainingType.Routine)
-                    .Sum(s => (s.ActualEndDateTime!.Value - s.ActualStartDateTime!.Value).TotalHours), 2);
-                var privateHours = Math.Round((decimal)g.Where(s => s.TrainingType == TrainingType.Private)
-                    .Sum(s => (s.ActualEndDateTime!.Value - s.ActualStartDateTime!.Value).TotalHours), 2);
+                var routineDays = g.Where(s => s.TrainingType == TrainingType.Routine)
+                    .Select(s => s.SessionDate)
+                    .Distinct()
+                    .Count();
+                var privateDays = g.Where(s => s.TrainingType == TrainingType.Private)
+                    .Select(s => s.SessionDate)
+                    .Distinct()
+                    .Count();
+                var totalDays = g.Select(s => s.SessionDate).Distinct().Count();
 
                 return new CoachTeachingHourReportItemDto
                 {
                     CoachId = g.Key.CreditedCoachId,
                     CoachCode = g.Key.CreditedCoachCode,
                     CoachFullName = g.Key.CreditedCoachName,
+                    CoachNickname = g.Key.CreditedCoachNickname,
+                    CoachColorHex = g.Key.CreditedCoachColorHex,
                     SessionCount = g.Count(),
-                    RoutineHours = routineHours,
-                    PrivateHours = privateHours,
-                    TotalHours = routineHours + privateHours,
+                    RoutineDays = routineDays,
+                    PrivateDays = privateDays,
+                    TotalDays = totalDays,
                 };
             })
-            .OrderByDescending(i => i.TotalHours)
+            .OrderByDescending(i => i.TotalDays)
+            .ThenBy(i => i.CoachCode)
             .ToList();
 
         return new CoachTeachingHourReportResponseDto
         {
             Items = items,
-            TotalRoutineHours = items.Sum(i => i.RoutineHours),
-            TotalPrivateHours = items.Sum(i => i.PrivateHours),
-            GrandTotalHours = items.Sum(i => i.TotalHours),
+            TotalRoutineDays = items.Sum(i => i.RoutineDays),
+            TotalPrivateDays = items.Sum(i => i.PrivateDays),
+            GrandTotalDays = items.Sum(i => i.TotalDays),
         };
     }
 }

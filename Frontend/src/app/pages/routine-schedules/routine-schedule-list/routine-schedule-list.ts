@@ -9,12 +9,10 @@ import { EmptyState } from '../../../shared/empty-state/empty-state';
 import { ErrorState } from '../../../shared/error-state/error-state';
 import { Pagination } from '../../../shared/pagination/pagination';
 import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
-import {
-  getRoutineScheduleDisplayName,
-  RoutineScheduleListItem,
-} from '../../../models/routine-schedule.model';
+import { RoutineScheduleListItem } from '../../../models/routine-schedule.model';
 import { RoutineScheduleService } from '../../../services/routine-schedule.service';
 import { ApiErrorBody } from '../../../models/paged-result.model';
+import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -31,6 +29,7 @@ type ViewState = 'loading' | 'error' | 'ready';
     ConfirmationDialog,
     LucidePencil,
     LucideTrash2,
+    DisplayDatePipe,
   ],
   templateUrl: './routine-schedule-list.html',
   styleUrl: './routine-schedule-list.css',
@@ -46,8 +45,6 @@ export class RoutineScheduleList implements OnInit {
   pendingDelete = signal<RoutineScheduleListItem | null>(null);
   deleteProcessing = signal(false);
   actionError = signal<string | null>(null);
-
-  getRoutineScheduleDisplayName = getRoutineScheduleDisplayName;
 
   constructor(private readonly routineScheduleService: RoutineScheduleService) {}
 

@@ -53,12 +53,7 @@
 
         <div>
           <label for="dateOfBirth" class="mb-1 block text-sm font-medium text-text">วันเกิด</label>
-          <input
-            id="dateOfBirth"
-            type="date"
-            formControlName="dateOfBirth"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-          />
+          <app-date-input class="block w-full" inputId="dateOfBirth" formControlName="dateOfBirth" ariaLabel="วันเกิด" />
         </div>
       </div>
 
@@ -108,12 +103,7 @@
 
       <div>
         <label for="joinDate" class="mb-1 block text-sm font-medium text-text">วันที่เข้าร่วม</label>
-        <input
-          id="joinDate"
-          type="date"
-          formControlName="joinDate"
-          class="w-full max-w-xs rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-        />
+        <app-date-input class="block w-full max-w-xs" inputId="joinDate" formControlName="joinDate" ariaLabel="วันที่เข้าร่วม" />
       </div>
 
       <div>

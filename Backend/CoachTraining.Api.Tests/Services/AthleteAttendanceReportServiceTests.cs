@@ -20,7 +20,13 @@ public class AthleteAttendanceReportServiceTests
 
     private static async Task<Athlete> SeedAthleteAsync(Data.ApplicationDbContext db, string code = "A001")
     {
-        var athlete = new Athlete { AthleteCode = code, FullName = $"Athlete {code}", IsActive = true };
+        var athlete = new Athlete
+        {
+            AthleteCode = code,
+            FullName = $"Athlete {code}",
+            Nickname = $"Nick {code}",
+            IsActive = true,
+        };
         db.Athletes.Add(athlete);
         await db.SaveChangesAsync();
         return athlete;
@@ -46,26 +52,28 @@ public class AthleteAttendanceReportServiceTests
     }
 
     [Fact]
-    public async Task GetReportAsync_SplitsCountsByTrainingTypeAndStatus()
+    public async Task GetReportAsync_CountsParticipationByTrainingTypeAndExcludesNonAttendance()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
         var athlete = await SeedAthleteAsync(db);
         var routineSession = await SeedSessionAsync(db, coach, new DateOnly(2026, 1, 5), TrainingType.Routine);
         var privateSession = await SeedSessionAsync(db, coach, new DateOnly(2026, 1, 6), TrainingType.Private);
+        var absentPrivateSession = await SeedSessionAsync(db, coach, new DateOnly(2026, 1, 7), TrainingType.Private);
 
         db.Attendances.AddRange(
             new Attendance { TrainingSessionId = routineSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Present },
-            new Attendance { TrainingSessionId = privateSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Absent });
+            new Attendance { TrainingSessionId = privateSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Late },
+            new Attendance { TrainingSessionId = absentPrivateSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Absent });
         await db.SaveChangesAsync();
 
         var service = CreateService(db);
         var result = await service.GetReportAsync(new AthleteAttendanceReportFilter());
 
         var item = Assert.Single(result.Items);
-        Assert.Equal(1, item.RoutinePresentCount);
-        Assert.Equal(0, item.RoutineLateCount);
-        Assert.Equal(1, item.PrivateAbsentCount);
+        Assert.Equal("Nick A001", item.Nickname);
+        Assert.Equal(1, item.RoutineAttendanceCount);
+        Assert.Equal(1, item.PrivateAttendanceCount);
         Assert.Equal(2, item.Records.Count);
     }
 

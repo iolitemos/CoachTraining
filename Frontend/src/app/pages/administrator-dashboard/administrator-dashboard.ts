@@ -2,12 +2,6 @@ import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
-  LucideCalendarCheck2,
-  LucideCalendarX,
-  LucideCircleCheckBig,
-  LucideDumbbell,
-  LucideHourglass,
-  LucideRepeat,
   LucideUsers,
 } from '@lucide/angular';
 import { PageHeader } from '../../shared/page-header/page-header';
@@ -16,9 +10,11 @@ import { ErrorState } from '../../shared/error-state/error-state';
 import { EmptyState } from '../../shared/empty-state/empty-state';
 import { CoachOption } from '../../models/coach.model';
 import { TrainingType } from '../../models/training-session.model';
-import { AdministratorDashboardResponse } from '../../models/administrator-dashboard.model';
+import { AdministratorDashboardResponse, CoachTeachingToday } from '../../models/administrator-dashboard.model';
 import { CoachService } from '../../services/coach.service';
 import { AdministratorDashboardService } from '../../services/administrator-dashboard.service';
+import { DateInput } from '../../shared/date-input/date-input';
+import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -36,13 +32,9 @@ type ViewState = 'loading' | 'error' | 'ready';
     LoadingIndicator,
     ErrorState,
     EmptyState,
-    LucideCalendarCheck2,
-    LucideCalendarX,
-    LucideCircleCheckBig,
-    LucideDumbbell,
-    LucideHourglass,
-    LucideRepeat,
     LucideUsers,
+    DateInput,
+    DisplayDatePipe,
   ],
   templateUrl: './administrator-dashboard.html',
   styleUrl: './administrator-dashboard.css',
@@ -63,8 +55,19 @@ export class AdministratorDashboard implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const today = new Date();
+    this.startDate = this.toDateInputValue(new Date(today.getFullYear(), today.getMonth(), 1));
+    this.endDate = this.toDateInputValue(new Date(today.getFullYear(), today.getMonth() + 1, 0));
     void this.coachService.getActiveOptions().then((options) => this.coachOptions.set(options));
     void this.load();
+  }
+
+  coachesByType(trainingType: TrainingType | string): CoachTeachingToday[] {
+    return this.dashboard()?.coachesTeachingToday.filter((coach) => coach.trainingType === trainingType) ?? [];
+  }
+
+  attendanceCount(attendances: { athleteId: number; attendanceCount: number }[], athleteId: number): number {
+    return attendances.find((attendance) => attendance.athleteId === athleteId)?.attendanceCount ?? 0;
   }
 
   async load(): Promise<void> {
@@ -86,5 +89,12 @@ export class AdministratorDashboard implements OnInit {
 
   applyFilters(): void {
     void this.load();
+  }
+
+  private toDateInputValue(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

@@ -1,4 +1,4 @@
-<app-page-header title="รายงานชั่วโมงสอนของโค้ช" subtitle="สรุปชั่วโมงสอนแยกฝึกซ้อมประจำและฝึกซ้อมส่วนตัว" />
+<app-page-header title="รายงานวันเข้าสอนของโค้ช" subtitle="สรุปจำนวนวันที่เข้าสอน แยกฝึกซ้อมประจำและฝึกซ้อมส่วนตัว" />
 
 <div class="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-surface p-3">
   <label class="flex flex-col gap-1 text-sm">
@@ -6,19 +6,19 @@
     <select [(ngModel)]="coachId" class="rounded-lg border border-border bg-surface px-3 py-2 text-text">
       <option [ngValue]="null">ทั้งหมด</option>
       @for (coach of coachOptions(); track coach.coachId) {
-        <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName }}</option>
+        <option [ngValue]="coach.coachId">{{ coach.nickname || coach.fullName }}</option>
       }
     </select>
   </label>
 
   <label class="flex flex-col gap-1 text-sm">
     <span class="text-text-secondary">ตั้งแต่วันที่</span>
-    <input type="date" [(ngModel)]="startDate" class="rounded-lg border border-border bg-surface px-3 py-2 text-text" />
+    <app-date-input [(ngModel)]="startDate" ariaLabel="ตั้งแต่วันที่" />
   </label>
 
   <label class="flex flex-col gap-1 text-sm">
     <span class="text-text-secondary">ถึงวันที่</span>
-    <input type="date" [(ngModel)]="endDate" class="rounded-lg border border-border bg-surface px-3 py-2 text-text" />
+    <app-date-input [(ngModel)]="endDate" ariaLabel="ถึงวันที่" />
   </label>
 
   <label class="flex flex-col gap-1 text-sm">
@@ -40,7 +40,7 @@
 </div>
 
 <p class="mt-2 text-xs text-text-secondary">
-  ชั่วโมงสอนจะถูกนับให้กับโค้ชที่สอนจริง หากมีการเปลี่ยนโค้ชตัวแทน ชั่วโมงจะถูกโอนไปยังโค้ชตัวแทนแทนโค้ชที่ได้รับมอบหมายเดิม
+  นับวันที่เข้าสอนให้กับโค้ชที่สอนจริง โดยหลายเซสชันในวันเดียวกันจะนับเป็น 1 วัน และกรณีโค้ชตัวแทนจะนับให้โค้ชตัวแทน
 </p>
 
 <div class="mt-4">
@@ -54,36 +54,42 @@
     @case ('ready') {
       @if (report(); as r) {
         @if (r.items.length === 0) {
-          <app-empty-state title="ไม่พบข้อมูลชั่วโมงสอน" description="ลองปรับตัวกรองแล้วค้นหาอีกครั้ง" />
+          <app-empty-state title="ไม่พบข้อมูลวันเข้าสอน" description="ลองปรับตัวกรองแล้วค้นหาอีกครั้ง" />
         } @else {
           <div class="overflow-x-auto rounded-xl border border-border bg-surface">
             <table class="w-full min-w-160 text-left text-sm">
               <thead class="border-b border-border text-text-secondary">
                 <tr>
                   <th class="px-4 py-3 font-medium">โค้ช</th>
-                  <th class="px-4 py-3 font-medium">จำนวนเซสชัน</th>
-                  <th class="px-4 py-3 font-medium">ฝึกซ้อมประจำ (ชม.)</th>
-                  <th class="px-4 py-3 font-medium">ฝึกซ้อมส่วนตัว (ชม.)</th>
-                  <th class="px-4 py-3 font-medium">รวม (ชม.)</th>
+                  <th class="px-4 py-3 text-center font-medium">ฝึกซ้อมประจำ (วัน)</th>
+                  <th class="px-4 py-3 text-center font-medium">ฝึกซ้อมส่วนตัว (วัน)</th>
+                  <th class="px-4 py-3 text-center font-medium">รวมวันเข้าสอน</th>
                 </tr>
               </thead>
               <tbody>
                 @for (item of r.items; track item.coachId) {
                   <tr class="border-b border-border last:border-0">
-                    <td class="px-4 py-3 font-medium text-text">{{ item.coachCode }} — {{ item.coachFullName }}</td>
-                    <td class="px-4 py-3 text-text-secondary">{{ item.sessionCount }}</td>
-                    <td class="px-4 py-3 text-text-secondary">{{ item.routineHours }}</td>
-                    <td class="px-4 py-3 text-text-secondary">{{ item.privateHours }}</td>
-                    <td class="px-4 py-3 font-medium text-text">{{ item.totalHours }}</td>
+                    <td class="px-4 py-3 font-medium text-text">
+                      <span class="inline-flex items-center gap-2">
+                        <span
+                          class="h-3 w-3 shrink-0 rounded-full ring-2 ring-white"
+                          [style.background-color]="item.coachColorHex"
+                        ></span>
+                        {{ item.coachNickname || item.coachFullName }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-center text-text-secondary">{{ item.routineDays }}</td>
+                    <td class="px-4 py-3 text-center text-text-secondary">{{ item.privateDays }}</td>
+                    <td class="px-4 py-3 text-center font-medium text-text">{{ item.totalDays }}</td>
                   </tr>
                 }
               </tbody>
               <tfoot>
                 <tr class="border-t border-border bg-secondary-100/50 font-semibold text-text">
-                  <td class="px-4 py-3" colspan="2">รวมทั้งหมด</td>
-                  <td class="px-4 py-3">{{ r.totalRoutineHours }}</td>
-                  <td class="px-4 py-3">{{ r.totalPrivateHours }}</td>
-                  <td class="px-4 py-3">{{ r.grandTotalHours }}</td>
+                  <td class="px-4 py-3">รวมทั้งหมด</td>
+                  <td class="px-4 py-3 text-center">{{ r.totalRoutineDays }}</td>
+                  <td class="px-4 py-3 text-center">{{ r.totalPrivateDays }}</td>
+                  <td class="px-4 py-3 text-center">{{ r.grandTotalDays }}</td>
                 </tr>
               </tfoot>
             </table>

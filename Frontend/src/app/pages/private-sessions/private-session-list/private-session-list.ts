@@ -9,12 +9,13 @@ import { Pagination } from '../../../shared/pagination/pagination';
 import { StatusBadge } from '../../../shared/status-badge/status-badge';
 import { PrivateSessionListItem } from '../../../models/private-session.model';
 import { PrivateSessionService } from '../../../services/private-session.service';
+import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
 @Component({
   selector: 'app-private-session-list',
-  imports: [RouterLink, PageHeader, SearchFilterToolbar, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge],
+  imports: [RouterLink, PageHeader, SearchFilterToolbar, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe],
   templateUrl: './private-session-list.html',
   styleUrl: './private-session-list.css',
 })

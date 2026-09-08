@@ -37,7 +37,7 @@ public class CoachTeachingHourReportController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Route: api/reports/coach-teaching-hours Controller: CoachTeachingHourReportController Function: Get UserId: {UserId}", _currentUser.UserId);
-            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถโหลดรายงานชั่วโมงสอนได้"));
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถโหลดรายงานวันเข้าสอนได้"));
         }
     }
 }

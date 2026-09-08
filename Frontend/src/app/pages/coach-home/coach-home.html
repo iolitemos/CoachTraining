@@ -111,7 +111,7 @@
                           <span class="text-xs font-medium text-text-secondary">{{ trainingTypeLabel(session) }}</span>
                           <app-status-badge [status]="session.status" />
                         </div>
-                        <p class="mt-1 text-sm font-medium text-text">{{ session.sessionDate }} · {{ timeRange(session) }}</p>
+                        <p class="mt-1 text-sm font-medium text-text">{{ session.sessionDate | displayDate }} · {{ timeRange(session) }}</p>
                         @if (session.requiredNextAction) {
                           <p class="mt-1 text-xs text-primary-700">{{ session.requiredNextAction }}</p>
                         }

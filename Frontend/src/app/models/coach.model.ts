@@ -50,4 +50,6 @@ export interface CoachOption {
   coachId: number;
   coachCode: string;
   fullName: string;
+  nickname: string | null;
+  colorHex: string;
 }

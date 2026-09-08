@@ -41,13 +41,14 @@ public class AdministratorDashboardService : IAdministratorDashboardService
                 _db.TrainingSessions.Where(s => s.SessionDate >= effectiveStart && s.SessionDate <= effectiveEnd), filter)
             .Select(s => new
             {
+                s.SessionDate,
                 s.TrainingType,
                 s.Status,
-                s.ActualStartDateTime,
-                s.ActualEndDateTime,
                 CreditedCoachId = s.ActualCoachId ?? s.AssignedCoachId,
-                CreditedCoachCode = s.ActualCoachId != null ? s.ActualCoachCodeSnapshot! : s.AssignedCoachCodeSnapshot,
-                CreditedCoachName = s.ActualCoachId != null ? s.ActualCoachNameSnapshot! : s.AssignedCoachNameSnapshot,
+                CoachNickname = s.ActualCoachId != null
+                    ? (s.ActualCoach!.Nickname ?? s.ActualCoach.FullName)
+                    : (s.AssignedCoach.Nickname ?? s.AssignedCoach.FullName),
+                CoachColorHex = s.ActualCoachId != null ? s.ActualCoach!.ColorHex : s.AssignedCoach.ColorHex,
             })
             .ToListAsync();
 
@@ -56,52 +57,38 @@ public class AdministratorDashboardService : IAdministratorDashboardService
         var routineCount = rangeSessions.Count(s => s.TrainingType == TrainingType.Routine);
         var privateCount = rangeSessions.Count(s => s.TrainingType == TrainingType.Private);
 
-        var coachTeachingHours = rangeSessions
-            .Where(s => _sessionStatusService.CountsAsCompletedTeaching(s.Status) && s.ActualStartDateTime is not null && s.ActualEndDateTime is not null)
-            .GroupBy(s => new { s.CreditedCoachId, s.CreditedCoachCode, s.CreditedCoachName })
-            .Select(g => new CoachTeachingHoursDto
-            {
-                CoachId = g.Key.CreditedCoachId,
-                CoachCode = g.Key.CreditedCoachCode,
-                CoachFullName = g.Key.CreditedCoachName,
-                RoutineHours = Math.Round((decimal)g.Where(s => s.TrainingType == TrainingType.Routine)
-                    .Sum(s => (s.ActualEndDateTime!.Value - s.ActualStartDateTime!.Value).TotalHours), 2),
-                PrivateHours = Math.Round((decimal)g.Where(s => s.TrainingType == TrainingType.Private)
-                    .Sum(s => (s.ActualEndDateTime!.Value - s.ActualStartDateTime!.Value).TotalHours), 2),
-            })
-            .OrderByDescending(c => c.RoutineHours + c.PrivateHours)
-            .ToList();
-
-        foreach (var coach in coachTeachingHours)
-        {
-            coach.TotalHours = coach.RoutineHours + coach.PrivateHours;
-        }
-
         var coachesTeachingToday = await ApplyCommonFilters(_db.TrainingSessions.Where(s => s.SessionDate == today), filter)
             .Select(s => new
             {
                 s.TrainingSessionId,
+                s.TrainingType,
                 CreditedCoachId = s.ActualCoachId ?? s.AssignedCoachId,
-                CreditedCoachCode = s.ActualCoachId != null ? s.ActualCoachCodeSnapshot! : s.AssignedCoachCodeSnapshot,
-                CreditedCoachName = s.ActualCoachId != null ? s.ActualCoachNameSnapshot! : s.AssignedCoachNameSnapshot,
+                CoachNickname = s.ActualCoachId != null
+                    ? (s.ActualCoach!.Nickname ?? s.ActualCoach.FullName)
+                    : (s.AssignedCoach.Nickname ?? s.AssignedCoach.FullName),
+                CoachColorHex = s.ActualCoachId != null ? s.ActualCoach!.ColorHex : s.AssignedCoach.ColorHex,
             })
             .ToListAsync();
 
         var coachesTeachingTodayDto = coachesTeachingToday
-            .GroupBy(s => new { s.CreditedCoachId, s.CreditedCoachCode, s.CreditedCoachName })
+            .GroupBy(s => new { s.CreditedCoachId, s.CoachNickname, s.CoachColorHex, s.TrainingType })
             .Select(g => new CoachTeachingTodayDto
             {
                 CoachId = g.Key.CreditedCoachId,
-                CoachCode = g.Key.CreditedCoachCode,
-                CoachFullName = g.Key.CreditedCoachName,
+                CoachNickname = g.Key.CoachNickname,
+                CoachColorHex = g.Key.CoachColorHex,
+                TrainingType = g.Key.TrainingType,
                 SessionCount = g.Count(),
                 TrainingSessionIds = g.Select(s => s.TrainingSessionId).ToList(),
             })
-            .OrderBy(c => c.CoachFullName)
+            .OrderBy(c => c.TrainingType)
+            .ThenBy(c => c.CoachNickname)
             .ToList();
 
         var attendanceQuery = _db.Attendances
             .Where(a => a.TrainingSession.SessionDate >= effectiveStart && a.TrainingSession.SessionDate <= effectiveEnd)
+            .Where(a => a.TrainingSession.Status != SessionStatus.Rescheduled)
+            .Where(a => a.Status == AttendanceStatus.Present || a.Status == AttendanceStatus.Late)
             .AsQueryable();
         if (filter.CoachId is not null)
         {
@@ -114,13 +101,90 @@ public class AdministratorDashboardService : IAdministratorDashboardService
             attendanceQuery = attendanceQuery.Where(a => a.TrainingSession.TrainingType == filter.TrainingType);
         }
 
-        var attendanceStatuses = await attendanceQuery.Select(a => a.Status).ToListAsync();
+        var attendanceRecords = await attendanceQuery
+            .Select(a => new
+            {
+                a.AthleteId,
+                AthleteName = a.Athlete.Nickname ?? a.Athlete.FullName,
+                a.TrainingSession.TrainingType,
+                Date = a.TrainingSession.SessionDate,
+            })
+            .ToListAsync();
+
+        static AttendanceByTrainingTypeDto SummarizeAttendance(
+            DateOnly startDate,
+            DateOnly endDate,
+            IEnumerable<(int AthleteId, string AthleteName, DateOnly Date)> records,
+            IEnumerable<(DateOnly Date, int CoachId, string CoachNickname, string CoachColorHex)> sessions)
+        {
+            var recordList = records.ToList();
+            var sessionList = sessions.ToList();
+            var dayCount = Math.Max(0, endDate.DayNumber - startDate.DayNumber + 1);
+
+            return new AttendanceByTrainingTypeDto
+            {
+                TotalAttendance = recordList.Count,
+                Athletes = recordList
+                    .GroupBy(a => new { a.AthleteId, a.AthleteName })
+                    .Select(g => new AthleteAttendanceSummaryItemDto
+                    {
+                        AthleteId = g.Key.AthleteId,
+                        AthleteName = g.Key.AthleteName,
+                        AttendanceCount = g.Count(),
+                    })
+                    .OrderBy(a => a.AthleteName)
+                    .ToList(),
+                DailySummaries = Enumerable.Range(0, dayCount)
+                    .Select(dayOffset => startDate.AddDays(dayOffset))
+                    .Select(date => new DailyAttendanceSummaryDto
+                    {
+                        Date = date,
+                        TotalAttendance = recordList.Count(a => a.Date == date),
+                        Attendances = recordList
+                            .Where(a => a.Date == date)
+                            .GroupBy(a => a.AthleteId)
+                            .Select(g => new DailyAttendanceCellDto
+                            {
+                                AthleteId = g.Key,
+                                AttendanceCount = g.Count(),
+                            })
+                            .ToList(),
+                        Coaches = sessionList
+                            .Where(s => s.Date == date)
+                            .GroupBy(s => new { s.CoachId, s.CoachNickname, s.CoachColorHex })
+                            .Select(g => new DailyAttendanceCoachDto
+                            {
+                                CoachId = g.Key.CoachId,
+                                CoachNickname = g.Key.CoachNickname,
+                                CoachColorHex = g.Key.CoachColorHex,
+                            })
+                            .OrderBy(c => c.CoachNickname)
+                            .ToList(),
+                    })
+                    .ToList(),
+            };
+        }
+
         var attendanceSummary = new AttendanceSummaryDto
         {
-            PresentCount = attendanceStatuses.Count(s => s == AttendanceStatus.Present),
-            AbsentCount = attendanceStatuses.Count(s => s == AttendanceStatus.Absent),
-            LateCount = attendanceStatuses.Count(s => s == AttendanceStatus.Late),
-            ExcusedCount = attendanceStatuses.Count(s => s == AttendanceStatus.Excused),
+            Routine = SummarizeAttendance(
+                effectiveStart,
+                effectiveEnd,
+                attendanceRecords
+                .Where(a => a.TrainingType == TrainingType.Routine)
+                .Select(a => (a.AthleteId, a.AthleteName, a.Date)),
+                rangeSessions
+                    .Where(s => s.TrainingType == TrainingType.Routine && s.Status != SessionStatus.Cancelled && s.Status != SessionStatus.Rescheduled)
+                    .Select(s => (s.SessionDate, s.CreditedCoachId, s.CoachNickname, s.CoachColorHex))),
+            Private = SummarizeAttendance(
+                effectiveStart,
+                effectiveEnd,
+                attendanceRecords
+                .Where(a => a.TrainingType == TrainingType.Private)
+                .Select(a => (a.AthleteId, a.AthleteName, a.Date)),
+                rangeSessions
+                    .Where(s => s.TrainingType == TrainingType.Private && s.Status != SessionStatus.Cancelled && s.Status != SessionStatus.Rescheduled)
+                    .Select(s => (s.SessionDate, s.CreditedCoachId, s.CoachNickname, s.CoachColorHex))),
         };
 
         return new AdministratorDashboardResponseDto
@@ -133,7 +197,6 @@ public class AdministratorDashboardService : IAdministratorDashboardService
             PrivateCount = privateCount,
             CoachesTeachingToday = coachesTeachingTodayDto,
             AttendanceSummary = attendanceSummary,
-            CoachTeachingHours = coachTeachingHours,
         };
     }
 

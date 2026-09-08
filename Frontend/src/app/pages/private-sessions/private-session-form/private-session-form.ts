@@ -13,10 +13,11 @@ import { TrainingSessionStatus } from '../../../models/training-session-status.m
 import { CoachService } from '../../../services/coach.service';
 import { AthleteService } from '../../../services/athlete.service';
 import { PrivateSessionService } from '../../../services/private-session.service';
+import { DateInput } from '../../../shared/date-input/date-input';
 
 @Component({
   selector: 'app-private-session-form',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink, PageHeader, LoadingIndicator, StatusBadge],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, PageHeader, LoadingIndicator, StatusBadge, DateInput],
   templateUrl: './private-session-form.html',
   styleUrl: './private-session-form.css',
 })

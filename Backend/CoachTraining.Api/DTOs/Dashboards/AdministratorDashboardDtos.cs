@@ -18,30 +18,54 @@ public class AdministratorDashboardFilterRequest
 public class CoachTeachingTodayDto
 {
     public int CoachId { get; set; }
-    public string CoachCode { get; set; } = string.Empty;
-    public string CoachFullName { get; set; } = string.Empty;
+    public string CoachNickname { get; set; } = string.Empty;
+    public string CoachColorHex { get; set; } = string.Empty;
+    public TrainingType TrainingType { get; set; }
     public int SessionCount { get; set; }
     public List<int> TrainingSessionIds { get; set; } = [];
 }
 
-/// <summary>Aggregate athlete attendance counts across the filtered range.</summary>
-public class AttendanceSummaryDto
+/// <summary>One athlete who explicitly attended a session in the filtered range.</summary>
+public class AthleteAttendanceSummaryItemDto
 {
-    public int PresentCount { get; set; }
-    public int AbsentCount { get; set; }
-    public int LateCount { get; set; }
-    public int ExcusedCount { get; set; }
+    public int AthleteId { get; set; }
+    public string AthleteName { get; set; } = string.Empty;
+    public int AttendanceCount { get; set; }
 }
 
-/// <summary>One coach's teaching-hour totals across the filtered range.</summary>
-public class CoachTeachingHoursDto
+/// <summary>Participation-only attendance summary, separated by training type.</summary>
+public class AttendanceByTrainingTypeDto
+{
+    public int TotalAttendance { get; set; }
+    public List<AthleteAttendanceSummaryItemDto> Athletes { get; set; } = [];
+    public List<DailyAttendanceSummaryDto> DailySummaries { get; set; } = [];
+}
+
+public class DailyAttendanceCellDto
+{
+    public int AthleteId { get; set; }
+    public int AttendanceCount { get; set; }
+}
+
+public class DailyAttendanceCoachDto
 {
     public int CoachId { get; set; }
-    public string CoachCode { get; set; } = string.Empty;
-    public string CoachFullName { get; set; } = string.Empty;
-    public decimal RoutineHours { get; set; }
-    public decimal PrivateHours { get; set; }
-    public decimal TotalHours { get; set; }
+    public string CoachNickname { get; set; } = string.Empty;
+    public string CoachColorHex { get; set; } = string.Empty;
+}
+
+public class DailyAttendanceSummaryDto
+{
+    public DateOnly Date { get; set; }
+    public int TotalAttendance { get; set; }
+    public List<DailyAttendanceCellDto> Attendances { get; set; } = [];
+    public List<DailyAttendanceCoachDto> Coaches { get; set; } = [];
+}
+
+public class AttendanceSummaryDto
+{
+    public AttendanceByTrainingTypeDto Routine { get; set; } = new();
+    public AttendanceByTrainingTypeDto Private { get; set; } = new();
 }
 
 /// <summary>Administrator Dashboard response (requirement.md 6.17, todo.md 4.17).</summary>
@@ -55,5 +79,4 @@ public class AdministratorDashboardResponseDto
     public int PrivateCount { get; set; }
     public List<CoachTeachingTodayDto> CoachesTeachingToday { get; set; } = [];
     public AttendanceSummaryDto AttendanceSummary { get; set; } = new();
-    public List<CoachTeachingHoursDto> CoachTeachingHours { get; set; } = [];
 }

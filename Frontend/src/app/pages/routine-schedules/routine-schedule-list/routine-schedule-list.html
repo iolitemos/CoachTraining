@@ -52,7 +52,7 @@
             <tbody>
               @for (schedule of schedules(); track schedule.routineScheduleId) {
                 <tr class="border-b border-border last:border-0">
-                  <td class="px-4 py-3 font-medium text-text">{{ schedule.effectiveStartDate }}</td>
+                  <td class="px-4 py-3 font-medium text-text">{{ schedule.effectiveStartDate | displayDate }}</td>
                   <td class="px-4 py-3 text-text-secondary">
                     {{ schedule.startTime.slice(0, 5) }} - {{ schedule.endTime.slice(0, 5) }}
                   </td>
@@ -109,8 +109,9 @@
   [processing]="deleteProcessing()"
   title="ยืนยันการลบตารางฝึกซ้อม"
   [message]="
-    'ต้องการลบ ' +
-    (pendingDelete() ? getRoutineScheduleDisplayName(pendingDelete()!) : '') +
+    'ต้องการลบตารางฝึกซ้อมวันที่ ' +
+    ((pendingDelete()?.effectiveStartDate || null) | displayDate) +
+    ' ' + (pendingDelete()?.startTime?.slice(0, 5) || '') + '-' + (pendingDelete()?.endTime?.slice(0, 5) || '') +
     ' ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้'
   "
   confirmLabel="ลบตาราง"

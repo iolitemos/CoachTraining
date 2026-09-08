@@ -42,7 +42,7 @@
                   }
                   <p class="mt-1 text-xs text-text-secondary">
                     ผู้ดำเนินการ: รหัสผู้ใช้ #{{ event.actionByUserId }} ·
-                    {{ event.actionDate | slice: 0 : 10 }} {{ event.actionDate | slice: 11 : 16 }}
+                    {{ event.actionDate | displayDate }} {{ event.actionDate | slice: 11 : 16 }}
                   </p>
                 </div>
               </li>

@@ -13,20 +13,14 @@ export interface AthleteAttendanceRecord {
   remark: string | null;
 }
 
-/** One athlete's attendance summary and history for the filtered range. */
+/** One athlete's participation summary and history for the filtered range. */
 export interface AthleteAttendanceReportItem {
   athleteId: number;
   athleteCode: string;
   fullName: string;
-  /** Routine supports Present/Late only (FR-RATT-005) — recorded attendance only,
-   * never inferred (FR-RPT-ATH-006). */
-  routinePresentCount: number;
-  routineLateCount: number;
-  /** Private supports the full status set (FR-RPT-ATH-005). */
-  privatePresentCount: number;
-  privateAbsentCount: number;
-  privateLateCount: number;
-  privateExcusedCount: number;
+  nickname: string | null;
+  routineAttendanceCount: number;
+  privateAttendanceCount: number;
   records: AthleteAttendanceRecord[];
 }
 

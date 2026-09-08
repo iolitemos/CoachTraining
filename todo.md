@@ -23,6 +23,7 @@
 
 ### 1.2 Frontend Foundation
 
+- [x] Standardize displayed dates and date-picker inputs across the frontend as `dd MMM yyyy` using Thai abbreviated month names and Gregorian years.
 - [x] Configure Tailwind CSS.
 - [x] Configure Prompt as the application font.
 - [x] Configure project theme tokens using Emerald as the primary color.
@@ -490,6 +491,7 @@
 - [x] Exclude rescheduled-original sessions.
 - [x] Exclude Coach Absent sessions unless substitute completion qualifies. <!-- All via ISessionStatusService.CountsAsCompletedTeaching, the single shared rule -->
 - [x] Use finalized session records according to approval rules. <!-- Same shared rule: Completed/Submitted/Approved/Locked count, per todo.md 4.5/4.6 design -->
+- [x] Adjust the coach teaching report to summarize distinct teaching days per coach instead of teaching-hour duration, including same-day de-duplication requested by the user.
 
 ### 4.19 Athlete Attendance Report Backend
 
@@ -756,6 +758,9 @@
 - [x] Add empty state where summary data is unavailable.
 - [x] Add dashboard API error state and retry action.
 - [x] Make dashboard responsive without horizontal overflow.
+- [x] Default Administrator Dashboard filters to the current calendar month, show coach nicknames/colors split by training type, show participation-only athlete names/totals split by training type, and remove coach teaching hours from this page as requested by the user.
+- [x] Remove the Administrator Dashboard KPI card row as requested by the user.
+- [x] Add date-by-athlete attendance matrix tables with daily totals, period totals, and coach names for Routine and Private Training on the Administrator Dashboard.
 
 ### 5.15 Coach Teaching-Hour Report Frontend
 
@@ -771,6 +776,8 @@
 - [x] Add report empty state.
 - [x] Add report error state.
 - [x] Make report layout responsive.
+- [x] Display distinct coach teaching-day totals instead of hourly totals, with same-day sessions counted once.
+- [x] Default teaching-day filters to the current month and show coach nickname/color in report controls and results.
 
 ### 5.16 Athlete Attendance Report Frontend
 
@@ -784,6 +791,9 @@
 - [x] Add report empty state.
 - [x] Add report error state.
 - [x] Make report layout responsive.
+- [x] Show participation-only summaries, athlete nickname followed by full name, and default filters to the current month as requested by the user.
+- [x] Use a compact athlete summary table with on-demand expandable attendance history.
+- [x] Present athlete attendance details in a monthly calendar modal with green Routine and blue Private markers.
 
 ### 5.17 History and Audit Frontend
 

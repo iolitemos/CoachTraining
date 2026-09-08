@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiErrorBody } from '../../models/paged-result.model';
 import { RescheduleResponse } from '../../models/reschedule.model';
 import { RescheduleService } from '../../services/reschedule.service';
+import { DateInput } from '../date-input/date-input';
 
 /**
  * Reschedule dialog (requirement.md 4.7/9.7, FR-CR-004–007, todo.md 5.12).
@@ -12,7 +13,7 @@ import { RescheduleService } from '../../services/reschedule.service';
  */
 @Component({
   selector: 'app-reschedule-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, DateInput],
   templateUrl: './reschedule-dialog.html',
   styleUrl: './reschedule-dialog.css',
 })

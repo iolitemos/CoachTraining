@@ -9,6 +9,7 @@ import { Pagination } from '../../../shared/pagination/pagination';
 import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
 import { AthleteListItem } from '../../../models/athlete.model';
 import { AthleteService } from '../../../services/athlete.service';
+import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -23,6 +24,7 @@ type ViewState = 'loading' | 'error' | 'ready';
     ErrorState,
     Pagination,
     ConfirmationDialog,
+    DisplayDatePipe,
   ],
   templateUrl: './athlete-list.html',
   styleUrl: './athlete-list.css',

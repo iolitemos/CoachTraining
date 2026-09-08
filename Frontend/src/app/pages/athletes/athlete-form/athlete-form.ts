@@ -6,10 +6,11 @@ import { PageHeader } from '../../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { AthleteService } from '../../../services/athlete.service';
+import { DateInput } from '../../../shared/date-input/date-input';
 
 @Component({
   selector: 'app-athlete-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator],
+  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, DateInput],
   templateUrl: './athlete-form.html',
   styleUrl: './athlete-form.css',
 })

@@ -27,17 +27,12 @@ public class AthleteAttendanceReportItemDto
     public int AthleteId { get; set; }
     public string AthleteCode { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+    public string? Nickname { get; set; }
 
-    /// <summary>Routine supports Present/Late only (FR-RATT-005) — recorded attendance
-    /// only, never inferred (FR-RPT-ATH-006).</summary>
-    public int RoutinePresentCount { get; set; }
-    public int RoutineLateCount { get; set; }
-
-    /// <summary>Private supports the full status set (FR-RPT-ATH-005).</summary>
-    public int PrivatePresentCount { get; set; }
-    public int PrivateAbsentCount { get; set; }
-    public int PrivateLateCount { get; set; }
-    public int PrivateExcusedCount { get; set; }
+    /// <summary>Explicitly recorded participation only. Present and Late both count
+    /// as attendance; Absent and Excused are not participation records in this report.</summary>
+    public int RoutineAttendanceCount { get; set; }
+    public int PrivateAttendanceCount { get; set; }
 
     public List<AthleteAttendanceRecordDto> Records { get; set; } = [];
 }

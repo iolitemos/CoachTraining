@@ -74,12 +74,7 @@
         <label for="effectiveStartDate" class="mb-1 block text-sm font-medium text-text">
           วันที่ฝึกซ้อม <span class="text-danger">*</span>
         </label>
-        <input
-          id="effectiveStartDate"
-          type="date"
-          formControlName="effectiveStartDate"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
-        />
+        <app-date-input class="block w-full" inputId="effectiveStartDate" formControlName="effectiveStartDate" ariaLabel="วันที่ฝึกซ้อม" />
         @if (form.controls.effectiveStartDate.invalid && form.controls.effectiveStartDate.touched) {
           <p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่ฝึกซ้อม</p>
         }

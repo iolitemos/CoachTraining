@@ -40,7 +40,7 @@
             <tbody>
               @for (session of sessions(); track session.trainingSessionId) {
                 <tr class="border-b border-border last:border-0">
-                  <td class="px-4 py-3 font-medium text-text">{{ session.sessionDate }}</td>
+                  <td class="px-4 py-3 font-medium text-text">{{ session.sessionDate | displayDate }}</td>
                   <td class="px-4 py-3 text-text-secondary">
                     {{ session.startTime.slice(0, 5) }} - {{ session.endTime.slice(0, 5) }}
                   </td>

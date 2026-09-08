@@ -13,6 +13,8 @@ import { TrainingSessionListItem, TrainingType } from '../../../models/training-
 import { TrainingSessionStatus } from '../../../models/training-session-status.model';
 import { CoachService } from '../../../services/coach.service';
 import { TrainingSessionService } from '../../../services/training-session.service';
+import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
+import { DateInput } from '../../../shared/date-input/date-input';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -26,7 +28,7 @@ type ViewState = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-review-list',
-  imports: [FormsModule, SlicePipe, RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge],
+  imports: [FormsModule, SlicePipe, RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe, DateInput],
   templateUrl: './review-list.html',
   styleUrl: './review-list.css',
 })
