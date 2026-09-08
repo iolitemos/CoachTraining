@@ -20,6 +20,9 @@ public class CoachDashboardSessionDto
 /// <summary>Coach Home dashboard response (requirement.md 6.16, todo.md 4.16).</summary>
 public class CoachDashboardResponseDto
 {
+    /// <summary>Past sessions that still require the signed-in Coach to start,
+    /// complete, or submit the teaching record. Newest sessions are returned first.</summary>
+    public List<CoachDashboardSessionDto> OverdueActionSessions { get; set; } = [];
     public List<CoachDashboardSessionDto> TodaySessions { get; set; } = [];
     public List<CoachDashboardSessionDto> UpcomingSessions { get; set; } = [];
 
@@ -35,4 +38,12 @@ public class CoachDashboardResponseDto
     public int PendingActionCount { get; set; }
 
     public decimal MonthlyTeachingHours { get; set; }
+}
+
+/// <summary>Privacy-limited colleague presence for the Coach calendar. Deliberately
+/// excludes session identifiers, times, status, and other operational details.</summary>
+public class CoachCalendarColleagueDto
+{
+    public DateOnly SessionDate { get; set; }
+    public string CoachNickname { get; set; } = string.Empty;
 }

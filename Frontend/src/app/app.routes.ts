@@ -3,6 +3,7 @@ import { AppShell } from './components/layout/app-shell/app-shell';
 import { AppRole } from './models/auth.model';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
+import { homeRedirectGuard } from './guards/home-redirect.guard';
 import { Home } from './pages/home/home';
 import { Login } from './pages/login/login';
 import { AccessDenied } from './pages/access-denied/access-denied';
@@ -11,13 +12,25 @@ import { CoachSession } from './pages/coach-session/coach-session';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
+  {
+    path: 'forgot-password',
+    loadComponent: () => import('./pages/password/forgot-password').then((m) => m.ForgotPassword),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () => import('./pages/password/reset-password').then((m) => m.ResetPassword),
+  },
   { path: 'access-denied', component: AccessDenied },
   {
     path: '',
     component: AppShell,
     canActivate: [authGuard],
     children: [
-      { path: '', component: Home, pathMatch: 'full' },
+      { path: '', component: Home, pathMatch: 'full', canActivate: [homeRedirectGuard] },
+      {
+        path: 'change-password',
+        loadComponent: () => import('./pages/password/change-password').then((m) => m.ChangePassword),
+      },
       {
         // No guard on the parent itself — each child is scoped individually,
         // since the session detail view (unlike Coach Home) also serves
@@ -36,6 +49,15 @@ export const routes: Routes = [
             component: CoachSession,
             canActivate: [roleGuard],
             data: { roles: [AppRole.Coach, AppRole.Administrator] },
+          },
+          {
+            path: 'routine-schedules/new',
+            loadComponent: () =>
+              import('./pages/routine-schedules/routine-schedule-form/routine-schedule-form').then(
+                (m) => m.RoutineScheduleForm,
+              ),
+            canActivate: [roleGuard],
+            data: { roles: [AppRole.Coach], selfService: true },
           },
         ],
       },

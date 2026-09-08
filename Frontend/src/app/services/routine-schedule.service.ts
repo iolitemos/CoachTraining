@@ -60,6 +60,16 @@ export class RoutineScheduleService {
     return response.data;
   }
 
+  async createOwn(request: Omit<RoutineScheduleSaveRequest, 'coachId'>): Promise<RoutineScheduleSaveResult> {
+    const response = await firstValueFrom(
+      this.http.post<ApiSuccessBody<RoutineScheduleSaveResult>>(
+        `${environment.apiBaseUrl}/coach/routine-schedules`,
+        request,
+      ),
+    );
+    return response.data;
+  }
+
   async update(
     routineScheduleId: number,
     request: RoutineScheduleSaveRequest,
@@ -81,5 +91,11 @@ export class RoutineScheduleService {
 
   async delete(routineScheduleId: number): Promise<void> {
     await firstValueFrom(this.http.delete(`${this.baseUrl}/${routineScheduleId}`));
+  }
+
+  async deleteOwn(routineScheduleId: number): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiBaseUrl}/coach/routine-schedules/${routineScheduleId}`),
+    );
   }
 }

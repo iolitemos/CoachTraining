@@ -8,6 +8,7 @@ public class RoutineAttendanceListItemDto
     public int AthleteId { get; set; }
     public string AthleteCode { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+    public string? Nickname { get; set; }
     public AttendanceStatus Status { get; set; }
     public TimeOnly? ArrivalTime { get; set; }
     public string? Remark { get; set; }

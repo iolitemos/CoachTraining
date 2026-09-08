@@ -352,6 +352,56 @@ namespace CoachTraining.Api.Migrations
                     b.ToTable("ConflictOverrideHistories");
                 });
 
+            modelBuilder.Entity("CoachTraining.Api.Models.PasswordResetToken", b =>
+                {
+                    b.Property<int>("PasswordResetTokenId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PasswordResetTokenId"));
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("InvalidatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UsedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("PasswordResetTokenId");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ExpiresAtUtc");
+
+                    b.ToTable("PasswordResetTokens");
+                });
+
             modelBuilder.Entity("CoachTraining.Api.Models.PrivateSessionAthlete", b =>
                 {
                     b.Property<int>("PrivateSessionAthleteId")
@@ -872,6 +922,17 @@ namespace CoachTraining.Api.Migrations
                     b.Navigation("TrainingSession");
                 });
 
+            modelBuilder.Entity("CoachTraining.Api.Models.PasswordResetToken", b =>
+                {
+                    b.HasOne("CoachTraining.Api.Models.User", "User")
+                        .WithMany("PasswordResetTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CoachTraining.Api.Models.PrivateSessionAthlete", b =>
                 {
                     b.HasOne("CoachTraining.Api.Models.Athlete", "Athlete")
@@ -1002,6 +1063,8 @@ namespace CoachTraining.Api.Migrations
             modelBuilder.Entity("CoachTraining.Api.Models.User", b =>
                 {
                     b.Navigation("Coach");
+
+                    b.Navigation("PasswordResetTokens");
 
                     b.Navigation("UserRoles");
                 });

@@ -25,6 +25,7 @@ export class RoutineScheduleForm implements OnInit {
 
   routineScheduleId = signal<number | null>(null);
   isEditMode = signal(false);
+  isSelfService = signal(false);
   loading = signal(true);
   submitting = signal(false);
   errorMessage = signal<string | null>(null);
@@ -40,8 +41,14 @@ export class RoutineScheduleForm implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    const selfService = this.route.snapshot.data?.['selfService'] === true;
+    this.isSelfService.set(selfService);
+    if (selfService) {
+      this.form.controls.coachId.clearValidators();
+      this.form.controls.coachId.updateValueAndValidity();
+    }
     const idParam = this.route.snapshot.paramMap.get('id');
-    const isEdit = idParam !== null;
+    const isEdit = !selfService && idParam !== null;
     this.isEditMode.set(isEdit);
 
     if (isEdit) {
@@ -52,7 +59,7 @@ export class RoutineScheduleForm implements OnInit {
 
     try {
       const [coachOptions, schedule] = await Promise.all([
-        this.coachService.getActiveOptions(),
+        selfService ? Promise.resolve([]) : this.coachService.getActiveOptions(),
         isEdit
           ? this.routineScheduleService.getById(this.routineScheduleId()!)
           : Promise.resolve(null),
@@ -119,11 +126,18 @@ export class RoutineScheduleForm implements OnInit {
     try {
       if (this.isEditMode()) {
         await this.routineScheduleService.update(this.routineScheduleId()!, payload);
+      } else if (this.isSelfService()) {
+        await this.routineScheduleService.createOwn({
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+          effectiveStartDate: payload.effectiveStartDate,
+          remarks: payload.remarks,
+        });
       } else {
         await this.routineScheduleService.create(payload);
       }
 
-      await this.router.navigateByUrl('/routine-schedules');
+      await this.router.navigateByUrl(this.isSelfService() ? '/coach/home?view=calendar' : '/routine-schedules');
     } catch (error) {
       this.handleSaveError(error);
     } finally {

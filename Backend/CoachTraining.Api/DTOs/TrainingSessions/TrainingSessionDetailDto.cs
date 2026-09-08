@@ -21,10 +21,14 @@ public class TrainingSessionDetailDto
     public int AssignedCoachId { get; set; }
     public string AssignedCoachCode { get; set; } = string.Empty;
     public string AssignedCoachName { get; set; } = string.Empty;
+    public string? AssignedCoachNickname { get; set; }
+    public string AssignedCoachColorHex { get; set; } = "#10B981";
 
     public int? ActualCoachId { get; set; }
     public string? ActualCoachCode { get; set; }
     public string? ActualCoachName { get; set; }
+    public string? ActualCoachNickname { get; set; }
+    public string? ActualCoachColorHex { get; set; }
 
     public SessionStatus Status { get; set; }
     public string? Location { get; set; }

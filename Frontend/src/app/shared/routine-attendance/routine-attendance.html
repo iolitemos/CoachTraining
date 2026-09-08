@@ -1,5 +1,5 @@
-<div class="rounded-xl border border-border bg-surface p-4">
-  <div class="flex items-center justify-between">
+<div class="rounded-xl border border-border bg-surface p-3 sm:p-4">
+  <div class="flex items-start justify-between gap-3">
     <h3 class="text-sm font-semibold text-text">การเข้าร่วมฝึกซ้อมประจำ</h3>
     <span class="text-xs text-text-secondary">{{ attendees().length }} คน</span>
   </div>
@@ -8,22 +8,22 @@
   </p>
 
   @if (!readOnly()) {
-    <div class="mt-3 flex flex-col gap-2 sm:flex-row">
-      <div class="flex flex-1 items-center gap-2 rounded-lg border border-border px-3 py-2">
+    <div class="mt-3 flex min-w-0 items-center gap-2">
+      <div class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border px-3 py-2">
         <svg lucideSearch [size]="16" class="text-text-secondary"></svg>
         <input
           type="text"
           [(ngModel)]="searchTerm"
           (keyup.enter)="search()"
           placeholder="ค้นหาชื่อหรือรหัสนักกีฬา"
-          class="w-full bg-transparent text-sm text-text outline-none"
+          class="min-w-0 flex-1 bg-transparent text-sm text-text outline-none"
         />
       </div>
       <button
         type="button"
         (click)="search()"
         [disabled]="searching()"
-        class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+        class="min-h-11 shrink-0 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60 sm:px-4"
       >
         {{ searching() ? 'กำลังค้นหา...' : 'ค้นหา' }}
       </button>
@@ -34,10 +34,14 @@
     }
 
     @if (searchResults().length > 0) {
-      <ul class="mt-2 divide-y divide-border rounded-lg border border-border">
+      <div class="mt-2 overflow-hidden rounded-lg border border-border bg-surface">
+        <p class="border-b border-border bg-secondary-50 px-3 py-2 text-xs text-text-secondary">
+          พบ {{ searchResults().length }} คน · เลื่อนเพื่อดูรายการเพิ่มเติม
+        </p>
+        <ul class="max-h-64 divide-y divide-border overflow-y-auto overscroll-contain">
         @for (athlete of searchResults(); track athlete.athleteId) {
-          <li class="flex items-center justify-between px-3 py-2 text-sm">
-            <span class="text-text">{{ athlete.athleteCode }} — {{ athlete.fullName }}</span>
+          <li class="flex min-h-12 items-center justify-between gap-3 px-3 py-2 text-sm">
+            <span class="min-w-0 break-words font-medium text-text">{{ athletePickerLabel(athlete) }}</span>
             @if (isAdded(athlete.athleteId)) {
               <span class="text-xs text-text-secondary">เพิ่มแล้ว</span>
             } @else {
@@ -45,7 +49,7 @@
                 type="button"
                 (click)="addAthlete(athlete)"
                 [disabled]="adding()"
-                class="inline-flex items-center gap-1 rounded-lg bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-60"
+                class="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-lg bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-60"
               >
                 <svg lucideUserPlus [size]="14"></svg>
                 เพิ่ม
@@ -53,7 +57,8 @@
             }
           </li>
         }
-      </ul>
+        </ul>
+      </div>
     }
   }
 
@@ -77,18 +82,29 @@
         } @else {
           <ul class="divide-y divide-border rounded-lg border border-border">
             @for (item of attendees(); track item.attendanceId) {
-              <li class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4">
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium text-text">{{ item.athleteCode }} — {{ item.fullName }}</p>
-                  <p class="text-xs text-text-secondary">บันทึกล่าสุด: {{ item.recordedDate | displayDate }} {{ item.recordedDate | slice: 11 : 16 }}</p>
+              <li class="relative flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4">
+                <div class="min-w-0 flex-1 pr-12 sm:pr-0">
+                  <p class="break-words text-sm font-medium text-text">{{ athletePickerLabel(item) }}</p>
+                  <p class="text-xs text-text-secondary">บันทึกล่าสุด: {{ item.recordedDate | displayDateTime }}</p>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2">
+                @if (!readOnly()) {
+                  <button
+                    type="button"
+                    (click)="requestRemove(item)"
+                    class="absolute top-3 right-3 inline-flex size-10 items-center justify-center rounded-lg bg-danger-surface text-danger transition-colors hover:bg-danger-surface sm:static sm:order-last sm:size-9 sm:bg-transparent"
+                    aria-label="ลบการเข้าร่วม"
+                  >
+                    <svg lucideTrash2 [size]="16"></svg>
+                  </button>
+                }
+
+                <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                   <select
                     [disabled]="readOnly() || isSaving(item.attendanceId)"
                     [ngModel]="item.status"
                     (ngModelChange)="updateStatus(item, $event)"
-                    class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                    class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-auto"
                   >
                     <option value="Present">มาเรียน</option>
                     <option value="Late">มาสาย</option>
@@ -100,7 +116,7 @@
                       [disabled]="readOnly() || isSaving(item.attendanceId)"
                       [ngModel]="item.arrivalTime"
                       (ngModelChange)="updateArrivalTime(item, $event)"
-                      class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                      class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-auto"
                     />
                   }
 
@@ -110,19 +126,9 @@
                     [disabled]="readOnly() || isSaving(item.attendanceId)"
                     [ngModel]="item.remark"
                     (ngModelChange)="updateRemark(item, $event)"
-                    class="w-32 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-40"
+                    class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-40"
+                    [class.col-span-2]="item.status === 'Late'"
                   />
-
-                  @if (!readOnly()) {
-                    <button
-                      type="button"
-                      (click)="requestRemove(item)"
-                      class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-danger transition-colors hover:bg-danger-surface"
-                      aria-label="ลบการเข้าร่วม"
-                    >
-                      <svg lucideTrash2 [size]="16"></svg>
-                    </button>
-                  }
                 </div>
               </li>
             }

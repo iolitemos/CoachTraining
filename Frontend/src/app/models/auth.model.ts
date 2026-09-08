@@ -27,6 +27,20 @@ export interface LoginResponse {
   user: CurrentUser;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 const ROLE_LABELS_TH: Record<string, string> = {
   [AppRole.Administrator]: 'ผู้ดูแลระบบ',
   [AppRole.Coach]: 'โค้ช',

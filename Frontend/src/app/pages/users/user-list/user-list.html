@@ -24,7 +24,58 @@
       @if (users().length === 0) {
         <app-empty-state title="ไม่พบผู้ใช้งาน" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มผู้ใช้ใหม่" />
       } @else {
-        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div class="grid gap-3 md:hidden">
+          @for (user of users(); track user.userId) {
+            <article class="rounded-xl border border-border bg-surface p-4 shadow-sm">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="truncate text-xs font-medium text-text-secondary">&#64;{{ user.username }}</p>
+                  <h2 class="mt-1 truncate font-semibold text-text">{{ user.fullName }}</h2>
+                </div>
+                <span
+                  class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                  [class]="user.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
+                >
+                  {{ user.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
+                </span>
+              </div>
+
+              <dl class="mt-4 space-y-3 text-sm">
+                <div>
+                  <dt class="text-xs text-text-secondary">อีเมล</dt>
+                  <dd class="mt-0.5 break-all text-text">{{ user.email }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-text-secondary">บทบาท</dt>
+                  <dd class="mt-1 flex flex-wrap gap-1.5">
+                    @for (role of user.roles; track role) {
+                      <span class="rounded-full bg-secondary-100 px-2.5 py-1 text-xs text-secondary-700">
+                        {{ getRoleLabel(role) }}
+                      </span>
+                    }
+                  </dd>
+                </div>
+              </dl>
+
+              <div class="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3">
+                <a
+                  [routerLink]="['/users', user.userId, 'edit']"
+                  class="inline-flex min-h-11 items-center justify-center rounded-lg border border-primary-200 px-3 text-sm font-medium text-primary-700"
+                >แก้ไข</a>
+                <button
+                  type="button"
+                  class="min-h-11 rounded-lg border px-3 text-sm font-medium"
+                  [class]="user.isActive ? 'border-danger/30 text-danger' : 'border-primary-200 text-primary-700'"
+                  (click)="requestStatusChange(user)"
+                >
+                  {{ user.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+
+        <div class="hidden overflow-x-auto rounded-xl border border-border bg-surface md:block">
           <table class="w-full min-w-160 text-left text-sm">
             <thead class="border-b border-border text-text-secondary">
               <tr>

@@ -5,7 +5,7 @@ import { PageHeader } from '../../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { EmptyState } from '../../../shared/empty-state/empty-state';
 import { ErrorState } from '../../../shared/error-state/error-state';
-import { AthleteOption } from '../../../models/athlete.model';
+import { AthleteOption, athletePickerLabel } from '../../../models/athlete.model';
 import {
   AthleteAttendanceRecord,
   AthleteAttendanceReportItem,
@@ -52,6 +52,7 @@ function currentMonthRange(): { startDate: string; endDate: string } {
   styleUrl: './athlete-attendance-report.css',
 })
 export class AthleteAttendanceReport implements OnInit {
+  readonly athletePickerLabel = athletePickerLabel;
   state = signal<ViewState>('loading');
   report = signal<AthleteAttendanceReportResponse | null>(null);
   calendarAthlete = signal<AthleteAttendanceReportItem | null>(null);

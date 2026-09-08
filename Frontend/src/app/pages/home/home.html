@@ -1,5 +1,16 @@
-<app-page-header title="ระบบพร้อมใช้งาน" subtitle="โครงสร้างโปรเจกต์เริ่มต้นถูกตั้งค่าเรียบร้อยแล้ว" />
-
-<div class="mt-6 rounded-xl border border-border bg-surface p-6 text-sm text-text-secondary">
-  หน้าหลักสำหรับโค้ชและผู้ดูแลระบบจะถูกเพิ่มในโมดูลถัดไปตามแผนงานใน todo.md
-</div>
+<section class="mx-auto flex min-h-[60vh] max-w-xl items-center justify-center py-10 text-center">
+  <div class="w-full rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-10">
+    <img src="/logo-spinning-star.png" alt="โลโก้ Spinning Star" class="mx-auto h-20 w-20 rounded-full" />
+    <h1 class="mt-5 text-2xl font-semibold text-text">บัญชียังไม่มีสิทธิ์ใช้งาน</h1>
+    <p class="mt-2 text-sm leading-6 text-text-secondary">
+      บัญชีของคุณยังไม่ได้รับบทบาทสำหรับเข้าใช้งานระบบ กรุณาติดต่อผู้ดูแลระบบเพื่อกำหนดสิทธิ์
+    </p>
+    <button
+      type="button"
+      class="mt-6 rounded-xl border border-border px-5 py-3 text-sm font-medium text-text transition hover:bg-background"
+      (click)="logout()"
+    >
+      ออกจากระบบ
+    </button>
+  </div>
+</section>

@@ -1,6 +1,6 @@
 @if (open()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div class="w-full max-w-md rounded-xl bg-surface p-5 shadow-lg">
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+    <div class="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-xl sm:p-5">
       <h2 class="text-base font-semibold text-text">ยืนยันการยกเลิกเซสชัน</h2>
       <p class="mt-1 text-xs text-text-secondary">
         เซสชันที่ยกเลิกจะยังคงอยู่ในประวัติ แต่จะไม่นับเป็นชั่วโมงสอนที่เสร็จสิ้น
@@ -19,12 +19,12 @@
         ></textarea>
       </label>
 
-      <div class="mt-5 flex justify-end gap-2">
+      <div class="mt-5 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
         <button
           type="button"
           (click)="dismiss()"
           [disabled]="submitting()"
-          class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100 disabled:opacity-60"
+          class="min-h-11 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100 disabled:opacity-60 sm:px-4"
         >
           ปิด
         </button>
@@ -32,7 +32,7 @@
           type="button"
           (click)="confirmCancel()"
           [disabled]="submitting()"
-          class="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+          class="min-h-11 rounded-lg bg-danger px-3 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60 sm:px-4"
         >
           {{ submitting() ? 'กำลังยกเลิก...' : 'ยืนยันยกเลิกเซสชัน' }}
         </button>

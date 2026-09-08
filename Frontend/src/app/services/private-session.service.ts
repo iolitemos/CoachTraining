@@ -30,6 +30,14 @@ export class PrivateSessionService {
     return response.data;
   }
 
+  async listCalendar(startDate: string, endDate: string): Promise<PrivateSessionListItem[]> {
+    const params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
+    const response = await firstValueFrom(
+      this.http.get<ApiSuccessBody<PrivateSessionListItem[]>>(`${this.baseUrl}/calendar`, { params }),
+    );
+    return response.data;
+  }
+
   /** Throws HttpErrorResponse(409) with ApiErrorBody.errors on schedule conflict. */
   async create(request: PrivateSessionSaveRequest): Promise<PrivateSessionDetail> {
     const response = await firstValueFrom(

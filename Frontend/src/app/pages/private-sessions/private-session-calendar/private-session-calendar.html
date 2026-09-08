@@ -1,0 +1,91 @@
+<app-page-header title="ปฏิทินฝึกซ้อมส่วนตัว" subtitle="ดูเซสชันรายเดือนและเลือกวันที่เพื่อเพิ่มรายการใหม่">
+  <div actions class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+    <a routerLink="/private-sessions/list" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-text-secondary hover:bg-secondary-50 sm:px-4">ดูแบบรายการ</a>
+    <a routerLink="/private-sessions/new" [queryParams]="{ date: selectedDate() }" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 sm:px-4">เพิ่มฝึกซ้อม</a>
+  </div>
+</app-page-header>
+
+<section class="mt-4 overflow-hidden rounded-xl border border-border bg-surface" aria-label="ปฏิทินฝึกซ้อมส่วนตัว">
+  <div class="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-lg font-semibold text-text">{{ monthLabel() }}</h2>
+      @if (state() === 'ready') {
+        <p class="mt-0.5 text-xs text-text-secondary">{{ currentMonthSessionCount() }} เซสชันในเดือนนี้</p>
+      }
+    </div>
+    <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 sm:flex" aria-label="เปลี่ยนเดือน">
+      <button type="button" aria-label="เดือนก่อนหน้า" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(-1)">‹</button>
+      <button type="button" class="min-h-10 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-secondary-50" (click)="goToCurrentMonth()">เดือนปัจจุบัน</button>
+      <button type="button" aria-label="เดือนถัดไป" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(1)">›</button>
+    </div>
+  </div>
+
+  @switch (state()) {
+    @case ('loading') { <div class="p-5"><app-loading-indicator label="กำลังโหลดปฏิทินฝึกซ้อมส่วนตัว..." /></div> }
+    @case ('error') { <div class="p-5"><app-error-state message="ไม่สามารถโหลดปฏิทินฝึกซ้อมส่วนตัวได้" (retry)="load()" /></div> }
+    @case ('ready') {
+      @if (sessions().length === 0) {
+        <div class="border-b border-border p-4"><app-empty-state title="ยังไม่มีฝึกซ้อมส่วนตัวในเดือนนี้" description="เลือกวันที่เพื่อสร้างเซสชันใหม่" /></div>
+      }
+
+      <div class="hidden md:block">
+        <div class="grid grid-cols-7 border-b border-border bg-secondary-50">
+          @for (header of dayHeaders; track header) { <div class="px-2 py-2 text-center text-xs font-medium text-text-secondary">{{ header }}</div> }
+        </div>
+        <div class="grid grid-cols-7">
+          @for (day of calendarDays(); track day.isoDate) {
+            <div class="group min-h-32 border-r border-b border-border p-2" [class.bg-secondary-50]="!day.isCurrentMonth">
+              <div class="mb-2 flex items-center justify-between">
+                <button type="button" class="flex size-7 items-center justify-center rounded-full text-xs font-medium hover:bg-primary-100" [class.bg-primary-600]="day.isToday" [class.text-white]="day.isToday" [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday" (click)="selectDay(day)">{{ day.dayNumber }}</button>
+                <a routerLink="/private-sessions/new" [queryParams]="{ date: day.isoDate }" class="rounded px-1.5 py-0.5 text-xs font-medium text-primary-600 opacity-0 hover:bg-primary-50 group-hover:opacity-100 focus:opacity-100">+ เพิ่ม</a>
+              </div>
+              <div class="space-y-1">
+                @for (session of day.sessions.slice(0, 3); track session.trainingSessionId) {
+                  <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="coach-event block rounded-md border-l-3 px-2 py-1 text-xs" [style.--coach-color]="session.coachColorHex" [title]="(session.coachNickname || session.coachFullName) + ' · ' + session.startTime.slice(0, 5) + '–' + session.endTime.slice(0, 5) + ' น. · นักกีฬา ' + session.athleteCount + ' คน'">
+                    <span class="block truncate font-semibold">{{ session.coachNickname || session.coachFullName }}</span>
+                    <span class="block truncate text-[11px] opacity-80">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น. · {{ session.athleteCount }} คน</span>
+                  </a>
+                }
+                @if (day.sessions.length > 3) { <button type="button" class="text-xs font-medium text-primary-600" (click)="selectDay(day)">อีก {{ day.sessions.length - 3 }} รายการ</button> }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="md:hidden">
+        <div class="grid grid-cols-7 border-b border-border bg-secondary-50">
+          @for (header of dayHeaders; track header) { <div class="py-2 text-center text-[11px] font-medium text-text-secondary">{{ header }}</div> }
+        </div>
+        <div class="grid grid-cols-7 gap-y-1 p-1.5 min-[360px]:p-2">
+          @for (day of calendarDays(); track day.isoDate) {
+            <button type="button" class="relative mx-auto flex size-9 items-center justify-center rounded-lg text-xs font-medium min-[360px]:size-10" [class.bg-primary-600]="selectedDate() === day.isoDate" [class.text-white]="selectedDate() === day.isoDate" [class.bg-blue-50]="selectedDate() !== day.isoDate && day.sessions.length > 0" [class.text-text-secondary]="!day.isCurrentMonth && selectedDate() !== day.isoDate" (click)="selectDay(day)">
+              {{ day.dayNumber }}
+              @if (day.sessions.length > 0) { <span class="absolute bottom-1 size-1 rounded-full" [class.bg-white]="selectedDate() === day.isoDate" [class.bg-blue-600]="selectedDate() !== day.isoDate"></span> }
+            </button>
+          }
+        </div>
+        @if (selectedDay(); as day) {
+          <div class="border-t border-border p-3 min-[360px]:p-4">
+            <div class="mb-3 flex flex-col gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:justify-between">
+              <h3 class="text-sm font-semibold text-text">เซสชันวันที่ {{ day.isoDate | displayDate }}</h3>
+              <a routerLink="/private-sessions/new" [queryParams]="{ date: day.isoDate }" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white">+ เพิ่มฝึกซ้อม</a>
+            </div>
+            @if (day.sessions.length === 0) {
+              <p class="rounded-lg bg-secondary-50 px-3 py-4 text-center text-sm text-text-secondary">ไม่มีฝึกซ้อมส่วนตัวในวันนี้</p>
+            } @else {
+              <div class="space-y-2">
+                @for (session of day.sessions; track session.trainingSessionId) {
+                  <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="coach-event block rounded-lg border border-l-4 p-3" [style.--coach-color]="session.coachColorHex">
+                    <div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="truncate font-semibold">{{ session.coachNickname || session.coachFullName }}</p><p class="mt-1 text-sm">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น.</p></div><app-status-badge [status]="session.status" /></div>
+                    <p class="mt-2 text-xs">นักกีฬา {{ session.athleteCount }} คน</p>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</section>

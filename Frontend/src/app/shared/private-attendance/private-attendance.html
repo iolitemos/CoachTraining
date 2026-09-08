@@ -1,5 +1,5 @@
-<div class="rounded-xl border border-border bg-surface p-4">
-  <div class="flex items-center justify-between">
+<div class="rounded-xl border border-border bg-surface p-3 sm:p-4">
+  <div class="flex items-start justify-between gap-3">
     <h3 class="text-sm font-semibold text-text">การเข้าร่วมฝึกซ้อมส่วนตัว</h3>
     @if (!isComplete() && athletes().length > 0) {
       <span class="inline-flex items-center gap-1 rounded-full bg-warning-surface px-2.5 py-1 text-xs font-medium text-warning">
@@ -32,22 +32,22 @@
             @for (item of athletes(); track item.athleteId) {
               <li class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4" [class.bg-warning-surface]="!item.status">
                 <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium text-text">{{ item.athleteCode }} — {{ item.fullName }}</p>
+                  <p class="break-words text-sm font-medium text-text">{{ item.athleteCode }} — {{ item.fullName }}</p>
                   @if (!item.status) {
                     <p class="text-xs text-warning">ยังไม่ได้บันทึกสถานะ</p>
                   } @else if (item.recordedDate) {
                     <p class="text-xs text-text-secondary">
-                      บันทึกล่าสุด: {{ item.recordedDate | displayDate }} {{ item.recordedDate | slice: 11 : 16 }}
+                      บันทึกล่าสุด: {{ item.recordedDate | displayDateTime }}
                     </p>
                   }
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                   <select
                     [disabled]="readOnly() || isSaving(item.athleteId)"
                     [ngModel]="item.status"
                     (ngModelChange)="updateStatus(item, $event)"
-                    class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                    class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-auto"
                   >
                     <option [ngValue]="null" disabled>เลือกสถานะ</option>
                     <option value="Present">มาเรียน</option>
@@ -62,7 +62,7 @@
                       [disabled]="readOnly() || isSaving(item.athleteId)"
                       [ngModel]="item.arrivalTime"
                       (ngModelChange)="updateArrivalTime(item, $event)"
-                      class="rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60"
+                      class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-auto"
                     />
                   }
 
@@ -73,7 +73,8 @@
                       [disabled]="readOnly() || isSaving(item.athleteId)"
                       [ngModel]="item.remark"
                       (ngModelChange)="updateRemark(item, $event)"
-                      class="w-32 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-40"
+                      class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-40"
+                      [class.col-span-2]="item.status === 'Late'"
                     />
                   }
                 </div>

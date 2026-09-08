@@ -35,7 +35,18 @@ public class RoutineAttendanceService : IRoutineAttendanceService
         return await _db.Attendances
             .Where(a => a.TrainingSessionId == trainingSessionId)
             .OrderBy(a => a.AthleteNameSnapshot)
-            .Select(a => MapToListItem(a))
+            .Select(a => new RoutineAttendanceListItemDto
+            {
+                AttendanceId = a.AttendanceId,
+                AthleteId = a.AthleteId,
+                AthleteCode = a.AthleteCodeSnapshot,
+                FullName = a.AthleteNameSnapshot,
+                Nickname = a.Athlete.Nickname,
+                Status = a.Status,
+                ArrivalTime = a.ArrivalTime,
+                Remark = a.Remark,
+                RecordedDate = a.RecordedDate,
+            })
             .ToListAsync();
     }
 
@@ -84,6 +95,7 @@ public class RoutineAttendanceService : IRoutineAttendanceService
                 Remark = dto.Remark,
                 RecordedByUserId = actionByUserId,
                 RecordedDate = DateTime.UtcNow,
+                Athlete = athlete,
             };
 
             _db.Attendances.Add(attendance);
@@ -111,7 +123,9 @@ public class RoutineAttendanceService : IRoutineAttendanceService
             return new RoutineAttendanceActionResult { Error = "การฝึกซ้อมประจำอนุญาตเฉพาะสถานะ มาเรียน หรือ มาสาย เท่านั้น" };
         }
 
-        var attendance = await _db.Attendances.FirstOrDefaultAsync(a => a.AttendanceId == attendanceId && a.TrainingSessionId == trainingSessionId);
+        var attendance = await _db.Attendances
+            .Include(a => a.Athlete)
+            .FirstOrDefaultAsync(a => a.AttendanceId == attendanceId && a.TrainingSessionId == trainingSessionId);
         if (attendance is null)
         {
             return new RoutineAttendanceActionResult { NotFound = true };
@@ -178,6 +192,7 @@ public class RoutineAttendanceService : IRoutineAttendanceService
         AthleteId = attendance.AthleteId,
         AthleteCode = attendance.AthleteCodeSnapshot,
         FullName = attendance.AthleteNameSnapshot,
+        Nickname = attendance.Athlete?.Nickname,
         Status = attendance.Status,
         ArrivalTime = attendance.ArrivalTime,
         Remark = attendance.Remark,

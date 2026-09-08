@@ -55,7 +55,7 @@
             routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
-            <svg lucideCalendarHeart [size]="18"></svg>
+            <svg lucideCalendarClock [size]="18"></svg>
             หน้าหลักโค้ช
           </a>
         }
@@ -93,7 +93,7 @@
             routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
-            <svg lucideRepeat [size]="18"></svg>
+            <svg lucideCalendarDays [size]="18"></svg>
             ตารางฝึกซ้อมประจำ
           </a>
           <a
@@ -101,7 +101,7 @@
             routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
-            <svg lucideCalendarHeart [size]="18"></svg>
+            <svg lucideCalendarPlus2 [size]="18"></svg>
             จัดการฝึกซ้อมส่วนตัว
           </a>
           <a
@@ -127,7 +127,7 @@
             routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
-            <svg lucideDumbbell [size]="18"></svg>
+            <svg lucideUserPlus [size]="18"></svg>
             จัดการนักกีฬา
           </a>
           <a
@@ -137,6 +137,24 @@
           >
             <svg lucideUsers [size]="18"></svg>
             จัดการผู้ใช้งาน
+          </a>
+          <a
+            routerLink="/change-password"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideKeyRound [size]="18"></svg>
+            เปลี่ยนรหัสผ่าน
+          </a>
+        } @else {
+          <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
+          <a
+            routerLink="/change-password"
+            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideKeyRound [size]="18"></svg>
+            เปลี่ยนรหัสผ่าน
           </a>
         }
       </nav>
@@ -178,7 +196,7 @@
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
-              <svg lucideCalendarHeart [size]="18"></svg>
+              <svg lucideCalendarClock [size]="18"></svg>
               หน้าหลักโค้ช
             </a>
           }
@@ -220,7 +238,7 @@
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
-              <svg lucideRepeat [size]="18"></svg>
+              <svg lucideCalendarDays [size]="18"></svg>
               ตารางฝึกซ้อมประจำ
             </a>
             <a
@@ -229,7 +247,7 @@
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
-              <svg lucideCalendarHeart [size]="18"></svg>
+              <svg lucideCalendarPlus2 [size]="18"></svg>
               จัดการฝึกซ้อมส่วนตัว
             </a>
             <a
@@ -258,7 +276,7 @@
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
-              <svg lucideDumbbell [size]="18"></svg>
+              <svg lucideUserPlus [size]="18"></svg>
               จัดการนักกีฬา
             </a>
             <a
@@ -269,6 +287,26 @@
             >
               <svg lucideUsers [size]="18"></svg>
               จัดการผู้ใช้งาน
+            </a>
+            <a
+              routerLink="/change-password"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideKeyRound [size]="18"></svg>
+              เปลี่ยนรหัสผ่าน
+            </a>
+          } @else {
+            <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
+            <a
+              routerLink="/change-password"
+              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideKeyRound [size]="18"></svg>
+              เปลี่ยนรหัสผ่าน
             </a>
           }
         </aside>

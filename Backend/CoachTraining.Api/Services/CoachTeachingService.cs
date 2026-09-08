@@ -23,7 +23,12 @@ public class CoachTeachingService : ICoachTeachingService
     {
         try
         {
-            var session = await _db.TrainingSessions.Include(s => s.PrivateAthletes).Include(s => s.TrainingLog).FirstOrDefaultAsync(s => s.TrainingSessionId == trainingSessionId);
+            var session = await _db.TrainingSessions
+                .Include(s => s.PrivateAthletes)
+                .Include(s => s.TrainingLog)
+                .Include(s => s.AssignedCoach)
+                .Include(s => s.ActualCoach)
+                .FirstOrDefaultAsync(s => s.TrainingSessionId == trainingSessionId);
             if (session is null)
             {
                 return new TeachingActionResult { NotFound = true };
@@ -52,12 +57,14 @@ public class CoachTeachingService : ICoachTeachingService
                 }
 
                 session.ActualCoachId = actingCoach.CoachId;
+                session.ActualCoach = actingCoach;
                 session.ActualCoachCodeSnapshot = actingCoach.CoachCode;
                 session.ActualCoachNameSnapshot = actingCoach.FullName;
             }
             else if (session.ActualCoachId is null)
             {
                 session.ActualCoachId = session.AssignedCoachId;
+                session.ActualCoach = session.AssignedCoach;
                 session.ActualCoachCodeSnapshot = session.AssignedCoachCodeSnapshot;
                 session.ActualCoachNameSnapshot = session.AssignedCoachNameSnapshot;
             }
@@ -83,7 +90,12 @@ public class CoachTeachingService : ICoachTeachingService
     {
         try
         {
-            var session = await _db.TrainingSessions.Include(s => s.PrivateAthletes).Include(s => s.TrainingLog).FirstOrDefaultAsync(s => s.TrainingSessionId == trainingSessionId);
+            var session = await _db.TrainingSessions
+                .Include(s => s.PrivateAthletes)
+                .Include(s => s.TrainingLog)
+                .Include(s => s.AssignedCoach)
+                .Include(s => s.ActualCoach)
+                .FirstOrDefaultAsync(s => s.TrainingSessionId == trainingSessionId);
             if (session is null)
             {
                 return new TeachingActionResult { NotFound = true };

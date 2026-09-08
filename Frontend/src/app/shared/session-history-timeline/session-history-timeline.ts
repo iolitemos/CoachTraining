@@ -1,4 +1,3 @@
-import { SlicePipe } from '@angular/common';
 import { Component, OnChanges, input, signal } from '@angular/core';
 import {
   LucideCalendarClock,
@@ -15,13 +14,14 @@ import { getApprovalActionLabel } from '../../models/approval.model';
 import { HistoryService } from '../../services/history.service';
 import { ApprovalService } from '../../services/approval.service';
 import { SubstituteCoachService } from '../../services/substitute-coach.service';
-import { DisplayDatePipe } from '../display-date/display-date.pipe';
+import { DisplayDateTimePipe } from '../display-date-time/display-date-time.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
 const AUDIT_ACTION_LABELS_TH: Record<string, string> = {
   Cancel: 'ยกเลิกเซสชัน',
   Reschedule: 'เลื่อนเซสชัน',
+  ResetToScheduled: 'ดึงสถานะกลับเป็นกำหนดการ',
 };
 
 const CONFLICT_TYPE_LABELS_TH: Record<ConflictType, string> = {
@@ -42,7 +42,6 @@ const CONFLICT_TYPE_LABELS_TH: Record<ConflictType, string> = {
 @Component({
   selector: 'app-session-history-timeline',
   imports: [
-    SlicePipe,
     LoadingIndicator,
     ErrorState,
     EmptyState,
@@ -51,7 +50,7 @@ const CONFLICT_TYPE_LABELS_TH: Record<ConflictType, string> = {
     LucideClipboardCheck,
     LucideCircleAlert,
     LucideCalendarClock,
-    DisplayDatePipe,
+    DisplayDateTimePipe,
   ],
   templateUrl: './session-history-timeline.html',
   styleUrl: './session-history-timeline.css',

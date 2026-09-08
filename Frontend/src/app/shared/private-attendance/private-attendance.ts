@@ -1,4 +1,3 @@
-import { SlicePipe } from '@angular/common';
 import { Component, OnChanges, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideCircleAlert } from '@lucide/angular';
@@ -6,7 +5,7 @@ import { LoadingIndicator } from '../loading-indicator/loading-indicator';
 import { ErrorState } from '../error-state/error-state';
 import { PrivateAttendanceRosterItem, PrivateAttendanceStatus } from '../../models/private-attendance.model';
 import { PrivateAttendanceService } from '../../services/private-attendance.service';
-import { DisplayDatePipe } from '../display-date/display-date.pipe';
+import { DisplayDateTimePipe } from '../display-date-time/display-date-time.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -17,7 +16,7 @@ type ViewState = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-private-attendance',
-  imports: [FormsModule, SlicePipe, LoadingIndicator, ErrorState, LucideCircleAlert, DisplayDatePipe],
+  imports: [FormsModule, LoadingIndicator, ErrorState, LucideCircleAlert, DisplayDateTimePipe],
   templateUrl: './private-attendance.html',
   styleUrl: './private-attendance.css',
 })

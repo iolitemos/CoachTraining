@@ -5,7 +5,7 @@
   <a actions routerLink="/private-sessions" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
 </app-page-header>
 
-<div class="mt-4 max-w-2xl">
+<div class="mt-4 w-full max-w-2xl">
   @if (loading()) {
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
@@ -22,7 +22,7 @@
       </p>
     }
 
-    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
       <div>
         <label for="coachId" class="mb-1 block text-sm font-medium text-text">
           โค้ช <span class="text-danger">*</span>
@@ -30,7 +30,7 @@
         <select
           id="coachId"
           formControlName="coachId"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text disabled:bg-secondary-50 disabled:text-text-secondary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+          class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text disabled:bg-secondary-50 disabled:text-text-secondary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
         >
           <option [ngValue]="null">— เลือกโค้ช —</option>
           @for (coach of coachOptions(); track coach.coachId) {
@@ -61,7 +61,7 @@
             id="startTime"
             type="time"
             formControlName="startTime"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text disabled:bg-secondary-50 disabled:text-text-secondary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text disabled:bg-secondary-50 disabled:text-text-secondary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
           />
           @if (form.controls.startTime.invalid && form.controls.startTime.touched) {
             <p class="mt-1 text-xs text-danger">กรุณากรอกเวลาเริ่ม</p>
@@ -76,7 +76,7 @@
             id="endTime"
             type="time"
             formControlName="endTime"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text disabled:bg-secondary-50 disabled:text-text-secondary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text disabled:bg-secondary-50 disabled:text-text-secondary focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
           />
           @if (form.controls.endTime.invalid && form.controls.endTime.touched) {
             <p class="mt-1 text-xs text-danger">กรุณากรอกเวลาสิ้นสุด</p>
@@ -112,10 +112,10 @@
         @if (selectedAthletes().length > 0) {
           <ul class="mb-2 flex flex-col gap-2">
             @for (athlete of selectedAthletes(); track athlete.athleteId) {
-              <li class="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                <span class="text-text">{{ athlete.athleteCode }} — {{ athlete.fullName }}</span>
+              <li class="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                <span class="min-w-0 break-words text-text">{{ athlete.athleteCode }} — {{ athlete.fullName }}</span>
                 @if (!readOnly()) {
-                  <button type="button" class="text-danger hover:underline" (click)="removeAthlete(athlete.athleteId)">
+                  <button type="button" class="min-h-10 shrink-0 rounded-lg px-2 text-danger hover:bg-danger-surface" (click)="removeAthlete(athlete.athleteId)">
                     นำออก
                   </button>
                 }
@@ -127,20 +127,20 @@
         }
 
         @if (!readOnly()) {
-          <div class="flex items-center gap-2">
+          <div class="flex min-w-0 items-center gap-2">
             <input
               type="text"
               [(ngModel)]="athleteSearchTerm"
               [ngModelOptions]="{ standalone: true }"
               placeholder="ค้นหารหัสหรือชื่อนักกีฬาที่ใช้งานอยู่"
               (keydown.enter)="$event.preventDefault(); searchAthletes()"
-              class="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+              class="min-h-11 min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
             />
             <button
               type="button"
               (click)="searchAthletes()"
               [disabled]="athleteSearching()"
-              class="rounded-lg border border-border px-3 py-2 text-sm font-medium text-text transition-colors hover:bg-secondary-50 disabled:cursor-not-allowed disabled:opacity-60"
+              class="min-h-11 shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text transition-colors hover:bg-secondary-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {{ athleteSearching() ? 'กำลังค้นหา...' : 'ค้นหา' }}
             </button>
@@ -151,21 +151,26 @@
           }
 
           @if (athleteSearchResults().length > 0) {
-            <ul class="mt-2 flex flex-col gap-1 rounded-lg border border-border p-2">
+            <div class="mt-2 overflow-hidden rounded-lg border border-border bg-surface">
+              <p class="border-b border-border bg-secondary-50 px-3 py-2 text-xs text-text-secondary">
+                พบ {{ athleteSearchResults().length }} คน · เลื่อนเพื่อดูรายการเพิ่มเติม
+              </p>
+              <ul class="max-h-64 divide-y divide-border overflow-y-auto overscroll-contain">
               @for (athlete of athleteSearchResults(); track athlete.athleteId) {
-                <li class="flex items-center justify-between px-2 py-1 text-sm">
-                  <span class="text-text">{{ athlete.athleteCode }} — {{ athlete.fullName }}</span>
+                <li class="flex min-h-12 items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span class="min-w-0 break-words font-medium text-text">{{ athletePickerLabel(athlete) }}</span>
                   <button
                     type="button"
                     [disabled]="isAthleteSelected(athlete.athleteId)"
                     (click)="addAthlete(athlete)"
-                    class="text-primary-600 hover:underline disabled:cursor-not-allowed disabled:text-text-secondary disabled:no-underline"
+                    class="min-h-10 shrink-0 rounded-lg px-3 text-primary-600 hover:bg-primary-50 disabled:cursor-not-allowed disabled:text-text-secondary"
                   >
                     {{ isAthleteSelected(athlete.athleteId) ? 'เลือกแล้ว' : 'เพิ่ม' }}
                   </button>
                 </li>
               }
-            </ul>
+              </ul>
+            </div>
           }
         }
       </div>
@@ -187,7 +192,7 @@
         <button
           type="submit"
           [disabled]="submitting()"
-          class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+          class="mt-2 min-h-11 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
         </button>

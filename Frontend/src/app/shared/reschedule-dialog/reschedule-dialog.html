@@ -1,6 +1,6 @@
 @if (open()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div class="w-full max-w-md rounded-xl bg-surface p-5 shadow-lg">
+  <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+    <div class="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-xl sm:p-5">
       <h2 class="text-base font-semibold text-text">เลื่อนเซสชันฝึกซ้อม</h2>
       <p class="mt-1 text-xs text-text-secondary">
         เซสชันเดิมจะถูกเก็บไว้ในประวัติ และระบบจะสร้างเซสชันใหม่ตามวันเวลาที่เลื่อนไป
@@ -22,14 +22,14 @@
       <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="flex flex-col gap-1 text-sm sm:col-span-2">
           <span class="text-text-secondary">วันที่ฝึกซ้อมใหม่ <span class="text-danger">*</span></span>
-          <app-date-input [(ngModel)]="sessionDate" ariaLabel="วันที่ฝึกซ้อมใหม่" />
+          <app-date-input class="block w-full" [(ngModel)]="sessionDate" ariaLabel="วันที่ฝึกซ้อมใหม่" />
         </label>
         <label class="flex flex-col gap-1 text-sm">
           <span class="text-text-secondary">เวลาเริ่ม <span class="text-danger">*</span></span>
           <input
             type="time"
             [(ngModel)]="startTime"
-            class="rounded-lg border border-border bg-surface px-3 py-2 text-text"
+            class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-text"
           />
         </label>
         <label class="flex flex-col gap-1 text-sm">
@@ -37,7 +37,7 @@
           <input
             type="time"
             [(ngModel)]="endTime"
-            class="rounded-lg border border-border bg-surface px-3 py-2 text-text"
+            class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-text"
           />
         </label>
         <label class="flex flex-col gap-1 text-sm sm:col-span-2">
@@ -61,12 +61,12 @@
         }
       </div>
 
-      <div class="mt-5 flex justify-end gap-2">
+      <div class="mt-5 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
         <button
           type="button"
           (click)="dismiss()"
           [disabled]="submitting()"
-          class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100 disabled:opacity-60"
+          class="min-h-11 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100 disabled:opacity-60 sm:px-4"
         >
           ยกเลิก
         </button>
@@ -74,7 +74,7 @@
           type="button"
           (click)="submit()"
           [disabled]="submitting()"
-          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+          class="min-h-11 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60 sm:px-4"
         >
           {{ submitting() ? 'กำลังบันทึก...' : (showOverride() ? 'ยืนยันดำเนินการต่อ' : 'เลื่อนเซสชัน') }}
         </button>

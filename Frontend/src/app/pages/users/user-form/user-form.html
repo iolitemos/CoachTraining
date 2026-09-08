@@ -5,11 +5,11 @@
   <a actions routerLink="/users" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
 </app-page-header>
 
-<div class="mt-4 max-w-xl">
+<div class="mt-4 w-full max-w-2xl">
   @if (loading()) {
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
-    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
       <div>
         <label for="username" class="mb-1 block text-sm font-medium text-text">
           ชื่อผู้ใช้ <span class="text-danger">*</span>
@@ -78,12 +78,12 @@
         </span>
         <div class="flex flex-col gap-2">
           @for (role of roleOptions(); track role.roleId) {
-            <label class="flex items-center gap-2 text-sm text-text">
+            <label class="flex min-h-11 items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm text-text">
               <input
                 type="checkbox"
                 [checked]="isRoleChecked(role.roleId)"
                 (change)="toggleRole(role.roleId, $any($event.target).checked)"
-                class="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
+                class="h-5 w-5 shrink-0 rounded border-border text-primary-600 focus:ring-primary-500"
               />
               {{ getRoleLabel(role.name) }}
             </label>
@@ -114,7 +114,7 @@
       <button
         type="submit"
         [disabled]="submitting()"
-        class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+        class="mt-2 min-h-11 w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto sm:w-auto sm:min-w-32"
       >
         {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
       </button>

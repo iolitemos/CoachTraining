@@ -8,4 +8,6 @@ public interface ICoachDashboardService
     /// <summary>Data is always scoped to <paramref name="coachId"/> — there is no
     /// cross-coach view of this dashboard.</summary>
     Task<CoachDashboardResponseDto> GetDashboardAsync(int coachId);
+    Task<List<CoachCalendarColleagueDto>> GetCalendarColleaguesAsync(
+        int coachId, DateOnly startDate, DateOnly endDate);
 }

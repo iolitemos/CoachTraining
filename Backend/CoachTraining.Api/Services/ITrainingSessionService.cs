@@ -19,4 +19,5 @@ public interface ITrainingSessionService
 
     /// <summary>Returns null both when the session doesn't exist and when a Coach requests one that isn't theirs.</summary>
     Task<TrainingSessionDetailDto?> GetByIdAsync(int trainingSessionId, bool isPrivilegedRole, int? currentCoachId);
+    Task<(TrainingSessionDetailDto? Session, string? Error, bool NotFound)> ResetToScheduledAsync(int trainingSessionId, string reason, int actionByUserId);
 }

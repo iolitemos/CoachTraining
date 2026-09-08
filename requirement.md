@@ -82,6 +82,7 @@ Purpose:
 
 - Manage system users and business roles.
 - Control access to administrative, coach, and management functions.
+- Allow account owners to change their password and securely reset a forgotten password through their registered email address.
 
 ### 4.2 Coach Management
 
@@ -363,6 +364,16 @@ Purpose:
 8. If a locked record requires correction, an authorized Administrator may unlock it.
 9. The system records the approval, rejection, revision, and unlock history.
 
+### 5.9 Password Change and Reset Flow
+
+1. A signed-in account owner may change only the password of the owner's own account.
+2. The system verifies the owner's current password before accepting a password change.
+3. If the owner forgets the password, the owner requests a reset link using the email address registered to the account.
+4. The system sends a single-use password-reset link to that registered email address without disclosing whether an account exists for the submitted address.
+5. The password-reset token expires 10 minutes after issuance.
+6. The owner sets a new password containing at least 8 characters.
+7. A successfully used token becomes invalid and cannot be reused.
+
 ---
 
 ## 6. Functional Requirements
@@ -373,6 +384,12 @@ Purpose:
 - **FR-USER-002** The system shall restrict features and data according to the signed-in user's authorized role.
 - **FR-USER-003** A Coach shall access only the coach's relevant operational records unless additional permission is granted.
 - **FR-USER-004** Inactive coaches and athletes shall remain visible in historical records but shall not be selectable for new active schedules unless reactivated.
+- **FR-USER-005** A signed-in user shall be able to change only the password of the user's own account after providing the correct current password.
+- **FR-USER-006** An account owner shall be able to request a password-reset link through the email address registered to the account.
+- **FR-USER-007** A password-reset link shall contain a single-use token that expires 10 minutes after issuance.
+- **FR-USER-008** New passwords created through password change or password reset shall contain at least 8 characters.
+- **FR-USER-009** Password-reset requests shall return a neutral response that does not reveal whether the submitted email address belongs to an account.
+- **FR-USER-010** A password-reset token shall be invalid after successful use, expiration, or issuance of a newer reset token for the same account.
 
 ### 6.2 Coach Requirements
 
@@ -861,7 +878,7 @@ Including:
 
 Including:
 
-- Email notifications
+- General operational email notifications; the transactional password-reset email required by `FR-USER-006` is in scope
 - LINE notifications
 - Messaging platform integrations
 - Automated reminder campaigns

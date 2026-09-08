@@ -6,6 +6,7 @@ export interface RoutineAttendanceItem {
   athleteId: number;
   athleteCode: string;
   fullName: string;
+  nickname: string | null;
   status: RoutineAttendanceStatus;
   arrivalTime: string | null;
   remark: string | null;

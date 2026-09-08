@@ -1,24 +1,26 @@
 <app-page-header
   [title]="isEditMode() ? 'แก้ไขตารางฝึกซ้อมประจำ' : 'เพิ่มตารางฝึกซ้อมประจำ'"
-  subtitle="เลือกโค้ช วันที่ และเวลาฝึกซ้อม"
+  [subtitle]="isSelfService() ? 'เพิ่มวันที่และเวลาฝึกซ้อมประจำของคุณ' : 'เลือกโค้ช วันที่ และเวลาฝึกซ้อม'"
 >
   <a
     actions
-    routerLink="/routine-schedules"
+    [routerLink]="isSelfService() ? '/coach/home' : '/routine-schedules'"
+    [queryParams]="isSelfService() ? { view: 'calendar' } : null"
     class="text-sm font-medium text-text-secondary hover:underline"
     >ย้อนกลับ</a
   >
 </app-page-header>
 
-<div class="mt-4 max-w-xl">
+<div class="mt-4 w-full max-w-xl">
   @if (loading()) {
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
     <form
-      class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5"
+      class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-5"
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
     >
+      @if (!isSelfService()) {
       <div>
         <label for="coachId" class="mb-1 block text-sm font-medium text-text">
           โค้ช <span class="text-danger">*</span>
@@ -26,7 +28,7 @@
         <select
           id="coachId"
           formControlName="coachId"
-          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+          class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
         >
           <option [ngValue]="null">— เลือกโค้ช —</option>
           @for (coach of coachOptions(); track coach.coachId) {
@@ -37,6 +39,7 @@
           <p class="mt-1 text-xs text-danger">กรุณาเลือกโค้ช</p>
         }
       </div>
+      }
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -47,7 +50,7 @@
             id="startTime"
             type="time"
             formControlName="startTime"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
           />
           @if (form.controls.startTime.invalid && form.controls.startTime.touched) {
             <p class="mt-1 text-xs text-danger">กรุณากรอกเวลาเริ่ม</p>
@@ -62,7 +65,7 @@
             id="endTime"
             type="time"
             formControlName="endTime"
-            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+            class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
           />
           @if (form.controls.endTime.invalid && form.controls.endTime.touched) {
             <p class="mt-1 text-xs text-danger">กรุณากรอกเวลาสิ้นสุด</p>
@@ -108,7 +111,7 @@
       <button
         type="submit"
         [disabled]="submitting()"
-        class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+        class="mt-2 min-h-11 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
       </button>

@@ -24,7 +24,53 @@
       @if (athletes().length === 0) {
         <app-empty-state title="ไม่พบข้อมูลนักกีฬา" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มนักกีฬาใหม่" />
       } @else {
-        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div class="grid gap-3 md:hidden">
+          @for (athlete of athletes(); track athlete.athleteId) {
+            <article class="rounded-xl border border-border bg-surface p-4 shadow-sm">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-text-secondary">{{ athlete.athleteCode }}</p>
+                  <h2 class="mt-1 truncate font-semibold text-text">{{ athlete.fullName }}</h2>
+                  <p class="mt-0.5 text-sm text-text-secondary">ชื่อเล่น {{ athlete.nickname || '-' }}</p>
+                </div>
+                <span
+                  class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                  [class]="athlete.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
+                >
+                  {{ athlete.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
+                </span>
+              </div>
+
+              <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <dt class="text-xs text-text-secondary">วันเกิด</dt>
+                  <dd class="mt-0.5 text-text">{{ athlete.dateOfBirth | displayDate }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-text-secondary">ระดับนักกีฬา</dt>
+                  <dd class="mt-0.5 break-words text-text">{{ athlete.athleteLevel || '-' }}</dd>
+                </div>
+              </dl>
+
+              <div class="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3">
+                <a
+                  [routerLink]="['/athletes', athlete.athleteId, 'edit']"
+                  class="inline-flex min-h-11 items-center justify-center rounded-lg border border-primary-200 px-3 text-sm font-medium text-primary-700"
+                >แก้ไข</a>
+                <button
+                  type="button"
+                  class="min-h-11 rounded-lg border px-3 text-sm font-medium"
+                  [class]="athlete.isActive ? 'border-danger/30 text-danger' : 'border-primary-200 text-primary-700'"
+                  (click)="requestStatusChange(athlete)"
+                >
+                  {{ athlete.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+
+        <div class="hidden overflow-x-auto rounded-xl border border-border bg-surface md:block">
           <table class="w-full min-w-160 text-left text-sm">
             <thead class="border-b border-border text-text-secondary">
               <tr>

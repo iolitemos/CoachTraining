@@ -1,15 +1,14 @@
-import { SlicePipe } from '@angular/common';
 import { Component, OnChanges, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideSearch, LucideTrash2, LucideUserPlus } from '@lucide/angular';
 import { LoadingIndicator } from '../loading-indicator/loading-indicator';
 import { ErrorState } from '../error-state/error-state';
 import { ConfirmationDialog } from '../confirmation-dialog/confirmation-dialog';
-import { AthleteOption } from '../../models/athlete.model';
+import { AthleteOption, athletePickerLabel } from '../../models/athlete.model';
 import { RoutineAttendanceItem, RoutineAttendanceStatus } from '../../models/routine-attendance.model';
 import { AthleteService } from '../../services/athlete.service';
 import { RoutineAttendanceService } from '../../services/routine-attendance.service';
-import { DisplayDatePipe } from '../display-date/display-date.pipe';
+import { DisplayDateTimePipe } from '../display-date-time/display-date-time.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -20,11 +19,12 @@ type ViewState = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-routine-attendance',
-  imports: [FormsModule, SlicePipe, LoadingIndicator, ErrorState, ConfirmationDialog, LucideSearch, LucideUserPlus, LucideTrash2, DisplayDatePipe],
+  imports: [FormsModule, LoadingIndicator, ErrorState, ConfirmationDialog, LucideSearch, LucideUserPlus, LucideTrash2, DisplayDateTimePipe],
   templateUrl: './routine-attendance.html',
   styleUrl: './routine-attendance.css',
 })
 export class RoutineAttendance implements OnChanges {
+  readonly athletePickerLabel = athletePickerLabel;
   trainingSessionId = input.required<number>();
   readOnly = input(false);
 

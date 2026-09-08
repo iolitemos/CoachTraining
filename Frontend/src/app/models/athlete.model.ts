@@ -47,3 +47,12 @@ export interface AthleteOption {
   fullName: string;
   nickname: string | null;
 }
+
+/** Compact label for athlete pickers: "nickname - full name", with a safe fallback. */
+export function athletePickerLabel(athlete: Pick<AthleteOption, 'nickname' | 'fullName'>): string {
+  if (athlete.nickname?.trim()) {
+    return `${athlete.nickname.trim()} - ${athlete.fullName}`;
+  }
+
+  return athlete.fullName;
+}

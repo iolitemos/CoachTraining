@@ -155,4 +155,33 @@ describe('RoutineScheduleForm', () => {
     expect(component.conflictMessages()).toEqual(['โค้ชมีตารางฝึกซ้อมในเวลานี้แล้ว']);
     expect(component.submitting()).toBe(false);
   });
+
+  it('should create a Coach self-service schedule without loading or sending a coach id', async () => {
+    (
+      TestBed.inject(ActivatedRoute).snapshot as {
+        data?: Record<string, unknown>;
+      }
+    ).data = { selfService: true };
+
+    await component.ngOnInit();
+    component.form.patchValue({
+      startTime: '18:00',
+      endTime: '20:00',
+      effectiveStartDate: '2026-09-10',
+    });
+
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/coach/routine-schedules'));
+
+    expect(request.request.body).toEqual({
+      startTime: '18:00',
+      endTime: '20:00',
+      effectiveStartDate: '2026-09-10',
+      remarks: null,
+    });
+    request.flush({ message: 'Success', data: { schedule: null, error: null, conflicts: [] } });
+    await submitPromise;
+
+    expect(component.isSelfService()).toBe(true);
+  });
 });

@@ -1,6 +1,7 @@
 import { SlicePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   LucideCalendarClock,
@@ -24,6 +25,7 @@ import { RescheduleDialog } from '../../shared/reschedule-dialog/reschedule-dial
 import { ApprovalActionDialog } from '../../shared/approval-action-dialog/approval-action-dialog';
 import { SessionHistoryTimeline } from '../../shared/session-history-timeline/session-history-timeline';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
+import { ConfirmationDialog } from '../../shared/confirmation-dialog/confirmation-dialog';
 import { ApiErrorBody } from '../../models/paged-result.model';
 import { TrainingLog, TrainingSessionDetail } from '../../models/training-session.model';
 import { SubstituteCoachResponse } from '../../models/substitute-coach.model';
@@ -51,6 +53,7 @@ const NON_EDITABLE_STATUSES = ['Submitted', 'Approved', 'Locked', 'Cancelled', '
   selector: 'app-coach-session',
   imports: [
     SlicePipe,
+    FormsModule,
     RouterLink,
     PageHeader,
     LoadingIndicator,
@@ -65,6 +68,7 @@ const NON_EDITABLE_STATUSES = ['Submitted', 'Approved', 'Locked', 'Cancelled', '
     ApprovalActionDialog,
     SessionHistoryTimeline,
     DisplayDatePipe,
+    ConfirmationDialog,
     LucidePlay,
     LucideCircleCheckBig,
     LucideSend,
@@ -89,6 +93,10 @@ export class CoachSession implements OnInit {
   completing = signal(false);
   submitting = signal(false);
   actionError = signal<string | null>(null);
+  startConfirmationOpen = signal(false);
+  resetDialogOpen = signal(false);
+  resetReason = '';
+  resetting = signal(false);
 
   /** FR-PATT-002 — Private Training only; Routine has no completeness concept. */
   privateAttendanceComplete = signal(true);
@@ -125,6 +133,26 @@ export class CoachSession implements OnInit {
 
   canStart(status: string): boolean {
     return status === 'Scheduled' || status === 'CoachAbsent';
+  }
+
+  canResetToScheduled(status: string): boolean {
+    return this.isAdministrator && status === 'InProgress';
+  }
+
+  requestStart(): void { this.startConfirmationOpen.set(true); }
+  cancelStart(): void { this.startConfirmationOpen.set(false); }
+  confirmStart(): void { this.startConfirmationOpen.set(false); void this.start(); }
+
+  openResetDialog(): void { this.resetReason = ''; this.resetDialogOpen.set(true); }
+  closeResetDialog(): void { this.resetDialogOpen.set(false); }
+  async resetToScheduled(): Promise<void> {
+    if (!this.resetReason.trim()) { this.actionError.set('กรุณาระบุเหตุผลในการดึงสถานะกลับ'); return; }
+    this.resetting.set(true);
+    try {
+      this.session.set(await this.trainingSessionService.resetToScheduled(this.trainingSessionId(), this.resetReason.trim()));
+      this.resetDialogOpen.set(false);
+    } catch (error) { this.actionError.set(this.extractErrorMessage(error, 'ไม่สามารถดึงสถานะกลับได้')); }
+    finally { this.resetting.set(false); }
   }
 
   canComplete(status: string): boolean {

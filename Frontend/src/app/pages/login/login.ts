@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   LucideArrowRight,
@@ -27,6 +28,7 @@ import { ApiErrorBody } from '../../models/paged-result.model';
     LucideLockKeyhole,
     LucideUserRound,
     LucideUsers,
+    RouterLink,
   ],
   templateUrl: './login.html',
   styleUrl: './login.css',

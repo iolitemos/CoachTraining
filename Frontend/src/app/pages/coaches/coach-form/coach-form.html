@@ -7,12 +7,12 @@
   >
 </app-page-header>
 
-<div class="mt-4 max-w-xl">
+<div class="mt-4 w-full max-w-2xl">
   @if (loading()) {
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
     <form
-      class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5"
+      class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-5"
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
     >
@@ -60,7 +60,7 @@
         <label for="colorHex" class="mb-1 block text-sm font-medium text-text">
           สีประจำตัวโค้ช <span class="text-danger">*</span>
         </label>
-        <div class="flex items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border bg-surface px-3 py-2">
           <input
             id="colorHex"
             type="color"
@@ -68,7 +68,7 @@
             class="h-9 w-12 cursor-pointer rounded border-0 bg-transparent p-0"
           />
           <span class="text-sm font-medium text-text">{{ form.controls.colorHex.value }}</span>
-          <span class="text-xs text-text-secondary">ใช้แยกโค้ชในปฏิทินฝึกซ้อม</span>
+          <span class="w-full text-xs text-text-secondary sm:w-auto">ใช้แยกโค้ชในปฏิทินฝึกซ้อม</span>
         </div>
         @if (form.controls.colorHex.invalid && form.controls.colorHex.touched) {
           <p class="mt-1 text-xs text-danger">กรุณาเลือกสีประจำตัวโค้ช</p>
@@ -186,7 +186,7 @@
       <button
         type="submit"
         [disabled]="submitting()"
-        class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+        class="mt-2 min-h-11 w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto sm:w-auto sm:min-w-32"
       >
         {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
       </button>

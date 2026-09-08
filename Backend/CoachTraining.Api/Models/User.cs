@@ -21,4 +21,6 @@ public class User : AuditableEntity
     public Coach? Coach { get; set; }
 
     public ICollection<UserRole> UserRoles { get; set; } = [];
+
+    public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = [];
 }

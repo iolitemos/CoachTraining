@@ -10,6 +10,7 @@ public interface IRoutineScheduleService
     Task<RoutineScheduleSaveResult> CreateAsync(RoutineScheduleCreateDto dto, int actionByUserId);
     Task<RoutineScheduleSaveResult> UpdateAsync(int routineScheduleId, RoutineScheduleUpdateDto dto, int actionByUserId);
     Task<(bool Found, string? Error)> DeleteAsync(int routineScheduleId, int actionByUserId);
+    Task<(bool Found, bool Forbidden, string? Error)> DeleteOwnAsync(int routineScheduleId, int coachId, int actionByUserId);
     Task<bool> SetStatusAsync(int routineScheduleId, bool isActive, int actionByUserId);
 
     /// <summary>Extends session generation for an existing schedule. Null result + null error means not found.</summary>

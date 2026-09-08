@@ -8,6 +8,8 @@ export interface PrivateSessionListItem {
   endTime: string;
   coachCode: string;
   coachFullName: string;
+  coachNickname: string | null;
+  coachColorHex: string;
   location: string | null;
   status: TrainingSessionStatus;
   athleteCount: number;

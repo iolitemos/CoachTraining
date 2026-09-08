@@ -11,6 +11,8 @@ public class CoachDashboardService : ICoachDashboardService
 {
     /// <summary>Statuses still occupying the coach's future calendar (shown as "upcoming").</summary>
     private static readonly SessionStatus[] UpcomingStatuses = [SessionStatus.Scheduled, SessionStatus.CoachAbsent];
+    private static readonly SessionStatus[] CoachActionStatuses =
+        [SessionStatus.Scheduled, SessionStatus.InProgress, SessionStatus.Completed];
 
     private readonly ApplicationDbContext _db;
     private readonly ISessionStatusService _sessionStatusService;
@@ -34,6 +36,14 @@ public class CoachDashboardService : ICoachDashboardService
         var coachSessions = _db.TrainingSessions
             .Where(s => s.AssignedCoachId == coachId || s.ActualCoachId == coachId);
 
+        var overdueActionSessions = await coachSessions
+            .Where(s => s.SessionDate < today && CoachActionStatuses.Contains(s.Status))
+            .OrderByDescending(s => s.SessionDate)
+            .ThenByDescending(s => s.ScheduledStartDateTime)
+            .Take(20)
+            .Select(ToDashboardSession)
+            .ToListAsync();
+
         var todaySessions = await coachSessions
             .Where(s => s.SessionDate == today)
             .OrderBy(s => s.ScheduledStartDateTime)
@@ -48,7 +58,7 @@ public class CoachDashboardService : ICoachDashboardService
             .Select(ToDashboardSession)
             .ToListAsync();
 
-        foreach (var session in todaySessions.Concat(upcomingSessions))
+        foreach (var session in overdueActionSessions.Concat(todaySessions).Concat(upcomingSessions))
         {
             session.RequiredNextAction = BuildNextAction(session.Status);
         }
@@ -74,6 +84,7 @@ public class CoachDashboardService : ICoachDashboardService
 
         return new CoachDashboardResponseDto
         {
+            OverdueActionSessions = overdueActionSessions,
             TodaySessions = todaySessions,
             UpcomingSessions = upcomingSessions,
             CompletedSessionCount = completedCount,
@@ -83,6 +94,43 @@ public class CoachDashboardService : ICoachDashboardService
             PendingActionCount = pendingActionCount,
             MonthlyTeachingHours = Math.Round(monthlyHours, 2),
         };
+    }
+
+    public async Task<List<CoachCalendarColleagueDto>> GetCalendarColleaguesAsync(
+        int coachId, DateOnly startDate, DateOnly endDate)
+    {
+        var excludedStatuses = new[] { SessionStatus.Cancelled, SessionStatus.Rescheduled };
+        var ownSessionDates = _db.TrainingSessions
+            .Where(s =>
+                s.SessionDate >= startDate &&
+                s.SessionDate <= endDate &&
+                !excludedStatuses.Contains(s.Status) &&
+                (s.AssignedCoachId == coachId || s.ActualCoachId == coachId))
+            .Select(s => s.SessionDate)
+            .Distinct();
+
+        return await _db.TrainingSessions
+            .Where(s =>
+                s.SessionDate >= startDate &&
+                s.SessionDate <= endDate &&
+                ownSessionDates.Contains(s.SessionDate) &&
+                !excludedStatuses.Contains(s.Status) &&
+                (s.ActualCoachId ?? s.AssignedCoachId) != coachId)
+            .Where(s =>
+                s.ActualCoachId != null
+                    ? s.ActualCoach!.Nickname != null && s.ActualCoach.Nickname != ""
+                    : s.AssignedCoach.Nickname != null && s.AssignedCoach.Nickname != "")
+            .Select(s => new CoachCalendarColleagueDto
+            {
+                SessionDate = s.SessionDate,
+                CoachNickname = s.ActualCoachId != null
+                    ? s.ActualCoach!.Nickname!
+                    : s.AssignedCoach.Nickname!,
+            })
+            .Distinct()
+            .OrderBy(x => x.SessionDate)
+            .ThenBy(x => x.CoachNickname)
+            .ToListAsync();
     }
 
     private static string? BuildNextAction(SessionStatus status) => status switch

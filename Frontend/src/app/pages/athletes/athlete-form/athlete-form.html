@@ -5,11 +5,11 @@
   <a actions routerLink="/athletes" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
 </app-page-header>
 
-<div class="mt-4 max-w-xl">
+<div class="mt-4 w-full max-w-2xl">
   @if (loading()) {
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
-    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
       <div>
         <label for="athleteCode" class="mb-1 block text-sm font-medium text-text">
           รหัสนักกีฬา <span class="text-danger">*</span>
@@ -103,7 +103,7 @@
 
       <div>
         <label for="joinDate" class="mb-1 block text-sm font-medium text-text">วันที่เข้าร่วม</label>
-        <app-date-input class="block w-full max-w-xs" inputId="joinDate" formControlName="joinDate" ariaLabel="วันที่เข้าร่วม" />
+        <app-date-input class="block w-full sm:max-w-xs" inputId="joinDate" formControlName="joinDate" ariaLabel="วันที่เข้าร่วม" />
       </div>
 
       <div>
@@ -123,7 +123,7 @@
       <button
         type="submit"
         [disabled]="submitting()"
-        class="mt-2 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+        class="mt-2 min-h-11 w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto sm:w-auto sm:min-w-32"
       >
         {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
       </button>

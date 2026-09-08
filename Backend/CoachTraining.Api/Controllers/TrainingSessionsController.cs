@@ -57,4 +57,14 @@ public class TrainingSessionsController : ControllerBase
 
         return Ok(new ApiResponse<TrainingSessionDetailDto>(session));
     }
+
+    [HttpPost("{id:int}/reset-to-scheduled")]
+    [Authorize(Roles = Roles.Administrator)]
+    public async Task<IActionResult> ResetToScheduled(int id, [FromBody] ResetSessionRequest request)
+    {
+        var result = await _trainingSessionService.ResetToScheduledAsync(id, request.Reason, _currentUser.UserId!.Value);
+        if (result.NotFound) return NotFound(new ApiErrorResponse("ไม่พบเซสชันฝึกซ้อมที่ต้องการ"));
+        if (result.Error is not null) return BadRequest(new ApiErrorResponse(result.Error));
+        return Ok(new ApiResponse<TrainingSessionDetailDto>(result.Session!, "ดึงสถานะกลับเป็นกำหนดการสำเร็จ"));
+    }
 }

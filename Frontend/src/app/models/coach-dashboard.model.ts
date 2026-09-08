@@ -16,6 +16,8 @@ export interface CoachDashboardSession {
 
 /** Coach Home dashboard response (requirement.md 9.1, todo.md 4.16/5.5). */
 export interface CoachDashboardResponse {
+  /** Past sessions that still need the signed-in Coach to start, complete, or submit. */
+  overdueActionSessions: CoachDashboardSession[];
   todaySessions: CoachDashboardSession[];
   upcomingSessions: CoachDashboardSession[];
   /** Counts below are scoped to the current calendar month. */
@@ -26,4 +28,9 @@ export interface CoachDashboardResponse {
   /** Sessions still needing a Coach action (FR-TEACH-006). */
   pendingActionCount: number;
   monthlyTeachingHours: number;
+}
+
+export interface CoachCalendarColleague {
+  sessionDate: string;
+  coachNickname: string;
 }

@@ -1,25 +1,25 @@
 <app-page-header title="รายงานการเข้าร่วมของนักกีฬา" subtitle="แยกฝึกซ้อมประจำและฝึกซ้อมส่วนตัว" />
 
 <div class="mt-4 rounded-xl border border-border bg-surface p-3">
-  <div class="flex flex-wrap items-end gap-3">
-    <div class="flex flex-col gap-1 text-sm">
+  <div class="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(18rem,2fr)_repeat(2,minmax(0,1fr))_auto]">
+    <div class="flex min-w-0 flex-col gap-1 text-sm">
       <span class="text-text-secondary">นักกีฬา</span>
       @if (selectedAthlete(); as athlete) {
-        <span class="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary-100 px-3 py-2 text-text">
-          {{ athlete.nickname ? athlete.nickname + ' — ' : '' }}{{ athlete.fullName }}
-          <button type="button" (click)="clearAthlete()" aria-label="ล้างตัวกรองนักกีฬา">
+        <span class="flex min-h-10 min-w-0 items-center gap-2 rounded-lg border border-border bg-secondary-100 px-3 py-2 text-text">
+          <span class="min-w-0 flex-1 truncate">{{ athletePickerLabel(athlete) }}</span>
+          <button type="button" (click)="clearAthlete()" class="shrink-0" aria-label="ล้างตัวกรองนักกีฬา">
             <svg lucideX [size]="14"></svg>
           </button>
         </span>
       } @else {
-        <div class="flex items-center gap-2 rounded-lg border border-border px-3 py-2">
+        <div class="flex min-h-10 min-w-0 items-center gap-2 rounded-lg border border-border px-3 py-2">
           <svg lucideSearch [size]="16" class="text-text-secondary"></svg>
           <input
             type="text"
             [(ngModel)]="athleteSearchTerm"
             (keyup.enter)="searchAthletes()"
             placeholder="ค้นหาชื่อหรือรหัสนักกีฬา (ทั้งหมดหากไม่ระบุ)"
-            class="w-56 bg-transparent text-sm text-text outline-none"
+            class="min-w-0 flex-1 bg-transparent text-sm text-text outline-none"
           />
           <button type="button" (click)="searchAthletes()" [disabled]="athleteSearching()" class="text-sm text-primary-600">
             {{ athleteSearching() ? 'กำลังค้นหา...' : 'ค้นหา' }}
@@ -28,20 +28,20 @@
       }
     </div>
 
-    <label class="flex flex-col gap-1 text-sm">
+    <label class="flex min-w-0 flex-col gap-1 text-sm">
       <span class="text-text-secondary">ตั้งแต่วันที่</span>
-      <app-date-input [(ngModel)]="startDate" ariaLabel="ตั้งแต่วันที่" />
+      <app-date-input class="block w-full" [(ngModel)]="startDate" ariaLabel="ตั้งแต่วันที่" />
     </label>
 
-    <label class="flex flex-col gap-1 text-sm">
+    <label class="flex min-w-0 flex-col gap-1 text-sm">
       <span class="text-text-secondary">ถึงวันที่</span>
-      <app-date-input [(ngModel)]="endDate" ariaLabel="ถึงวันที่" />
+      <app-date-input class="block w-full" [(ngModel)]="endDate" ariaLabel="ถึงวันที่" />
     </label>
 
     <button
       type="button"
       (click)="applyFilters()"
-      class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+      class="min-h-10 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:col-span-2 xl:col-span-1 xl:w-auto"
     >
       ค้นหารายงาน
     </button>
@@ -52,14 +52,19 @@
   }
 
   @if (!selectedAthlete() && athleteSearchResults().length > 0) {
-    <ul class="mt-2 max-w-md divide-y divide-border rounded-lg border border-border">
+    <div class="mt-2 w-full max-w-md overflow-hidden rounded-lg border border-border bg-surface">
+      <p class="border-b border-border bg-secondary-50 px-3 py-2 text-xs text-text-secondary">
+        พบ {{ athleteSearchResults().length }} คน · เลื่อนเพื่อดูรายการเพิ่มเติม
+      </p>
+      <ul class="max-h-64 divide-y divide-border overflow-y-auto overscroll-contain">
       @for (athlete of athleteSearchResults(); track athlete.athleteId) {
-        <li class="flex items-center justify-between px-3 py-2 text-sm">
-          <span class="text-text">{{ athlete.nickname ? athlete.nickname + ' — ' : '' }}{{ athlete.fullName }}</span>
-          <button type="button" (click)="selectAthlete(athlete)" class="text-primary-600 hover:underline">เลือก</button>
+        <li class="flex min-h-12 items-center justify-between gap-3 px-3 py-2 text-sm">
+          <span class="min-w-0 break-words font-medium text-text">{{ athletePickerLabel(athlete) }}</span>
+          <button type="button" (click)="selectAthlete(athlete)" class="min-h-10 shrink-0 rounded-lg px-3 text-primary-600 hover:bg-primary-50">เลือก</button>
         </li>
       }
-    </ul>
+      </ul>
+    </div>
   }
 </div>
 
@@ -76,7 +81,27 @@
         @if (r.items.length === 0) {
           <app-empty-state title="ไม่พบข้อมูลการเข้าร่วม" description="ลองปรับตัวกรองแล้วค้นหาอีกครั้ง" />
         } @else {
-          <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+          <div class="space-y-3 sm:hidden">
+            @for (item of r.items; track item.athleteId) {
+              <article class="rounded-xl border border-border bg-surface p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <h2 class="min-w-0 break-words font-semibold text-text">
+                    {{ item.nickname ? item.nickname + ' — ' : '' }}{{ item.fullName }}
+                  </h2>
+                  <button type="button" (click)="openCalendar(item)" class="shrink-0 rounded-lg bg-primary-50 px-2.5 py-1.5 text-xs font-medium text-primary-700">
+                    ดูประวัติ
+                  </button>
+                </div>
+                <dl class="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div class="rounded-lg bg-emerald-50 p-2"><dt class="text-xs text-text-secondary">ประจำ</dt><dd class="mt-1 font-semibold text-emerald-700">{{ item.routineAttendanceCount }}</dd></div>
+                  <div class="rounded-lg bg-blue-50 p-2"><dt class="text-xs text-text-secondary">ส่วนตัว</dt><dd class="mt-1 font-semibold text-blue-700">{{ item.privateAttendanceCount }}</dd></div>
+                  <div class="rounded-lg bg-secondary-100 p-2"><dt class="text-xs text-text-secondary">รวม</dt><dd class="mt-1 font-semibold text-text">{{ item.routineAttendanceCount + item.privateAttendanceCount }}</dd></div>
+                </dl>
+              </article>
+            }
+          </div>
+
+          <div class="hidden overflow-x-auto rounded-xl border border-border bg-surface sm:block">
             <table class="w-full min-w-170 text-left text-sm">
               <thead class="border-b border-border bg-secondary-50 text-text-secondary">
                 <tr>
@@ -162,7 +187,24 @@
       </div>
 
       <div class="overflow-auto p-3 sm:p-5">
-        <div class="grid min-w-140 grid-cols-7 border-l border-t border-border text-center text-xs font-medium text-text-secondary">
+        <div class="space-y-2 sm:hidden">
+          @for (day of calendarDays(); track day.isoDate) {
+            @if (day.inCurrentMonth && day.records.length > 0) {
+              <div class="rounded-lg border border-border p-3">
+                <p class="text-sm font-semibold text-text">วันที่ {{ day.dayNumber }}</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  @if (routineCount(day.records); as count) {
+                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">ฝึกซ้อมประจำ {{ count }} ครั้ง</span>
+                  }
+                  @if (privateCount(day.records); as count) {
+                    <span class="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">ฝึกซ้อมส่วนตัว {{ count }} ครั้ง</span>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+        <div class="hidden grid-cols-7 border-l border-t border-border text-center text-xs font-medium text-text-secondary sm:grid">
           @for (label of weekdayLabels; track label) {
             <div class="border-b border-r border-border bg-secondary-50 py-2">{{ label }}</div>
           }

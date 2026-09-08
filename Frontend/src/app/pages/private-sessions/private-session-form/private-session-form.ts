@@ -7,7 +7,7 @@ import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indi
 import { StatusBadge } from '../../../shared/status-badge/status-badge';
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { CoachOption } from '../../../models/coach.model';
-import { AthleteOption } from '../../../models/athlete.model';
+import { AthleteOption, athletePickerLabel } from '../../../models/athlete.model';
 import { PrivateSessionAthlete } from '../../../models/private-session.model';
 import { TrainingSessionStatus } from '../../../models/training-session-status.model';
 import { CoachService } from '../../../services/coach.service';
@@ -22,6 +22,7 @@ import { DateInput } from '../../../shared/date-input/date-input';
   styleUrl: './private-session-form.css',
 })
 export class PrivateSessionForm implements OnInit {
+  readonly athletePickerLabel = athletePickerLabel;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -63,6 +64,8 @@ export class PrivateSessionForm implements OnInit {
 
     if (isEdit) {
       this.trainingSessionId.set(Number(idParam));
+    } else {
+      this.prefillFromCalendar(this.route.snapshot.queryParamMap?.get('date'));
     }
 
     try {
@@ -95,6 +98,25 @@ export class PrivateSessionForm implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private prefillFromCalendar(date: string | null | undefined): void {
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return;
+    }
+
+    const [year, month, day] = date.split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, day);
+    if (
+      Number.isNaN(selectedDate.getTime()) ||
+      selectedDate.getFullYear() !== year ||
+      selectedDate.getMonth() !== month - 1 ||
+      selectedDate.getDate() !== day
+    ) {
+      return;
+    }
+
+    this.form.patchValue({ sessionDate: date });
   }
 
   async searchAthletes(): Promise<void> {

@@ -235,6 +235,26 @@ public class RoutineScheduleService : IRoutineScheduleService
         return (true, null);
     }
 
+    public async Task<(bool Found, bool Forbidden, string? Error)> DeleteOwnAsync(
+        int routineScheduleId, int coachId, int actionByUserId)
+    {
+        var schedule = await _db.RoutineSchedules
+            .AsNoTracking()
+            .FirstOrDefaultAsync(rs => rs.RoutineScheduleId == routineScheduleId);
+        if (schedule is null)
+        {
+            return (false, false, null);
+        }
+
+        if (schedule.CoachId != coachId)
+        {
+            return (true, true, null);
+        }
+
+        var (found, error) = await DeleteAsync(routineScheduleId, actionByUserId);
+        return (found, false, error);
+    }
+
     public async Task<(GenerateSessionsResult? Result, string? Error)> GenerateSessionsAsync(int routineScheduleId, DateOnly throughDate, int actionByUserId)
     {
         var schedule = await _db.RoutineSchedules.Include(rs => rs.Coach).FirstOrDefaultAsync(rs => rs.RoutineScheduleId == routineScheduleId);

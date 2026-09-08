@@ -40,9 +40,13 @@ export interface TrainingSessionDetail {
   assignedCoachId: number;
   assignedCoachCode: string;
   assignedCoachName: string;
+  assignedCoachNickname: string | null;
+  assignedCoachColorHex: string;
   actualCoachId: number | null;
   actualCoachCode: string | null;
   actualCoachName: string | null;
+  actualCoachNickname: string | null;
+  actualCoachColorHex: string | null;
   status: TrainingSessionStatus;
   location: string | null;
   remarks: string | null;
@@ -58,6 +62,7 @@ export interface TrainingSessionDetail {
 /** Row shape for the unified Training Session list (todo.md 4.5/5.13). */
 export interface TrainingSessionListItem {
   trainingSessionId: number;
+  routineScheduleId: number | null;
   trainingType: TrainingType;
   sessionDate: string;
   scheduledStartDateTime: string;
@@ -66,8 +71,12 @@ export interface TrainingSessionListItem {
   actualEndDateTime: string | null;
   assignedCoachCode: string;
   assignedCoachName: string;
+  assignedCoachNickname: string | null;
+  assignedCoachColorHex: string;
   actualCoachCode: string | null;
   actualCoachName: string | null;
+  actualCoachNickname: string | null;
+  actualCoachColorHex: string | null;
   status: TrainingSessionStatus;
   location: string | null;
 }

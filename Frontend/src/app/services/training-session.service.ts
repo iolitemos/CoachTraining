@@ -72,4 +72,11 @@ export class TrainingSessionService {
     );
     return response.data.session;
   }
+
+  async resetToScheduled(trainingSessionId: number, reason: string): Promise<TrainingSessionDetail> {
+    const response = await firstValueFrom(
+      this.http.post<ApiSuccessBody<TrainingSessionDetail>>(`${this.baseUrl}/${trainingSessionId}/reset-to-scheduled`, { reason }),
+    );
+    return response.data;
+  }
 }

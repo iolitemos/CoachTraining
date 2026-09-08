@@ -53,6 +53,31 @@ public class PrivateSessionsController : ControllerBase
         return Ok(new ApiResponse<PrivateSessionDetailDto>(session));
     }
 
+    [HttpGet("calendar")]
+    public async Task<IActionResult> Calendar([FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
+    {
+        if (endDate < startDate)
+        {
+            return BadRequest(new ApiErrorResponse("วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น"));
+        }
+
+        if (endDate.DayNumber - startDate.DayNumber > 42)
+        {
+            return BadRequest(new ApiErrorResponse("ช่วงวันที่ของปฏิทินต้องไม่เกิน 43 วัน"));
+        }
+
+        try
+        {
+            var sessions = await _privateSessionService.ListByDateRangeAsync(startDate, endDate);
+            return Ok(new ApiResponse<List<PrivateSessionListItemDto>>(sessions));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/private-sessions/calendar Controller: PrivateSessionsController Function: Calendar UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถโหลดปฏิทินฝึกซ้อมส่วนตัวได้"));
+        }
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PrivateSessionCreateDto dto)
     {

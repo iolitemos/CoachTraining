@@ -1,15 +1,19 @@
 import { Component } from '@angular/core';
-import { PageHeader } from '../../shared/page-header/page-header';
+import { AuthService } from '../../services/auth.service';
 
 /**
- * Placeholder landing page for Project Setup. Coach Home (todo.md 5.5) and
- * the Administrator Dashboard (todo.md 5.14) replace this once Authentication
- * (todo.md section 3) can redirect signed-in users by role.
+ * Fallback shown only when an authenticated account has no supported role.
  */
 @Component({
   selector: 'app-home',
-  imports: [PageHeader],
+  imports: [],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
-export class Home {}
+export class Home {
+  constructor(readonly authService: AuthService) {}
+
+  logout(): void {
+    this.authService.logout();
+  }
+}

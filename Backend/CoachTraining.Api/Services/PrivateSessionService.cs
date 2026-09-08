@@ -54,6 +54,8 @@ public class PrivateSessionService : IPrivateSessionService
                 EndTime = TimeOnly.FromDateTime(s.ScheduledEndDateTime),
                 CoachCode = s.AssignedCoachCodeSnapshot,
                 CoachFullName = s.AssignedCoachNameSnapshot,
+                CoachNickname = s.AssignedCoach.Nickname,
+                CoachColorHex = s.AssignedCoach.ColorHex,
                 Location = s.Location,
                 Status = s.Status,
                 AthleteCount = s.PrivateAthletes.Count,
@@ -61,6 +63,32 @@ public class PrivateSessionService : IPrivateSessionService
             .ToListAsync();
 
         return new PagedResponse<PrivateSessionListItemDto>(items, request.Page, request.PageSize, totalCount);
+    }
+
+    public async Task<List<PrivateSessionListItemDto>> ListByDateRangeAsync(DateOnly startDate, DateOnly endDate)
+    {
+        return await _db.TrainingSessions
+            .Where(s =>
+                s.TrainingType == TrainingType.Private &&
+                s.SessionDate >= startDate &&
+                s.SessionDate <= endDate)
+            .OrderBy(s => s.SessionDate)
+            .ThenBy(s => s.ScheduledStartDateTime)
+            .Select(s => new PrivateSessionListItemDto
+            {
+                TrainingSessionId = s.TrainingSessionId,
+                SessionDate = s.SessionDate,
+                StartTime = TimeOnly.FromDateTime(s.ScheduledStartDateTime),
+                EndTime = TimeOnly.FromDateTime(s.ScheduledEndDateTime),
+                CoachCode = s.AssignedCoachCodeSnapshot,
+                CoachFullName = s.AssignedCoachNameSnapshot,
+                CoachNickname = s.AssignedCoach.Nickname,
+                CoachColorHex = s.AssignedCoach.ColorHex,
+                Location = s.Location,
+                Status = s.Status,
+                AthleteCount = s.PrivateAthletes.Count,
+            })
+            .ToListAsync();
     }
 
     public async Task<PrivateSessionDetailDto?> GetByIdAsync(int trainingSessionId)

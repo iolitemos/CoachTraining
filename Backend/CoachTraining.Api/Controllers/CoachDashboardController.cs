@@ -45,4 +45,31 @@ public class CoachDashboardController : ControllerBase
             return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถโหลดข้อมูลแดชบอร์ดได้"));
         }
     }
+
+    [HttpGet("calendar-colleagues")]
+    public async Task<IActionResult> GetCalendarColleagues(
+        [FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
+    {
+        if (_currentUser.CoachId is not int coachId)
+        {
+            return BadRequest(new ApiErrorResponse("บัญชีนี้ไม่ได้เชื่อมโยงกับข้อมูลโค้ช"));
+        }
+
+        if (endDate < startDate || endDate.DayNumber - startDate.DayNumber > 42)
+        {
+            return BadRequest(new ApiErrorResponse("ช่วงวันที่ปฏิทินต้องอยู่ระหว่าง 1 ถึง 43 วัน"));
+        }
+
+        try
+        {
+            var result = await _coachDashboardService.GetCalendarColleaguesAsync(
+                coachId, startDate, endDate);
+            return Ok(new ApiResponse<List<CoachCalendarColleagueDto>>(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/dashboard/coach/calendar-colleagues Controller: CoachDashboardController Function: GetCalendarColleagues UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถโหลดรายชื่อโค้ชร่วมวันได้"));
+        }
+    }
 }

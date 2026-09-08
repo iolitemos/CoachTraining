@@ -1,5 +1,34 @@
 <app-page-header title="หน้าหลักโค้ช" subtitle="ภาพรวมเซสชันฝึกซ้อมและงานที่ต้องดำเนินการ" />
 
+<div class="mt-4 grid grid-cols-2 rounded-xl border border-border bg-surface p-1" role="tablist" aria-label="มุมมองหน้าหลักโค้ช">
+  <button
+    type="button"
+    role="tab"
+    class="min-h-11 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+    [class.bg-primary-600]="activeTab() === 'overview'"
+    [class.text-white]="activeTab() === 'overview'"
+    [class.text-text-secondary]="activeTab() !== 'overview'"
+    [class.hover:bg-secondary-50]="activeTab() !== 'overview'"
+    [attr.aria-selected]="activeTab() === 'overview'"
+    (click)="selectTab('overview')"
+  >
+    ภาพรวม
+  </button>
+  <button
+    type="button"
+    role="tab"
+    class="min-h-11 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+    [class.bg-primary-600]="activeTab() === 'calendar'"
+    [class.text-white]="activeTab() === 'calendar'"
+    [class.text-text-secondary]="activeTab() !== 'calendar'"
+    [class.hover:bg-secondary-50]="activeTab() !== 'calendar'"
+    [attr.aria-selected]="activeTab() === 'calendar'"
+    (click)="selectTab('calendar')"
+  >
+    ปฏิทิน
+  </button>
+</div>
+
 <div class="mt-4">
   @switch (state()) {
     @case ('loading') {
@@ -10,6 +39,7 @@
     }
     @case ('ready') {
       @if (dashboard(); as d) {
+        <div [class.hidden]="activeTab() !== 'overview'" role="tabpanel">
         <!-- Summary cards -->
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div class="rounded-xl border border-border bg-surface p-4">
@@ -53,11 +83,48 @@
           </span>
         </div>
 
-        @if (d.todaySessions.length === 0 && d.upcomingSessions.length === 0) {
+        @if (d.overdueActionSessions.length === 0 && d.todaySessions.length === 0 && d.upcomingSessions.length === 0) {
           <div class="mt-6">
             <app-empty-state title="ไม่มีเซสชันฝึกซ้อม" description="ยังไม่มีเซสชันฝึกซ้อมที่กำหนดไว้สำหรับวันนี้หรือช่วงถัดไป" />
           </div>
         } @else {
+          <!-- Past sessions that still need action -->
+          @if (d.overdueActionSessions.length > 0) {
+            <section class="mt-6 rounded-xl border border-warning/30 bg-warning-surface/40 p-3 sm:p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-sm font-semibold text-text">เซสชันค้างดำเนินการ</h2>
+                <span class="rounded-full bg-warning-surface px-2.5 py-1 text-xs font-medium text-warning">
+                  {{ d.overdueActionSessions.length }} รายการล่าสุด
+                </span>
+              </div>
+              <p class="mt-1 text-xs text-text-secondary">เซสชันก่อนวันนี้ที่ยังต้องเริ่ม ปิดจ็อบ หรือส่งตรวจ</p>
+              <ul class="mt-3 flex flex-col gap-2">
+                @for (session of d.overdueActionSessions; track session.trainingSessionId) {
+                  <li>
+                    <a
+                      [routerLink]="['/coach/sessions', session.trainingSessionId]"
+                      class="flex min-h-18 items-center justify-between gap-3 rounded-xl border border-warning/20 bg-surface p-4 transition-colors hover:border-warning/50"
+                    >
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class="text-xs font-medium text-text-secondary">{{ trainingTypeLabel(session) }}</span>
+                          <app-status-badge [status]="session.status" />
+                        </div>
+                        <p class="mt-1 text-sm font-medium text-text">
+                          {{ session.sessionDate | displayDate }} · {{ timeRange(session) }}
+                        </p>
+                        @if (session.requiredNextAction) {
+                          <p class="mt-1 text-xs font-medium text-warning">{{ session.requiredNextAction }}</p>
+                        }
+                      </div>
+                      <svg lucideArrowRight [size]="18" class="shrink-0 text-text-secondary"></svg>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
           <!-- Today -->
           <section class="mt-6">
             <h2 class="text-sm font-semibold text-text">เซสชันวันนี้</h2>
@@ -124,7 +191,221 @@
             }
           </section>
         }
+        </div>
+
+        <section
+          class="overflow-hidden rounded-xl border border-border bg-surface"
+          [class.hidden]="activeTab() !== 'calendar'"
+          role="tabpanel"
+          aria-label="ปฏิทินเซสชันของฉัน"
+        >
+          <div class="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 class="text-lg font-semibold text-text">ปฏิทินเซสชันของฉัน</h2>
+              <p class="mt-0.5 text-sm text-text-secondary">{{ monthLabel() }}</p>
+              @if (calendarState() === 'ready') {
+                <p class="mt-0.5 text-xs text-text-secondary">{{ currentMonthSessionCount() }} เซสชันในเดือนนี้</p>
+              }
+              <div class="mt-2 flex flex-wrap gap-3 text-xs text-text-secondary" aria-label="คำอธิบายสีประเภทการฝึกซ้อม">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-800"><span class="size-2.5 rounded-full bg-emerald-500"></span>ฝึกซ้อมประจำ</span>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-blue-800"><span class="size-2.5 rounded-full bg-blue-500"></span>ฝึกซ้อมส่วนตัว</span>
+              </div>
+            </div>
+            <div class="flex flex-col gap-2 sm:items-end">
+              <a
+                routerLink="/coach/routine-schedules/new"
+                [queryParams]="{ date: selectedDate() }"
+                class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              >+ เพิ่มฝึกซ้อมประจำ</a>
+            <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 sm:flex" aria-label="เปลี่ยนเดือน">
+              <button type="button" aria-label="เดือนก่อนหน้า" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(-1)">‹</button>
+              <button type="button" class="min-h-10 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-secondary-50" (click)="goToCurrentMonth()">เดือนปัจจุบัน</button>
+              <button type="button" aria-label="เดือนถัดไป" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(1)">›</button>
+            </div>
+            </div>
+          </div>
+
+          @switch (calendarState()) {
+            @case ('loading') {
+              <div class="p-5"><app-loading-indicator label="กำลังโหลดปฏิทินเซสชัน..." /></div>
+            }
+            @case ('error') {
+              <div class="p-5"><app-error-state message="ไม่สามารถโหลดปฏิทินเซสชันได้" (retry)="loadCalendar()" /></div>
+            }
+            @case ('ready') {
+              @if (calendarActionError()) {
+                <p class="m-4 rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">{{ calendarActionError() }}</p>
+              }
+              <div class="hidden md:block">
+                <div class="grid grid-cols-7 border-b border-border bg-secondary-50">
+                  @for (header of dayHeaders; track header) {
+                    <div class="px-2 py-2 text-center text-xs font-medium text-text-secondary">{{ header }}</div>
+                  }
+                </div>
+                <div class="grid grid-cols-7">
+                  @for (day of calendarDays(); track day.isoDate) {
+                    <div class="min-h-30 border-r border-b border-border p-2" [class.bg-secondary-50]="!day.isCurrentMonth">
+                      <button
+                        type="button"
+                        [attr.aria-label]="'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
+                        title="กดค้างเพื่อเพิ่มฝึกซ้อมประจำ"
+                        class="mb-2 flex size-7 items-center justify-center rounded-full text-xs font-medium hover:bg-primary-100"
+                        [class.bg-primary-600]="day.isToday"
+                        [class.text-white]="day.isToday"
+                        [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday"
+                        (pointerdown)="startDateLongPress(day)"
+                        (pointerup)="cancelDateLongPress()"
+                        (pointerleave)="cancelDateLongPress()"
+                        (pointercancel)="cancelDateLongPress()"
+                        (contextmenu)="$event.preventDefault()"
+                        (click)="selectDay(day)"
+                      >{{ day.dayNumber }}</button>
+                      <div class="space-y-1">
+                        @for (session of day.sessions.slice(0, 3); track session.trainingSessionId) {
+                          <div class="group/event relative">
+                          <a
+                            [routerLink]="['/coach/sessions', session.trainingSessionId]"
+                            class="block rounded-md border-l-3 px-2 py-1 pr-7 text-xs"
+                            [class.border-l-emerald-500]="session.trainingType === 'Routine'"
+                            [class.bg-emerald-100]="session.trainingType === 'Routine'"
+                            [class.text-emerald-800]="session.trainingType === 'Routine'"
+                            [class.border-l-blue-500]="session.trainingType === 'Private'"
+                            [class.bg-blue-100]="session.trainingType === 'Private'"
+                            [class.text-blue-800]="session.trainingType === 'Private'"
+                          >
+                            <span class="block truncate font-semibold">{{ session.trainingType === 'Routine' ? 'ประจำ' : 'ส่วนตัว' }}</span>
+                            <span class="block truncate text-[11px] opacity-80">{{ timeRange(session) }}</span>
+                          </a>
+                          @if (canDelete(session)) {
+                            <button
+                              type="button"
+                              class="absolute top-1/2 right-1 -translate-y-1/2 rounded px-1 text-sm font-medium text-danger opacity-0 hover:bg-white group-hover/event:opacity-100 focus:opacity-100"
+                              aria-label="ลบตารางฝึกซ้อม"
+                              (click)="requestDelete(session, $event)"
+                            >×</button>
+                          }
+                          </div>
+                        }
+                        @if (day.sessions.length > 3) {
+                          <button type="button" class="text-xs font-medium text-primary-600" (click)="selectDay(day)">อีก {{ day.sessions.length - 3 }} รายการ</button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <div class="md:hidden">
+                <div class="grid grid-cols-7 border-b border-border bg-secondary-50">
+                  @for (header of dayHeaders; track header) {
+                    <div class="py-2 text-center text-[11px] font-medium text-text-secondary">{{ header }}</div>
+                  }
+                </div>
+                <div class="grid grid-cols-7 gap-y-1 p-1.5 min-[360px]:p-2">
+                  @for (day of calendarDays(); track day.isoDate) {
+                    <button
+                      type="button"
+                      [attr.aria-label]="'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
+                      class="relative mx-auto flex size-9 items-center justify-center rounded-lg text-xs font-medium min-[360px]:size-10"
+                      [class.ring-2]="selectedDate() === day.isoDate"
+                      [class.ring-secondary-400]="selectedDate() === day.isoDate && day.sessions.length === 0"
+                      [class.ring-emerald-600]="selectedDate() === day.isoDate && hasTrainingType(day, 'Routine') && !hasTrainingType(day, 'Private')"
+                      [class.ring-blue-600]="selectedDate() === day.isoDate && hasTrainingType(day, 'Private') && !hasTrainingType(day, 'Routine')"
+                      [class.ring-secondary-600]="selectedDate() === day.isoDate && hasTrainingType(day, 'Routine') && hasTrainingType(day, 'Private')"
+                      [class.text-text]="selectedDate() === day.isoDate"
+                      [style.background]="calendarDayBackground(day, selectedDate() === day.isoDate)"
+                      [class.text-text-secondary]="!day.isCurrentMonth && selectedDate() !== day.isoDate"
+                      (pointerdown)="startDateLongPress(day)"
+                      (pointerup)="cancelDateLongPress()"
+                      (pointerleave)="cancelDateLongPress()"
+                      (pointercancel)="cancelDateLongPress()"
+                      (contextmenu)="$event.preventDefault()"
+                      (click)="selectDay(day)"
+                    >
+                      {{ day.dayNumber }}
+                      @if (day.sessions.length > 0) {
+                        <span class="absolute bottom-1 flex gap-0.5" aria-hidden="true">
+                          @if (hasTrainingType(day, 'Routine')) {
+                            <span class="size-1 rounded-full bg-emerald-600"></span>
+                          }
+                          @if (hasTrainingType(day, 'Private')) {
+                            <span class="size-1 rounded-full bg-blue-600"></span>
+                          }
+                        </span>
+                      }
+                    </button>
+                  }
+                </div>
+
+                @if (selectedDay(); as day) {
+                  <div class="border-t border-border p-3 min-[360px]:p-4">
+                    <h3 class="mb-3 text-sm font-semibold text-text">เซสชันวันที่ {{ day.isoDate | displayDate }}</h3>
+                    <p class="mb-3 text-xs text-text-secondary">เคล็ดลับ: กดวันที่บนปฏิทินค้างเพื่อเพิ่มฝึกซ้อมประจำ</p>
+                    @if (selectedDayColleagues().length > 0) {
+                      <div class="mb-3 rounded-lg bg-secondary-50 p-3">
+                        <p class="text-xs font-medium text-text-secondary">โค้ชคนอื่นที่เข้าสอนวันเดียวกัน</p>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                          @for (nickname of selectedDayColleagues(); track nickname) {
+                            <span class="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text">
+                              {{ nickname }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+                    @if (day.sessions.length === 0) {
+                      <p class="rounded-lg bg-secondary-50 px-3 py-4 text-center text-sm text-text-secondary">ไม่มีเซสชันในวันนี้</p>
+                    } @else {
+                      <div class="space-y-2">
+                        @for (session of day.sessions; track session.trainingSessionId) {
+                          <div class="flex items-stretch gap-2">
+                          <a
+                            [routerLink]="['/coach/sessions', session.trainingSessionId]"
+                            class="block min-h-18 min-w-0 flex-1 rounded-lg border border-l-4 p-3"
+                            [class.border-emerald-200]="session.trainingType === 'Routine'"
+                            [class.border-l-emerald-500]="session.trainingType === 'Routine'"
+                            [class.bg-emerald-100]="session.trainingType === 'Routine'"
+                            [class.border-blue-200]="session.trainingType === 'Private'"
+                            [class.border-l-blue-500]="session.trainingType === 'Private'"
+                            [class.bg-blue-100]="session.trainingType === 'Private'"
+                          >
+                            <div class="flex items-start justify-between gap-2">
+                              <div>
+                                <p class="font-semibold text-text">{{ session.trainingType === 'Routine' ? 'ฝึกซ้อมประจำ' : 'ฝึกซ้อมส่วนตัว' }}</p>
+                                <p class="mt-1 text-sm text-text-secondary">{{ timeRange(session) }}</p>
+                              </div>
+                              <app-status-badge [status]="session.status" />
+                            </div>
+                          </a>
+                          @if (canDelete(session)) {
+                            <button
+                              type="button"
+                              class="min-h-18 shrink-0 rounded-lg border border-danger/30 px-3 text-sm font-medium text-danger"
+                              (click)="requestDelete(session, $event)"
+                            >ลบ</button>
+                          }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          }
+        </section>
       }
     }
   }
 </div>
+
+<app-confirmation-dialog
+  [open]="pendingDelete() !== null"
+  [danger]="true"
+  [processing]="deleteProcessing()"
+  title="ยืนยันการลบตารางฝึกซ้อม"
+  message="ต้องการลบตารางฝึกซ้อมประจำนี้ใช่หรือไม่? ลบได้เฉพาะรายการที่ยังไม่เริ่มและไม่มีประวัติ"
+  confirmLabel="ลบตาราง"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

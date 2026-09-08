@@ -23,30 +23,28 @@
         }
 
         @if (isLocked(s.status)) {
-          <div class="mb-4 flex items-center gap-2 rounded-lg border border-border bg-secondary-100 p-3 text-sm text-text-secondary">
-            <svg lucideLock [size]="16"></svg>
-            บันทึกนี้อยู่ในสถานะที่ไม่สามารถแก้ไขได้อีกต่อไป
+          <div class="mb-4 flex items-start gap-2 rounded-lg border border-border bg-secondary-100 p-3 text-sm text-text-secondary">
+            <svg lucideLock [size]="16" class="mt-0.5 shrink-0"></svg>
+            <span class="min-w-0">บันทึกนี้อยู่ในสถานะที่ไม่สามารถแก้ไขได้อีกต่อไป</span>
           </div>
         }
 
         @if (s.originalSessionId) {
-          <div class="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-warning">
-            <svg lucideCalendarClock [size]="16"></svg>
-            เซสชันนี้เกิดจากการเลื่อนตาราง —
-            <a [routerLink]="['/coach/sessions', s.originalSessionId]" class="underline">ดูเซสชันต้นฉบับ</a>
+          <div class="mb-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-warning">
+            <svg lucideCalendarClock [size]="16" class="mt-0.5 shrink-0"></svg>
+            <span class="min-w-0">เซสชันนี้เกิดจากการเลื่อนตาราง — <a [routerLink]="['/coach/sessions', s.originalSessionId]" class="font-medium underline">ดูเซสชันต้นฉบับ</a></span>
           </div>
         }
 
         @if (replacementSessionId(); as replacementId) {
-          <div class="mb-4 flex items-center gap-2 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-warning">
-            <svg lucideCalendarClock [size]="16"></svg>
-            เลื่อนเซสชันนี้ไปแล้ว —
-            <a [routerLink]="['/coach/sessions', replacementId]" class="underline">ดูเซสชันใหม่</a>
+          <div class="mb-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-warning">
+            <svg lucideCalendarClock [size]="16" class="mt-0.5 shrink-0"></svg>
+            <span class="min-w-0">เลื่อนเซสชันนี้ไปแล้ว — <a [routerLink]="['/coach/sessions', replacementId]" class="font-medium underline">ดูเซสชันใหม่</a></span>
           </div>
         }
 
         <!-- 1. Session Summary -->
-        <section class="rounded-xl border border-border bg-surface p-4">
+        <section class="rounded-xl border border-border bg-surface p-3 sm:p-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 class="text-sm font-semibold text-text">สรุปเซสชัน</h2>
             <app-status-badge [status]="s.status" />
@@ -64,12 +62,20 @@
             </div>
             <div>
               <dt class="text-text-secondary">โค้ชที่มอบหมาย</dt>
-              <dd class="font-medium text-text">{{ s.assignedCoachCode }} — {{ s.assignedCoachName }}</dd>
+              <dd class="mt-1 flex min-w-0 items-center gap-2 font-medium text-text">
+                <span class="size-3 shrink-0 rounded-full" [style.background-color]="s.assignedCoachColorHex"></span>
+                <span class="min-w-0 break-words">{{ s.assignedCoachNickname ? s.assignedCoachNickname + ' - ' : '' }}{{ s.assignedCoachName }}</span>
+              </dd>
             </div>
             <div>
               <dt class="text-text-secondary">โค้ชที่สอนจริง</dt>
-              <dd class="font-medium text-text">
-                {{ s.actualCoachCode ? s.actualCoachCode + ' — ' + s.actualCoachName : '-' }}
+              <dd class="mt-1 flex min-w-0 items-center gap-2 font-medium text-text">
+                @if (s.actualCoachCode) {
+                  <span class="size-3 shrink-0 rounded-full" [style.background-color]="s.actualCoachColorHex || '#10B981'"></span>
+                  <span class="min-w-0 break-words">{{ s.actualCoachNickname ? s.actualCoachNickname + ' - ' : '' }}{{ s.actualCoachName }}</span>
+                } @else {
+                  <span>-</span>
+                }
               </dd>
             </div>
             @if (s.location) {
@@ -88,7 +94,7 @@
         </section>
 
         <!-- 2. Start / Actual Teaching Information -->
-        <section class="mt-4 rounded-xl border border-border bg-surface p-4">
+        <section class="mt-4 rounded-xl border border-border bg-surface p-3 sm:p-4">
           <h2 class="text-sm font-semibold text-text">เริ่มฝึกซ้อม / ข้อมูลการสอนจริง</h2>
           <dl class="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <div>
@@ -107,23 +113,28 @@
             }
           </dl>
 
-          <div class="mt-4 flex flex-wrap gap-2">
+          <div class="mt-4 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             @if (canStart(s.status)) {
               <button
                 type="button"
-                (click)="start()"
+                (click)="requestStart()"
                 [disabled]="starting()"
-                class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
               >
                 <svg lucidePlay [size]="16"></svg>
                 {{ starting() ? 'กำลังบันทึก...' : 'เริ่มฝึกซ้อม' }}
+              </button>
+            }
+            @if (canResetToScheduled(s.status)) {
+              <button type="button" (click)="openResetDialog()" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-warning/40 px-4 py-2 text-sm font-medium text-warning hover:bg-warning-surface">
+                ดึงกลับเป็นกำหนดการ
               </button>
             }
             @if (isAdministrator && canSubstitute(s.status)) {
               <button
                 type="button"
                 (click)="openSubstituteDialog()"
-                class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
               >
                 <svg lucideRepeat [size]="16"></svg>
                 กำหนดโค้ชตัวแทน
@@ -133,7 +144,7 @@
               <button
                 type="button"
                 (click)="openRescheduleDialog()"
-                class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
               >
                 <svg lucideCalendarClock [size]="16"></svg>
                 เลื่อนเซสชัน
@@ -143,7 +154,7 @@
               <button
                 type="button"
                 (click)="openCancellationDialog()"
-                class="inline-flex items-center gap-2 rounded-lg border border-danger/40 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-surface"
+                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-danger/40 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-surface"
               >
                 <svg lucideX [size]="16"></svg>
                 ยกเลิกเซสชัน
@@ -176,15 +187,15 @@
         </section>
 
         <!-- 5 & 6. Complete / Submit -->
-        <section class="mt-4 flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+        <section class="mt-4 flex flex-col gap-3 rounded-xl border border-border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
           <p class="text-sm text-text-secondary">เมื่อฝึกซ้อมเสร็จสิ้นแล้ว ให้กดเสร็จสิ้น จากนั้นส่งตรวจเพื่อรออนุมัติ</p>
-          <div class="flex flex-wrap gap-2">
+          <div class="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
             @if (canComplete(s.status)) {
               <button
                 type="button"
                 (click)="complete()"
                 [disabled]="completing()"
-                class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
               >
                 <svg lucideCircleCheckBig [size]="16"></svg>
                 {{ completing() ? 'กำลังบันทึก...' : 'เสร็จสิ้นฝึกซ้อม' }}
@@ -195,7 +206,7 @@
                 type="button"
                 (click)="submit()"
                 [disabled]="submitting() || !privateAttendanceComplete()"
-                class="inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
+                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-60"
               >
                 <svg lucideSend [size]="16"></svg>
                 {{ submitting() ? 'กำลังส่ง...' : 'ส่งตรวจ' }}
@@ -210,14 +221,14 @@
 
         <!-- Administrative Review -->
         @if (isAdministrator && (canReviewSubmission(s.status) || canUnlock(s.status))) {
-          <section class="mt-4 rounded-xl border border-border bg-surface p-4">
+          <section class="mt-4 rounded-xl border border-border bg-surface p-3 sm:p-4">
             <h2 class="text-sm font-semibold text-text">ตรวจสอบและอนุมัติ</h2>
-            <div class="mt-3 flex flex-wrap gap-2">
+            <div class="mt-3 grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
               @if (canReviewSubmission(s.status)) {
                 <button
                   type="button"
                   (click)="openApprovalDialog('Approve')"
-                  class="inline-flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
+                  class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-success px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
                 >
                   <svg lucideCircleCheckBig [size]="16"></svg>
                   อนุมัติ
@@ -225,14 +236,14 @@
                 <button
                   type="button"
                   (click)="openApprovalDialog('RequestRevision')"
-                  class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+                  class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
                 >
                   ขอให้แก้ไข
                 </button>
                 <button
                   type="button"
                   (click)="openApprovalDialog('Reject')"
-                  class="inline-flex items-center gap-2 rounded-lg border border-danger/40 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-surface"
+                  class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-danger/40 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger-surface"
                 >
                   <svg lucideX [size]="16"></svg>
                   ตีกลับ
@@ -242,7 +253,7 @@
                 <button
                   type="button"
                   (click)="openApprovalDialog('Unlock')"
-                  class="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
+                  class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-100"
                 >
                   <svg lucideLock [size]="16"></svg>
                   ปลดล็อก
@@ -286,6 +297,32 @@
             (confirmed)="onCancellationConfirmed($event); historyTimeline.reload()"
             (dismissed)="closeCancellationDialog()"
           />
+        }
+
+        <app-confirmation-dialog
+          [open]="startConfirmationOpen()"
+          title="ยืนยันเริ่มฝึกซ้อม"
+          message="ต้องการเริ่มฝึกซ้อมเซสชันนี้ใช่หรือไม่? ระบบจะบันทึกเวลาเริ่มจริงทันที"
+          confirmLabel="เริ่มฝึกซ้อม"
+          [processing]="starting()"
+          (confirmed)="confirmStart()"
+          (cancelled)="cancelStart()"
+        />
+
+        @if (resetDialogOpen()) {
+          <div class="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center sm:p-4">
+            <section class="w-full max-w-md rounded-t-2xl bg-surface p-4 shadow-lg sm:rounded-xl sm:p-5">
+              <h2 class="font-semibold text-text">ดึงสถานะกลับเป็นกำหนดการ</h2>
+              <p class="mt-1 text-xs text-text-secondary">ระบบจะล้างเวลาเริ่มจริงและโค้ชที่สอนจริง พร้อมบันทึกการดำเนินการไว้ในประวัติ</p>
+              <label class="mt-4 block text-sm text-text-secondary">เหตุผล <span class="text-danger">*</span>
+                <textarea rows="3" [(ngModel)]="resetReason" class="mt-1 w-full rounded-lg border border-border bg-surface px-3 py-2 text-text"></textarea>
+              </label>
+              <div class="mt-4 grid grid-cols-2 gap-2">
+                <button type="button" (click)="closeResetDialog()" [disabled]="resetting()" class="min-h-11 rounded-lg border border-border">ยกเลิก</button>
+                <button type="button" (click)="resetToScheduled()" [disabled]="resetting()" class="min-h-11 rounded-lg bg-warning px-3 text-white disabled:opacity-60">{{ resetting() ? 'กำลังบันทึก...' : 'ยืนยันดึงกลับ' }}</button>
+              </div>
+            </section>
+          </div>
         }
       }
     }

@@ -30,7 +30,60 @@
           description="ลองค้นหาด้วยคำอื่น หรือเพิ่มโค้ชใหม่"
         />
       } @else {
-        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div class="grid gap-3 md:hidden">
+          @for (coach of coaches(); track coach.coachId) {
+            <article class="rounded-xl border border-border bg-surface p-4 shadow-sm">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="text-xs font-medium text-text-secondary">{{ coach.coachCode }}</p>
+                  <h2 class="mt-1 truncate font-semibold text-text">{{ coach.fullName }}</h2>
+                  <p class="mt-0.5 text-sm text-text-secondary">ชื่อเล่น {{ coach.nickname || '-' }}</p>
+                </div>
+                <span
+                  class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium"
+                  [class]="coach.isActive ? 'bg-success-surface text-success' : 'bg-secondary-100 text-secondary-600'"
+                >
+                  {{ coach.isActive ? 'ใช้งานอยู่' : 'ปิดใช้งาน' }}
+                </span>
+              </div>
+
+              <dl class="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 text-sm">
+                <div>
+                  <dt class="text-xs text-text-secondary">เบอร์โทร</dt>
+                  <dd class="mt-0.5 break-words text-text">{{ coach.phoneNumber || '-' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-text-secondary">บัญชีผู้ใช้</dt>
+                  <dd class="mt-0.5 break-words text-text">{{ coach.linkedUsername || '-' }}</dd>
+                </div>
+                <div class="col-span-2">
+                  <dt class="text-xs text-text-secondary">สีประจำตัว</dt>
+                  <dd class="mt-1 flex items-center gap-2 text-text">
+                    <span class="size-5 rounded-full border border-black/10" [style.background-color]="coach.colorHex"></span>
+                    {{ coach.colorHex }}
+                  </dd>
+                </div>
+              </dl>
+
+              <div class="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3">
+                <a
+                  [routerLink]="['/coaches', coach.coachId, 'edit']"
+                  class="inline-flex min-h-11 items-center justify-center rounded-lg border border-primary-200 px-3 text-sm font-medium text-primary-700"
+                >แก้ไข</a>
+                <button
+                  type="button"
+                  class="min-h-11 rounded-lg border px-3 text-sm font-medium"
+                  [class]="coach.isActive ? 'border-danger/30 text-danger' : 'border-primary-200 text-primary-700'"
+                  (click)="requestStatusChange(coach)"
+                >
+                  {{ coach.isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน' }}
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+
+        <div class="hidden overflow-x-auto rounded-xl border border-border bg-surface md:block">
           <table class="w-full min-w-160 text-left text-sm">
             <thead class="border-b border-border text-text-secondary">
               <tr>

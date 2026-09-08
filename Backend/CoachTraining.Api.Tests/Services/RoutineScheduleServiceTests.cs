@@ -373,6 +373,35 @@ public class RoutineScheduleServiceTests
     }
 
     [Fact]
+    public async Task DeleteOwnAsync_OnlyDeletesTheAuthenticatedCoachsSchedule()
+    {
+        using var db = TestDbContextFactory.Create();
+        var owner = await SeedCoachAsync(db, "C001");
+        var otherCoach = await SeedCoachAsync(db, "C002");
+        var service = CreateService(db);
+        var created = await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = owner.CoachId,
+            StartTime = new TimeOnly(18, 0),
+            EndTime = new TimeOnly(20, 0),
+            EffectiveStartDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7),
+        }, actionByUserId: 1);
+
+        var forbidden = await service.DeleteOwnAsync(
+            created.Schedule!.RoutineScheduleId, otherCoach.CoachId, actionByUserId: 2);
+        Assert.True(forbidden.Found);
+        Assert.True(forbidden.Forbidden);
+        Assert.True(await db.RoutineSchedules.AnyAsync(x => x.RoutineScheduleId == created.Schedule.RoutineScheduleId));
+
+        var deleted = await service.DeleteOwnAsync(
+            created.Schedule.RoutineScheduleId, owner.CoachId, actionByUserId: 1);
+        Assert.True(deleted.Found);
+        Assert.False(deleted.Forbidden);
+        Assert.Null(deleted.Error);
+        Assert.False(await db.RoutineSchedules.AnyAsync(x => x.RoutineScheduleId == created.Schedule.RoutineScheduleId));
+    }
+
+    [Fact]
     public async Task DeleteAsync_WithProgressedSession_ReturnsErrorAndPreservesData()
     {
         using var db = TestDbContextFactory.Create();

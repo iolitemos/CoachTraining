@@ -1,14 +1,14 @@
 <app-page-header title="จัดการตารางฝึกซ้อมประจำ" subtitle="ตารางฝึกซ้อมตามวันที่ที่กำหนด">
-  <div actions class="flex items-center gap-2">
+  <div actions class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
     <a
       routerLink="/routine-schedules"
-      class="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50"
+      class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50 sm:px-4"
     >
       ดูแบบปฏิทิน
     </a>
     <a
       routerLink="/routine-schedules/new"
-      class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+      class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-3 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:px-4"
     >
       เพิ่มตารางฝึกซ้อม
     </a>
@@ -39,7 +39,43 @@
           description="ลองค้นหาด้วยคำอื่น หรือเพิ่มตารางฝึกซ้อมใหม่"
         />
       } @else {
-        <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+        <div class="space-y-3 sm:hidden">
+          @for (schedule of schedules(); track schedule.routineScheduleId) {
+            <article class="rounded-xl border border-border bg-surface p-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-semibold text-text">{{ schedule.effectiveStartDate | displayDate }}</p>
+                  <p class="mt-1 text-sm text-text-secondary">
+                    {{ schedule.startTime.slice(0, 5) }} - {{ schedule.endTime.slice(0, 5) }} น.
+                  </p>
+                  <p class="mt-2 flex items-center gap-2 text-sm text-text">
+                    <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="schedule.coachColorHex"></span>
+                    <span class="truncate">{{ schedule.coachNickname || 'ไม่ระบุชื่อเล่น' }}</span>
+                  </p>
+                </div>
+                <div class="flex shrink-0 items-center gap-1">
+                  <a
+                    [routerLink]="['/routine-schedules', schedule.routineScheduleId, 'edit']"
+                    class="inline-flex size-10 items-center justify-center rounded-lg bg-primary-50 text-primary-600"
+                    aria-label="แก้ไขตารางฝึกซ้อม"
+                  >
+                    <svg lucidePencil [size]="18"></svg>
+                  </a>
+                  <button
+                    type="button"
+                    class="inline-flex size-10 items-center justify-center rounded-lg bg-danger-surface text-danger"
+                    aria-label="ลบตารางฝึกซ้อม"
+                    (click)="requestDelete(schedule)"
+                  >
+                    <svg lucideTrash2 [size]="18"></svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+
+        <div class="hidden overflow-x-auto rounded-xl border border-border bg-surface sm:block">
           <table class="w-full min-w-120 text-left text-sm">
             <thead class="border-b border-border text-text-secondary">
               <tr>

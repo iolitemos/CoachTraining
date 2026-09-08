@@ -1,9 +1,9 @@
 <app-page-header title="รายงานวันเข้าสอนของโค้ช" subtitle="สรุปจำนวนวันที่เข้าสอน แยกฝึกซ้อมประจำและฝึกซ้อมส่วนตัว" />
 
-<div class="mt-4 flex flex-wrap items-end gap-3 rounded-xl border border-border bg-surface p-3">
-  <label class="flex flex-col gap-1 text-sm">
+<div class="mt-4 grid grid-cols-1 items-end gap-3 rounded-xl border border-border bg-surface p-3 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
+  <label class="flex min-w-0 flex-col gap-1 text-sm">
     <span class="text-text-secondary">โค้ช</span>
-    <select [(ngModel)]="coachId" class="rounded-lg border border-border bg-surface px-3 py-2 text-text">
+    <select [(ngModel)]="coachId" class="min-h-10 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-text">
       <option [ngValue]="null">ทั้งหมด</option>
       @for (coach of coachOptions(); track coach.coachId) {
         <option [ngValue]="coach.coachId">{{ coach.nickname || coach.fullName }}</option>
@@ -11,19 +11,19 @@
     </select>
   </label>
 
-  <label class="flex flex-col gap-1 text-sm">
+  <label class="flex min-w-0 flex-col gap-1 text-sm">
     <span class="text-text-secondary">ตั้งแต่วันที่</span>
-    <app-date-input [(ngModel)]="startDate" ariaLabel="ตั้งแต่วันที่" />
+    <app-date-input class="block w-full" [(ngModel)]="startDate" ariaLabel="ตั้งแต่วันที่" />
   </label>
 
-  <label class="flex flex-col gap-1 text-sm">
+  <label class="flex min-w-0 flex-col gap-1 text-sm">
     <span class="text-text-secondary">ถึงวันที่</span>
-    <app-date-input [(ngModel)]="endDate" ariaLabel="ถึงวันที่" />
+    <app-date-input class="block w-full" [(ngModel)]="endDate" ariaLabel="ถึงวันที่" />
   </label>
 
-  <label class="flex flex-col gap-1 text-sm">
+  <label class="flex min-w-0 flex-col gap-1 text-sm">
     <span class="text-text-secondary">ประเภทการฝึกซ้อม</span>
-    <select [(ngModel)]="trainingType" class="rounded-lg border border-border bg-surface px-3 py-2 text-text">
+    <select [(ngModel)]="trainingType" class="min-h-10 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-text">
       <option value="">ทั้งหมด</option>
       <option value="Routine">ฝึกซ้อมประจำ</option>
       <option value="Private">ฝึกซ้อมส่วนตัว</option>
@@ -33,7 +33,7 @@
   <button
     type="button"
     (click)="applyFilters()"
-    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+    class="min-h-10 w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:col-span-2 xl:col-span-1 xl:w-auto"
   >
     ค้นหา
   </button>
@@ -56,7 +56,28 @@
         @if (r.items.length === 0) {
           <app-empty-state title="ไม่พบข้อมูลวันเข้าสอน" description="ลองปรับตัวกรองแล้วค้นหาอีกครั้ง" />
         } @else {
-          <div class="overflow-x-auto rounded-xl border border-border bg-surface">
+          <div class="space-y-3 sm:hidden">
+            <div class="grid grid-cols-3 gap-2 rounded-xl bg-primary-50 p-3 text-center">
+              <div><p class="text-xs text-text-secondary">ประจำ</p><p class="mt-1 text-lg font-semibold text-primary-700">{{ r.totalRoutineDays }}</p></div>
+              <div><p class="text-xs text-text-secondary">ส่วนตัว</p><p class="mt-1 text-lg font-semibold text-primary-700">{{ r.totalPrivateDays }}</p></div>
+              <div><p class="text-xs text-text-secondary">รวม</p><p class="mt-1 text-lg font-semibold text-primary-700">{{ r.grandTotalDays }}</p></div>
+            </div>
+            @for (item of r.items; track item.coachId) {
+              <article class="rounded-xl border border-border bg-surface p-4">
+                <h2 class="flex items-center gap-2 font-semibold text-text">
+                  <span class="size-3 shrink-0 rounded-full ring-2 ring-white" [style.background-color]="item.coachColorHex"></span>
+                  {{ item.coachNickname || item.coachFullName }}
+                </h2>
+                <dl class="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div class="rounded-lg bg-secondary-50 p-2"><dt class="text-xs text-text-secondary">ประจำ</dt><dd class="mt-1 font-semibold text-text">{{ item.routineDays }} วัน</dd></div>
+                  <div class="rounded-lg bg-secondary-50 p-2"><dt class="text-xs text-text-secondary">ส่วนตัว</dt><dd class="mt-1 font-semibold text-text">{{ item.privateDays }} วัน</dd></div>
+                  <div class="rounded-lg bg-success-surface p-2"><dt class="text-xs text-text-secondary">รวม</dt><dd class="mt-1 font-semibold text-success">{{ item.totalDays }} วัน</dd></div>
+                </dl>
+              </article>
+            }
+          </div>
+
+          <div class="hidden overflow-x-auto rounded-xl border border-border bg-surface sm:block">
             <table class="w-full min-w-160 text-left text-sm">
               <thead class="border-b border-border text-text-secondary">
                 <tr>

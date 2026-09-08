@@ -106,6 +106,32 @@ public class CoachDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetDashboardAsync_ReturnsPastActionableSessionsNewestFirst()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var now = new DateTime(2026, 1, 10, 12, 0, 0);
+
+        db.TrainingSessions.AddRange(
+            BuildSession(coach, new DateOnly(2026, 1, 8), new TimeOnly(8, 0), new TimeOnly(9, 0), SessionStatus.Scheduled),
+            BuildSession(coach, new DateOnly(2026, 1, 9), new TimeOnly(17, 0), new TimeOnly(19, 0), SessionStatus.InProgress),
+            BuildSession(coach, new DateOnly(2026, 1, 7), new TimeOnly(17, 0), new TimeOnly(19, 0), SessionStatus.Completed),
+            BuildSession(coach, new DateOnly(2026, 1, 6), new TimeOnly(17, 0), new TimeOnly(19, 0), SessionStatus.Cancelled),
+            BuildSession(coach, new DateOnly(2026, 1, 5), new TimeOnly(17, 0), new TimeOnly(19, 0), SessionStatus.Locked));
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetDashboardAsync(coach.CoachId, now);
+
+        Assert.Equal(3, result.OverdueActionSessions.Count);
+        Assert.Equal(
+            [new DateOnly(2026, 1, 9), new DateOnly(2026, 1, 8), new DateOnly(2026, 1, 7)],
+            result.OverdueActionSessions.Select(s => s.SessionDate).ToArray());
+        Assert.Equal("บันทึกการเสร็จสิ้นฝึกซ้อม", result.OverdueActionSessions[0].RequiredNextAction);
+        Assert.Equal("เริ่มฝึกซ้อม", result.OverdueActionSessions[1].RequiredNextAction);
+        Assert.Equal("ส่งตรวจ", result.OverdueActionSessions[2].RequiredNextAction);
+    }
+
+    [Fact]
     public async Task GetDashboardAsync_NeverIncludesAnotherCoachsSessions()
     {
         using var db = TestDbContextFactory.Create();
@@ -121,5 +147,31 @@ public class CoachDashboardServiceTests
         var result = await service.GetDashboardAsync(coach.CoachId, now);
 
         Assert.Empty(result.TodaySessions);
+    }
+
+    [Fact]
+    public async Task GetCalendarColleaguesAsync_ReturnsOnlyNicknamesOnTheCurrentCoachsSessionDates()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db, "C001");
+        coach.Nickname = "มอส";
+        var colleague = await SeedCoachAsync(db, "C002");
+        colleague.Nickname = "อาร์ม";
+        var unrelated = await SeedCoachAsync(db, "C003");
+        unrelated.Nickname = "ปุ้ม";
+        var sharedDate = new DateOnly(2026, 9, 8);
+
+        db.TrainingSessions.AddRange(
+            BuildSession(coach, sharedDate, new TimeOnly(17, 0), new TimeOnly(18, 0), SessionStatus.Scheduled),
+            BuildSession(colleague, sharedDate, new TimeOnly(18, 0), new TimeOnly(19, 0), SessionStatus.Scheduled),
+            BuildSession(unrelated, sharedDate.AddDays(1), new TimeOnly(18, 0), new TimeOnly(19, 0), SessionStatus.Scheduled));
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetCalendarColleaguesAsync(
+            coach.CoachId, sharedDate, sharedDate.AddDays(1));
+
+        var item = Assert.Single(result);
+        Assert.Equal(sharedDate, item.SessionDate);
+        Assert.Equal("อาร์ม", item.CoachNickname);
     }
 }

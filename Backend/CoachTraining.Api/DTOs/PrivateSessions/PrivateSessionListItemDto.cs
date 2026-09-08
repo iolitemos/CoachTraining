@@ -10,6 +10,8 @@ public class PrivateSessionListItemDto
     public TimeOnly EndTime { get; set; }
     public string CoachCode { get; set; } = string.Empty;
     public string CoachFullName { get; set; } = string.Empty;
+    public string? CoachNickname { get; set; }
+    public string CoachColorHex { get; set; } = "#10B981";
     public string? Location { get; set; }
     public SessionStatus Status { get; set; }
     public int AthleteCount { get; set; }

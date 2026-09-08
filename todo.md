@@ -225,8 +225,10 @@
 - [x] Create access-denied page.
 - [x] Add logout action.
 - [x] Hide navigation items the signed-in user is not authorized to access.
-- [ ] Redirect Coach users to Coach Home after login.
-- [ ] Redirect Administrator users to Administrator Dashboard after login.
+- [x] Redirect Coach users to Coach Home after login.
+- [x] Redirect Administrator users to Administrator Dashboard after login.
+- [x] Redirect Management / Viewer users to Administrator Dashboard in read-only mode after login.
+- [x] Show a no-role fallback page only when an authenticated account has no supported role.
 
 ### 3.4 User and Role Management Frontend
 
@@ -239,6 +241,35 @@
 - [x] Add form validation and processing state.
 - [x] Add activate/deactivate confirmation flow.
 - [x] Make user management pages responsive.
+- [x] Add a touch-friendly User card list for mobile while preserving the desktop table.
+
+### 3.5 Password Change and Reset Backend
+
+- [x] Create password change, reset request, and reset confirmation DTOs (`FR-USER-005`–`010`).
+- [x] Add secure single-use password-reset token persistence with issued, expiry, used, and invalidated state.
+- [x] Add an EF Core migration for password-reset token persistence and required indexes.
+- [x] Apply the password-reset token migration to the DEV database.
+- [x] Create a password service and keep password business logic out of the controller.
+- [x] Add an authenticated API for an account owner to change only the owner's own password.
+- [x] Require and verify the current password before changing a password.
+- [x] Add a public forgot-password API that always returns a neutral response.
+- [x] Send the password-reset link only to the email address registered to the active account.
+- [x] Store only a secure hash of the reset token and never persist or log the raw token.
+- [x] Set password-reset token expiry to 10 minutes and make each token single use.
+- [x] Invalidate older reset tokens when a newer token is issued for the same account.
+- [x] Enforce a minimum password length of 8 characters for user creation, password change, and password reset.
+- [x] Add a MailKit email sender and HTML reset-password template under `Backend/EmailTemplate`.
+- [x] Keep the frontend reset URL and email settings in environment-specific configuration outside source control where sensitive.
+
+### 3.6 Password Change and Reset Frontend
+
+- [x] Create an authenticated change-password page for the signed-in account owner.
+- [x] Create a forgot-password page that accepts the account email address.
+- [x] Create a reset-password page that accepts the reset token and new password.
+- [x] Enforce and clearly display the minimum 8-character password rule.
+- [x] Add password confirmation validation, processing state, success feedback, and safe error states.
+- [x] Handle invalid, expired, and already-used reset links without exposing account information.
+- [x] Make password change and reset screens responsive and use Thai UI text.
 
 ---
 
@@ -540,6 +571,7 @@
 - [x] Replace Coach Type/Specialization inputs with bank account detail inputs (bank name, account number, account name) in the Coach form; drop the Coach Type column from the Coach list.
 - [x] Make the bank-name field a dropdown of Thai bank names with PromptPay listed first.
 - [x] Make Coach list and forms responsive.
+- [x] Add a touch-friendly Coach card list for mobile while preserving the desktop table.
 
 ### 5.2 Athlete Management Frontend
 
@@ -553,6 +585,7 @@
 - [x] Add Athlete Code uniqueness error feedback.
 - [x] Add Athlete activate/deactivate action.
 - [x] Make Athlete list and forms responsive.
+- [x] Add a touch-friendly Athlete card list for mobile while preserving the desktop table.
 
 ### 5.3 Routine Training Frontend
 
@@ -587,6 +620,9 @@
 ### 5.4 Private Training Frontend
 
 - [x] Create Private Training list page.
+- [x] Create Private Training monthly calendar view with a selected-date mobile agenda.
+- [x] Display Coach color/nickname, start-end time, and athlete count on Private Training calendar entries.
+- [x] Allow Administrator to select a calendar date and open the create form with the date prefilled.
 - [x] Add Private Training search/filter/pagination.
 - [x] Add loading, empty, and error states to Private Training list.
 - [x] Create Private Training create form.
@@ -619,6 +655,17 @@
 - [x] Add empty state when no sessions are scheduled.
 - [x] Add API error state and retry action.
 - [x] Optimize Coach Home for mobile-first use.
+- [x] Display past actionable sessions on Coach Home so Coaches can complete overdue teaching records.
+- [x] Add a responsive monthly calendar and selected-date agenda for the signed-in Coach's sessions.
+- [x] Split Coach Home into Overview and Calendar tabs with touch-friendly responsive controls.
+- [x] Allow a Coach to create only the Coach's own Routine Training schedule from Coach Home without conflict override permission.
+- [x] Open the Coach's Routine Training create form with the selected date after a calendar-day long press.
+- [x] Allow a Coach to delete only the Coach's own untouched Scheduled Routine Training from the calendar.
+- [x] Use distinct calendar colors and legends for Routine and Private Training on desktop and mobile.
+- [x] Add distinct calendar background colors, including a split background for dates containing both training types.
+- [x] Use a gray selected-day background only when empty while preserving training-type backgrounds on populated dates.
+- [x] Match the selected calendar-day border to a darker shade of its Routine or Private Training background.
+- [x] Show nickname-only colleague presence on dates shared with the signed-in Coach without exposing other session details.
 
 ### 5.6 Coach Session Frontend
 
@@ -638,6 +685,8 @@
 - [x] Display locked/read-only state for finalized records.
 - [x] Add loading and API error states.
 - [x] Make Coach Session flow responsive and optimized for mobile.
+- [x] Require confirmation before starting a training session.
+- [x] Allow an Administrator to reset an In Progress session to Scheduled with a required audited reason.
 
 ### 5.7 Routine Attendance Frontend
 
@@ -896,6 +945,8 @@
 
 - [ ] Require HTTPS in deployed environments.
 - [ ] Keep JWT signing keys and database credentials outside source control.
+- [x] Keep email credentials outside source control and protect password-reset URLs in logs and telemetry.
+- [x] Rate-limit forgot-password requests and apply abuse protection without enabling account enumeration.
 - [ ] Validate all incoming input on the backend.
 - [ ] Verify EF/database access does not use unsafe raw SQL patterns.
 - [ ] Verify rendered user-entered text is handled safely against XSS.
@@ -916,6 +967,11 @@
 ### 9.1 Backend Unit Tests
 
 - [x] Test AuthService login (correct credentials, wrong password, inactive account, unknown username).
+- [x] Test password change ownership, current-password verification, and minimum 8-character validation.
+- [x] Test forgot-password neutral responses for known, unknown, and inactive account emails.
+- [x] Test reset-token hashing, 10-minute expiry, single use, and invalidation after a newer request.
+- [x] Test successful password reset and rejection of invalid, expired, or already-used tokens.
+- [x] Test password-reset email uses the registered account email and configured frontend reset URL.
 - [x] Test JwtTokenService issues correct identity/role claims.
 - [x] Test User username/email uniqueness validation.
 - [x] Test Coach Code uniqueness validation.
@@ -1021,6 +1077,8 @@
 - [x] Run `ng build` after Project Setup frontend changes.
 - [x] Run `dotnet build` after Authentication backend implementation.
 - [x] Run `ng build` after Authentication frontend implementation.
+- [x] Run `dotnet build` after password change/reset backend implementation.
+- [x] Run `ng build` after password change/reset frontend implementation.
 - [x] Run `dotnet build` after Coach module backend implementation.
 - [x] Run `ng build` after Coach module frontend implementation.
 - [x] Run `dotnet build` after Athlete module backend implementation.

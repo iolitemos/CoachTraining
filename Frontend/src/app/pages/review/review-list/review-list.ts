@@ -41,11 +41,11 @@ export class ReviewList implements OnInit {
 
   coachOptions = signal<CoachOption[]>([]);
 
-  status: TrainingSessionStatus | '' = 'Submitted';
+  status: TrainingSessionStatus | '' = '';
   trainingType: TrainingType | '' = '';
   coachId: number | null = null;
-  dateFrom = '';
-  dateTo = '';
+  dateFrom = todayIsoDate();
+  dateTo = todayIsoDate();
 
   constructor(
     private readonly trainingSessionService: TrainingSessionService,
@@ -90,4 +90,11 @@ export class ReviewList implements OnInit {
   trainingTypeLabel(type: TrainingType): string {
     return type === 'Routine' ? 'ฝึกซ้อมประจำ' : 'ฝึกซ้อมส่วนตัว';
   }
+}
+
+function todayIsoDate(): string {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
 }
