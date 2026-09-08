@@ -26,8 +26,7 @@ public class CoachDashboardResponseDto
     public List<CoachDashboardSessionDto> TodaySessions { get; set; } = [];
     public List<CoachDashboardSessionDto> UpcomingSessions { get; set; } = [];
 
-    /// <summary>Counts below are scoped to the current calendar month, paired with
-    /// the monthly teaching-hour summary.</summary>
+    /// <summary>Counts below are scoped to the current calendar month.</summary>
     public int CompletedSessionCount { get; set; }
     public int RemainingSessionCount { get; set; }
     public int RoutineSessionCount { get; set; }
@@ -37,7 +36,9 @@ public class CoachDashboardResponseDto
     /// sessions, and Completed sessions not yet submitted (FR-TEACH-006).</summary>
     public int PendingActionCount { get; set; }
 
-    public decimal MonthlyTeachingHours { get; set; }
+    /// <summary>Distinct dates in the month on which this coach is credited with
+    /// at least one completed teaching session.</summary>
+    public int MonthlyTeachingDayCount { get; set; }
 }
 
 /// <summary>Privacy-limited colleague presence for the Coach calendar. Deliberately

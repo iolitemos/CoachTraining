@@ -47,6 +47,15 @@ describe('PrivateSessionForm', () => {
     expect(component.loading()).toBe(false);
   });
 
+  it('formats coach options as nickname followed by full name', () => {
+    expect(
+      component.coachPickerLabel({ nickname: 'มอส', fullName: 'สมชาย ใจดี' }),
+    ).toBe('มอส - สมชาย ใจดี');
+    expect(
+      component.coachPickerLabel({ nickname: null, fullName: 'สมหญิง ใจดี' }),
+    ).toBe('สมหญิง ใจดี');
+  });
+
   it('should require at least one athlete before submit even when the rest of the form is valid', async () => {
     await initInAddMode();
 

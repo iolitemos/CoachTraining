@@ -13,6 +13,9 @@
 - [x] Configure backend dependency injection entry points.
 - [x] Configure frontend application routing.
 - [x] Configure shared frontend layout and navigation shell.
+- [x] Show the signed-in username in the mobile header and full account/role details in the mobile navigation drawer.
+- [x] Remove the redundant generic Home link from desktop and mobile navigation while retaining role-based root redirects.
+- [x] Remove the empty generic Menu heading from the desktop sidebar.
 - [x] Configure PostgreSQL connection for the existing database environment.
 - [x] Confirm no PostgreSQL Docker or database `docker-compose` setup is added.
 - [x] Configure EF Core database context.
@@ -489,7 +492,7 @@
 - [x] Add Coach completed/remaining session summary. <!-- Scoped to the current calendar month -->
 - [x] Add Routine/Private session summary. <!-- Scoped to the current calendar month -->
 - [x] Add pending/incomplete record summary. <!-- Overdue Scheduled/InProgress + not-yet-submitted Completed sessions -->
-- [x] Add monthly teaching-hour summary.
+- [x] Replace the monthly teaching-hour summary with a distinct monthly teaching-day summary as requested by the user.
 - [x] Restrict dashboard data to the signed-in Coach. <!-- GET /api/dashboard/coach always scopes to _currentUser.CoachId -->
 
 ### 4.17 Administrator Dashboard Backend
@@ -598,6 +601,7 @@
 - [x] Add responsive mobile calendar and selected-date agenda.
 - [x] Add loading, empty, and error states to Routine Schedule calendar.
 - [x] Show only Coach nickname without time in calendar entries and use the configured Coach color.
+- [x] Color Routine Schedule calendar dates Emerald, use a dark-green selected border for scheduled dates, and gray for empty selected dates.
 - [x] Add Routine Schedule search/filter/pagination.
 - [x] Add loading, empty, and error states to Routine Schedule list.
 - [x] Create Routine Schedule create form.
@@ -621,6 +625,7 @@
 
 - [x] Create Private Training list page.
 - [x] Create Private Training monthly calendar view with a selected-date mobile agenda.
+- [x] Color Private Session calendar dates blue, use a dark-blue selected border for session dates, and gray for empty selected dates.
 - [x] Display Coach color/nickname, start-end time, and athlete count on Private Training calendar entries.
 - [x] Allow Administrator to select a calendar date and open the create form with the date prefilled.
 - [x] Add Private Training search/filter/pagination.
@@ -628,6 +633,7 @@
 - [x] Create Private Training create form.
 - [x] Create Private Training edit form.
 - [x] Add active Coach selector.
+- [x] Display Private Training coach options as nickname followed by full name.
 - [x] Add searchable multi-athlete selector.
 - [x] Prevent duplicate athlete selection.
 - [x] Add date/start/end time inputs.
@@ -648,7 +654,7 @@
 - [x] Display scheduled time and current status.
 - [x] Display required next action for actionable sessions.
 - [x] Add completed/remaining session summary.
-- [x] Add monthly teaching-hour summary.
+- [x] Display a distinct monthly teaching-day summary instead of teaching hours as requested by the user.
 - [x] Add pending/incomplete training-record summary.
 - [x] Add direct navigation from session card/list item to session detail.
 - [x] Add loading state.
@@ -666,6 +672,7 @@
 - [x] Use a gray selected-day background only when empty while preserving training-type backgrounds on populated dates.
 - [x] Match the selected calendar-day border to a darker shade of its Routine or Private Training background.
 - [x] Show nickname-only colleague presence on dates shared with the signed-in Coach without exposing other session details.
+- [x] Add distinct colors to Coach Home summary statuses and consistently color Routine/Private type badges.
 
 ### 5.6 Coach Session Frontend
 

@@ -112,6 +112,16 @@ export class RoutineScheduleCalendar implements OnInit {
     }
   }
 
+  calendarDayBackground(day: CalendarDay, isSelected = false): string | null {
+    if (day.schedules.length > 0) {
+      return '#d1fae5';
+    }
+    if (isSelected) {
+      return '#e5e7eb';
+    }
+    return day.isToday ? '#2563eb' : null;
+  }
+
   requestDelete(schedule: RoutineScheduleListItem): void {
     this.actionError.set(null);
     this.pendingDelete.set(schedule);

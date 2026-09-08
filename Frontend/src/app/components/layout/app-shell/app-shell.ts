@@ -1,16 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import {
-  LucideCalendarHeart,
   LucideClipboardCheck,
   LucideClipboardList,
-  LucideDumbbell,
   LucideFileBarChart,
   LucideLayoutDashboard,
   LucideKeyRound,
   LucideLogOut,
   LucideMenu,
-  LucideRepeat,
   LucideUserCheck,
   LucideUsers,
   LucideX,
@@ -19,7 +16,7 @@ import {
   LucideCalendarPlus2,
   LucideCalendarClock,
 } from '@lucide/angular';
-import { AppRole } from '../../../models/auth.model';
+import { AppRole, getRoleLabel } from '../../../models/auth.model';
 import { AuthService } from '../../../services/auth.service';
 
 /**
@@ -39,9 +36,6 @@ import { AuthService } from '../../../services/auth.service';
     LucideLayoutDashboard,
     LucideUsers,
     LucideUserCheck,
-    LucideDumbbell,
-    LucideRepeat,
-    LucideCalendarHeart,
     LucideClipboardCheck,
     LucideFileBarChart,
     LucideClipboardList,
@@ -76,5 +70,9 @@ export class AppShell {
 
   userInitial(fullName: string | undefined): string {
     return fullName?.trim().charAt(0).toUpperCase() ?? '';
+  }
+
+  roleLabel(role: string): string {
+    return getRoleLabel(role);
   }
 }

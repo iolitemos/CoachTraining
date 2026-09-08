@@ -60,7 +60,7 @@ public class CoachDashboardServiceTests
     }
 
     [Fact]
-    public async Task GetDashboardAsync_ComputesMonthlyCountsAndTeachingHours()
+    public async Task GetDashboardAsync_ComputesMonthlyCountsAndDistinctTeachingDays()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
@@ -83,7 +83,26 @@ public class CoachDashboardServiceTests
         Assert.Equal(1, result.RemainingSessionCount);
         Assert.Equal(2, result.RoutineSessionCount);
         Assert.Equal(1, result.PrivateSessionCount);
-        Assert.Equal(3.5m, result.MonthlyTeachingHours);
+        Assert.Equal(2, result.MonthlyTeachingDayCount);
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_CountsMultipleCompletedSessionsOnTheSameDateAsOneTeachingDay()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var date = new DateOnly(2026, 1, 5);
+
+        db.TrainingSessions.AddRange(
+            BuildSession(coach, date, new TimeOnly(9, 0), new TimeOnly(10, 0), SessionStatus.Completed),
+            BuildSession(coach, date, new TimeOnly(17, 0), new TimeOnly(18, 0), SessionStatus.Locked,
+                type: TrainingType.Private));
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetDashboardAsync(
+            coach.CoachId, new DateTime(2026, 1, 20, 9, 0, 0));
+
+        Assert.Equal(1, result.MonthlyTeachingDayCount);
     }
 
     [Fact]

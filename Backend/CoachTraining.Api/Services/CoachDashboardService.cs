@@ -65,16 +65,25 @@ public class CoachDashboardService : ICoachDashboardService
 
         var monthSessions = await coachSessions
             .Where(s => s.SessionDate >= monthStart && s.SessionDate <= monthEnd)
-            .Select(s => new { s.TrainingType, s.Status, s.ActualStartDateTime, s.ActualEndDateTime })
+            .Select(s => new { s.TrainingType, s.Status })
             .ToListAsync();
 
         var completedCount = monthSessions.Count(s => _sessionStatusService.CountsAsCompletedTeaching(s.Status));
         var remainingCount = monthSessions.Count(s => UpcomingStatuses.Contains(s.Status) || s.Status == SessionStatus.InProgress);
         var routineCount = monthSessions.Count(s => s.TrainingType == TrainingType.Routine);
         var privateCount = monthSessions.Count(s => s.TrainingType == TrainingType.Private);
-        var monthlyHours = monthSessions
-            .Where(s => _sessionStatusService.CountsAsCompletedTeaching(s.Status) && s.ActualStartDateTime is not null && s.ActualEndDateTime is not null)
-            .Sum(s => (decimal)(s.ActualEndDateTime!.Value - s.ActualStartDateTime!.Value).TotalHours);
+        var teachingStatuses = Enum.GetValues<SessionStatus>()
+            .Where(_sessionStatusService.CountsAsCompletedTeaching)
+            .ToArray();
+        var monthlyTeachingDayCount = await _db.TrainingSessions
+            .Where(s =>
+                s.SessionDate >= monthStart &&
+                s.SessionDate <= monthEnd &&
+                teachingStatuses.Contains(s.Status) &&
+                (s.ActualCoachId ?? s.AssignedCoachId) == coachId)
+            .Select(s => s.SessionDate)
+            .Distinct()
+            .CountAsync();
 
         // FR-TEACH-006 — sessions still needing a Coach action: due-or-overdue
         // Scheduled/InProgress sessions, and Completed sessions not yet submitted.
@@ -92,7 +101,7 @@ public class CoachDashboardService : ICoachDashboardService
             RoutineSessionCount = routineCount,
             PrivateSessionCount = privateCount,
             PendingActionCount = pendingActionCount,
-            MonthlyTeachingHours = Math.Round(monthlyHours, 2),
+            MonthlyTeachingDayCount = monthlyTeachingDayCount,
         };
     }
 

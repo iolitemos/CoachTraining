@@ -29,4 +29,16 @@ describe('PrivateSessionCalendar', () => {
 
     expect(component.state()).toBe('ready');
   });
+
+  it('uses blue for session dates and gray only for an empty selected date', () => {
+    const component = TestBed.createComponent(PrivateSessionCalendar).componentInstance;
+    component.visibleMonth.set(new Date(2026, 0, 1));
+    const day = component.calendarDays().find((item) => item.isoDate === '2026-01-05')!;
+
+    day.sessions = [{ trainingSessionId: 1 } as never];
+    expect(component.calendarDayBackground(day, true)).toBe('#dbeafe');
+
+    day.sessions = [];
+    expect(component.calendarDayBackground(day, true)).toBe('#e5e7eb');
+  });
 });

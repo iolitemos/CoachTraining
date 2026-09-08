@@ -36,7 +36,18 @@
           @for (day of calendarDays(); track day.isoDate) {
             <div class="group min-h-32 border-r border-b border-border p-2" [class.bg-secondary-50]="!day.isCurrentMonth">
               <div class="mb-2 flex items-center justify-between">
-                <button type="button" class="flex size-7 items-center justify-center rounded-full text-xs font-medium hover:bg-primary-100" [class.bg-primary-600]="day.isToday" [class.text-white]="day.isToday" [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday" (click)="selectDay(day)">{{ day.dayNumber }}</button>
+                <button
+                  type="button"
+                  class="flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-blue-100"
+                  [class.ring-2]="selectedDate() === day.isoDate"
+                  [class.ring-blue-700]="selectedDate() === day.isoDate && day.sessions.length > 0"
+                  [class.ring-secondary-400]="selectedDate() === day.isoDate && day.sessions.length === 0"
+                  [class.text-blue-900]="day.sessions.length > 0"
+                  [class.text-white]="day.isToday && day.sessions.length === 0 && selectedDate() !== day.isoDate"
+                  [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday && selectedDate() !== day.isoDate"
+                  [style.background-color]="calendarDayBackground(day, selectedDate() === day.isoDate)"
+                  (click)="selectDay(day)"
+                >{{ day.dayNumber }}</button>
                 <a routerLink="/private-sessions/new" [queryParams]="{ date: day.isoDate }" class="rounded px-1.5 py-0.5 text-xs font-medium text-primary-600 opacity-0 hover:bg-primary-50 group-hover:opacity-100 focus:opacity-100">+ เพิ่ม</a>
               </div>
               <div class="space-y-1">
@@ -59,9 +70,20 @@
         </div>
         <div class="grid grid-cols-7 gap-y-1 p-1.5 min-[360px]:p-2">
           @for (day of calendarDays(); track day.isoDate) {
-            <button type="button" class="relative mx-auto flex size-9 items-center justify-center rounded-lg text-xs font-medium min-[360px]:size-10" [class.bg-primary-600]="selectedDate() === day.isoDate" [class.text-white]="selectedDate() === day.isoDate" [class.bg-blue-50]="selectedDate() !== day.isoDate && day.sessions.length > 0" [class.text-text-secondary]="!day.isCurrentMonth && selectedDate() !== day.isoDate" (click)="selectDay(day)">
+            <button
+              type="button"
+              class="relative mx-auto flex size-9 items-center justify-center rounded-lg text-xs font-medium transition-colors min-[360px]:size-10"
+              [class.ring-2]="selectedDate() === day.isoDate"
+              [class.ring-blue-700]="selectedDate() === day.isoDate && day.sessions.length > 0"
+              [class.ring-secondary-400]="selectedDate() === day.isoDate && day.sessions.length === 0"
+              [class.text-blue-900]="day.sessions.length > 0"
+              [class.text-white]="day.isToday && day.sessions.length === 0 && selectedDate() !== day.isoDate"
+              [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday && selectedDate() !== day.isoDate"
+              [style.background-color]="calendarDayBackground(day, selectedDate() === day.isoDate)"
+              (click)="selectDay(day)"
+            >
               {{ day.dayNumber }}
-              @if (day.sessions.length > 0) { <span class="absolute bottom-1 size-1 rounded-full" [class.bg-white]="selectedDate() === day.isoDate" [class.bg-blue-600]="selectedDate() !== day.isoDate"></span> }
+              @if (day.sessions.length > 0) { <span class="absolute bottom-1 size-1 rounded-full bg-blue-700"></span> }
             </button>
           }
         </div>

@@ -6,7 +6,7 @@ import { PageHeader } from '../../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { StatusBadge } from '../../../shared/status-badge/status-badge';
 import { ApiErrorBody } from '../../../models/paged-result.model';
-import { CoachOption } from '../../../models/coach.model';
+import { CoachOption, coachPickerLabel } from '../../../models/coach.model';
 import { AthleteOption, athletePickerLabel } from '../../../models/athlete.model';
 import { PrivateSessionAthlete } from '../../../models/private-session.model';
 import { TrainingSessionStatus } from '../../../models/training-session-status.model';
@@ -23,6 +23,7 @@ import { DateInput } from '../../../shared/date-input/date-input';
 })
 export class PrivateSessionForm implements OnInit {
   readonly athletePickerLabel = athletePickerLabel;
+  readonly coachPickerLabel = coachPickerLabel;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

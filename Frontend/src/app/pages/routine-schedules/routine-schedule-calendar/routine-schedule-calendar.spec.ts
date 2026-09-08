@@ -71,6 +71,16 @@ describe('RoutineScheduleCalendar', () => {
     expect(component.selectedDate()).toBe('2026-02-01');
   });
 
+  it('uses Emerald for scheduled days and gray only for an empty selected day', () => {
+    const day = component.calendarDays().find((item) => item.isoDate === '2026-01-05')!;
+
+    day.schedules = [{ routineScheduleId: 1 } as never];
+    expect(component.calendarDayBackground(day, true)).toBe('#d1fae5');
+
+    day.schedules = [];
+    expect(component.calendarDayBackground(day, true)).toBe('#e5e7eb');
+  });
+
   it('should render only the coach nickname with the configured color and no time', async () => {
     component.visibleMonth.set(new Date(2026, 0, 1));
     fixture.detectChanges();

@@ -103,6 +103,16 @@ export class PrivateSessionCalendar implements OnInit {
       void this.load();
     }
   }
+
+  calendarDayBackground(day: CalendarDay, isSelected = false): string | null {
+    if (day.sessions.length > 0) {
+      return '#dbeafe';
+    }
+    if (isSelected) {
+      return '#e5e7eb';
+    }
+    return day.isToday ? '#2563eb' : null;
+  }
 }
 
 function startOfMonth(date: Date): Date {

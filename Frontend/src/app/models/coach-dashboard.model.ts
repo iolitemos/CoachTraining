@@ -27,7 +27,8 @@ export interface CoachDashboardResponse {
   privateSessionCount: number;
   /** Sessions still needing a Coach action (FR-TEACH-006). */
   pendingActionCount: number;
-  monthlyTeachingHours: number;
+  /** Distinct dates with at least one completed session credited to this coach. */
+  monthlyTeachingDayCount: number;
 }
 
 export interface CoachCalendarColleague {

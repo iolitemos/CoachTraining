@@ -53,3 +53,9 @@ export interface CoachOption {
   nickname: string | null;
   colorHex: string;
 }
+
+/** Compact selector label: "nickname - full name", falling back to full name. */
+export function coachPickerLabel(coach: Pick<CoachOption, 'nickname' | 'fullName'>): string {
+  const nickname = coach.nickname?.trim();
+  return nickname ? `${nickname} - ${coach.fullName}` : coach.fullName;
+}

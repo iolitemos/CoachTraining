@@ -21,15 +21,15 @@ export interface StatusDisplay {
 }
 
 const STATUS_DISPLAY: Record<TrainingSessionStatus, StatusDisplay> = {
-  Scheduled: { label: 'กำหนดการ', className: 'bg-secondary-100 text-secondary-700' },
-  InProgress: { label: 'กำลังฝึกซ้อม', className: 'bg-primary-100 text-primary-700' },
-  Completed: { label: 'เสร็จสิ้น', className: 'bg-primary-100 text-primary-700' },
-  Submitted: { label: 'ส่งตรวจแล้ว', className: 'bg-warning-surface text-warning' },
-  Approved: { label: 'อนุมัติแล้ว', className: 'bg-success-surface text-success' },
+  Scheduled: { label: 'กำหนดการ', className: 'bg-blue-100 text-blue-800' },
+  InProgress: { label: 'กำลังฝึกซ้อม', className: 'bg-amber-100 text-amber-800' },
+  Completed: { label: 'เสร็จสิ้น', className: 'bg-emerald-100 text-emerald-800' },
+  Submitted: { label: 'ส่งตรวจแล้ว', className: 'bg-violet-100 text-violet-800' },
+  Approved: { label: 'อนุมัติแล้ว', className: 'bg-green-100 text-green-800' },
   Locked: { label: 'ล็อกแล้ว', className: 'bg-secondary-200 text-secondary-700' },
   Cancelled: { label: 'ยกเลิก', className: 'bg-danger-surface text-danger' },
-  Rescheduled: { label: 'เลื่อนตาราง', className: 'bg-warning-surface text-warning' },
-  CoachAbsent: { label: 'โค้ชขาด', className: 'bg-danger-surface text-danger' },
+  Rescheduled: { label: 'เลื่อนตาราง', className: 'bg-orange-100 text-orange-800' },
+  CoachAbsent: { label: 'โค้ชขาด', className: 'bg-rose-100 text-rose-800' },
 };
 
 export function getStatusDisplay(status: TrainingSessionStatus): StatusDisplay {

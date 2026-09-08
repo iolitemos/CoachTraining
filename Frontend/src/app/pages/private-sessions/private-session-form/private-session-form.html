@@ -34,7 +34,7 @@
         >
           <option [ngValue]="null">— เลือกโค้ช —</option>
           @for (coach of coachOptions(); track coach.coachId) {
-            <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName }}</option>
+            <option [ngValue]="coach.coachId">{{ coachPickerLabel(coach) }}</option>
           }
         </select>
         @if (form.controls.coachId.invalid && form.controls.coachId.touched) {
