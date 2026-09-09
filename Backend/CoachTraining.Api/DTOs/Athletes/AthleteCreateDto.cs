@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CoachTraining.Api.Models.Enums;
 
 namespace CoachTraining.Api.DTOs.Athletes;
 
@@ -7,6 +8,9 @@ public class AthleteCreateDto
     [Required(ErrorMessage = "กรุณากรอกรหัสนักกีฬา")]
     [MaxLength(30, ErrorMessage = "รหัสนักกีฬาต้องไม่เกิน 30 ตัวอักษร")]
     public string AthleteCode { get; set; } = string.Empty;
+
+    [EnumDataType(typeof(AthleteType), ErrorMessage = "ประเภทนักกีฬาไม่ถูกต้อง")]
+    public AthleteType AthleteType { get; set; } = AthleteType.Affiliated;
 
     [Required(ErrorMessage = "กรุณากรอกชื่อ-นามสกุล")]
     [MaxLength(200)]

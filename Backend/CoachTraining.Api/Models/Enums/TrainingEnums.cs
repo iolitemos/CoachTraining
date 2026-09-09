@@ -1,5 +1,12 @@
 namespace CoachTraining.Api.Models.Enums;
 
+/// <summary>requirement.md FR-ATHLETE-005 — athlete master-data classification.</summary>
+public enum AthleteType
+{
+    Affiliated,
+    General,
+}
+
 /// <summary>requirement.md FR-SESSION-002 — every session is exactly one of these.</summary>
 public enum TrainingType
 {

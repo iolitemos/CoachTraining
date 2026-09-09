@@ -8,8 +8,33 @@
   </a>
 </app-page-header>
 
+<div class="mt-4 border-b border-border" role="tablist" aria-label="ประเภทนักกีฬา">
+  <div class="flex gap-1 overflow-x-auto">
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="athleteType() === 'Affiliated'"
+      class="min-h-11 shrink-0 border-b-2 px-4 py-2 text-sm font-medium transition-colors"
+      [class]="athleteType() === 'Affiliated' ? 'border-primary-600 text-primary-700' : 'border-transparent text-text-secondary hover:text-text'"
+      (click)="onTypeChange('Affiliated')"
+    >
+      นักกีฬาในสังกัด
+    </button>
+    <button
+      type="button"
+      role="tab"
+      [attr.aria-selected]="athleteType() === 'General'"
+      class="min-h-11 shrink-0 border-b-2 px-4 py-2 text-sm font-medium transition-colors"
+      [class]="athleteType() === 'General' ? 'border-primary-600 text-primary-700' : 'border-transparent text-text-secondary hover:text-text'"
+      (click)="onTypeChange('General')"
+    >
+      นักกีฬาทั่วไป
+    </button>
+  </div>
+</div>
+
 <div class="mt-4">
-  <app-search-filter-toolbar placeholder="ค้นหารหัสนักกีฬา ชื่อ-นามสกุล หรือชื่อเล่น" (search)="onSearch($event)" />
+  <app-search-filter-toolbar placeholder="ค้นหารหัสนักกีฬา ชื่อ-นามสกุล หรือชื่อเล่น" [initialSearchTerm]="search()" (search)="onSearch($event)" />
 </div>
 
 <div class="mt-4">
@@ -22,7 +47,7 @@
     }
     @case ('ready') {
       @if (athletes().length === 0) {
-        <app-empty-state title="ไม่พบข้อมูลนักกีฬา" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มนักกีฬาใหม่" />
+        <app-empty-state [title]="athleteType() === 'Affiliated' ? 'ไม่พบนักกีฬาในสังกัด' : 'ไม่พบนักกีฬาทั่วไป'" description="ลองค้นหาด้วยคำอื่น หรือเพิ่มนักกีฬาใหม่" />
       } @else {
         <div class="grid gap-3 md:hidden">
           @for (athlete of athletes(); track athlete.athleteId) {
@@ -32,6 +57,7 @@
                   <p class="text-xs font-medium text-text-secondary">{{ athlete.athleteCode }}</p>
                   <h2 class="mt-1 truncate font-semibold text-text">{{ athlete.fullName }}</h2>
                   <p class="mt-0.5 text-sm text-text-secondary">ชื่อเล่น {{ athlete.nickname || '-' }}</p>
+                  <p class="mt-1 text-xs font-medium text-primary-700">{{ athleteTypeLabel(athlete.athleteType) }}</p>
                 </div>
                 <span
                   class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium"
@@ -77,6 +103,7 @@
                 <th class="px-4 py-3 font-medium">รหัสนักกีฬา</th>
                 <th class="px-4 py-3 font-medium">ชื่อ-นามสกุล</th>
                 <th class="px-4 py-3 font-medium">ชื่อเล่น</th>
+                <th class="px-4 py-3 font-medium">ประเภท</th>
                 <th class="px-4 py-3 font-medium">วันเกิด</th>
                 <th class="px-4 py-3 font-medium">ระดับ</th>
                 <th class="px-4 py-3 font-medium">สถานะ</th>
@@ -89,6 +116,7 @@
                   <td class="px-4 py-3 font-medium text-text">{{ athlete.athleteCode }}</td>
                   <td class="px-4 py-3 text-text">{{ athlete.fullName }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ athlete.nickname || '-' }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ athleteTypeLabel(athlete.athleteType) }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ athlete.dateOfBirth | displayDate }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ athlete.athleteLevel || '-' }}</td>
                   <td class="px-4 py-3">

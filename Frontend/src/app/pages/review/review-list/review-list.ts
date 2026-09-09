@@ -1,7 +1,7 @@
 import { SlicePipe } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { EmptyState } from '../../../shared/empty-state/empty-state';
@@ -15,6 +15,7 @@ import { CoachService } from '../../../services/coach.service';
 import { TrainingSessionService } from '../../../services/training-session.service';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 import { DateInput } from '../../../shared/date-input/date-input';
+import { FilterStateService } from '../../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -50,9 +51,20 @@ export class ReviewList implements OnInit {
   constructor(
     private readonly trainingSessionService: TrainingSessionService,
     private readonly coachService: CoachService,
+    private readonly filterState: FilterStateService,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    const filters = this.filterState.restore<{ status: string; trainingType: string; coachId: number | null; dateFrom: string; dateTo: string; page: number }>('review', {
+      status: '', trainingType: '', coachId: null, dateFrom: todayIsoDate(), dateTo: todayIsoDate(), page: 1,
+    }, this.route.snapshot.queryParamMap, ['coachId', 'page']);
+    this.status = filters.status as TrainingSessionStatus | '';
+    this.trainingType = filters.trainingType as TrainingType | '';
+    this.coachId = filters.coachId;
+    this.dateFrom = filters.dateFrom;
+    this.dateTo = filters.dateTo;
+    this.page.set(filters.page ?? 1);
     void this.coachService.getActiveOptions().then((options) => this.coachOptions.set(options));
     void this.load();
   }
@@ -79,12 +91,21 @@ export class ReviewList implements OnInit {
 
   applyFilters(): void {
     this.page.set(1);
+    this.rememberFilters();
     void this.load();
   }
 
   onPageChange(page: number): void {
     this.page.set(page);
+    this.rememberFilters();
     void this.load();
+  }
+
+  private rememberFilters(): void {
+    this.filterState.save('review', {
+      status: this.status, trainingType: this.trainingType, coachId: this.coachId,
+      dateFrom: this.dateFrom, dateTo: this.dateTo, page: this.page(),
+    }, this.route);
   }
 
   trainingTypeLabel(type: TrainingType): string {

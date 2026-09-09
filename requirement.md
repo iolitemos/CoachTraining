@@ -112,6 +112,7 @@ Purpose:
 Core data:
 
 - Athlete Code
+- Athlete Type (Affiliated Athlete / General Athlete)
 - Full Name
 - Nickname
 - Date of Birth
@@ -404,6 +405,8 @@ Purpose:
 - **FR-ATHLETE-002** Each athlete record shall have a unique business identifier.
 - **FR-ATHLETE-003** Deactivating an athlete shall not delete or alter historical attendance records.
 - **FR-ATHLETE-004** Active athletes shall be selectable for new Private Training sessions and Routine Training attendance.
+- **FR-ATHLETE-005** Each athlete shall be classified as either an Affiliated Athlete or a General Athlete, and Administrator shall be able to set and update this classification.
+- **FR-ATHLETE-006** The Athlete Management list shall separate Affiliated Athletes and General Athletes into distinct tabs with independent server-side filtered results.
 
 ### 6.4 Routine Training Requirements
 

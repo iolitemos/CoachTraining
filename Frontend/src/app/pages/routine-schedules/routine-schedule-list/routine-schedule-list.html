@@ -16,7 +16,7 @@
 </app-page-header>
 
 <div class="mt-4">
-  <app-search-filter-toolbar placeholder="ค้นหาชื่อเล่นโค้ช" (search)="onSearch($event)" />
+  <app-search-filter-toolbar placeholder="ค้นหาชื่อเล่นโค้ช" [initialSearchTerm]="search()" (search)="onSearch($event)" />
 </div>
 
 <div class="mt-4">

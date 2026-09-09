@@ -11,6 +11,7 @@ public class AthleteConfiguration : IEntityTypeConfiguration<Athlete>
         builder.HasKey(a => a.AthleteId);
 
         builder.Property(a => a.AthleteCode).HasMaxLength(30).IsRequired();
+        builder.Property(a => a.AthleteType).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(a => a.FullName).HasMaxLength(200).IsRequired();
         builder.Property(a => a.Nickname).HasMaxLength(100);
         builder.Property(a => a.PhoneNumber).HasMaxLength(30);

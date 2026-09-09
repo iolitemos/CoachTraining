@@ -8,6 +8,7 @@ import {
   AthleteDetail,
   AthleteListItem,
   AthleteOption,
+  AthleteType,
   AthleteUpdateRequest,
 } from '../models/athlete.model';
 
@@ -17,11 +18,12 @@ export class AthleteService {
 
   constructor(private readonly http: HttpClient) {}
 
-  async list(page: number, pageSize: number, search: string): Promise<PagedResult<AthleteListItem>> {
+  async list(page: number, pageSize: number, search: string, athleteType: AthleteType): Promise<PagedResult<AthleteListItem>> {
     const params = new HttpParams()
       .set('page', page)
       .set('pageSize', pageSize)
-      .set('search', search ?? '');
+      .set('search', search ?? '')
+      .set('athleteType', athleteType);
 
     const response = await firstValueFrom(
       this.http.get<ApiSuccessBody<PagedResult<AthleteListItem>>>(this.baseUrl, { params }),

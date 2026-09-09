@@ -187,43 +187,36 @@
       </div>
 
       <div class="overflow-auto p-3 sm:p-5">
-        <div class="space-y-2 sm:hidden">
-          @for (day of calendarDays(); track day.isoDate) {
-            @if (day.inCurrentMonth && day.records.length > 0) {
-              <div class="rounded-lg border border-border p-3">
-                <p class="text-sm font-semibold text-text">วันที่ {{ day.dayNumber }}</p>
-                <div class="mt-2 flex flex-wrap gap-2">
-                  @if (routineCount(day.records); as count) {
-                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">ฝึกซ้อมประจำ {{ count }} ครั้ง</span>
-                  }
-                  @if (privateCount(day.records); as count) {
-                    <span class="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">ฝึกซ้อมส่วนตัว {{ count }} ครั้ง</span>
-                  }
-                </div>
-              </div>
-            }
-          }
-        </div>
-        <div class="hidden grid-cols-7 border-l border-t border-border text-center text-xs font-medium text-text-secondary sm:grid">
+        <div class="grid grid-cols-7 border-l border-t border-border text-center text-[11px] font-medium text-text-secondary sm:text-xs">
           @for (label of weekdayLabels; track label) {
             <div class="border-b border-r border-border bg-secondary-50 py-2">{{ label }}</div>
           }
           @for (day of calendarDays(); track day.isoDate) {
             <div
-              class="min-h-20 border-b border-r border-border p-1.5 text-left"
+              class="min-h-14 min-w-0 border-b border-r border-border p-1 text-left sm:min-h-20 sm:p-1.5"
               [class.bg-secondary-50]="!day.inCurrentMonth"
             >
               <span class="text-xs" [class.text-text]="day.inCurrentMonth" [class.text-text-secondary]="!day.inCurrentMonth">
                 {{ day.dayNumber }}
               </span>
               @if (routineCount(day.records); as count) {
-                <div class="mt-1 rounded bg-emerald-100 px-1.5 py-1 text-[11px] font-medium text-emerald-700">
-                  ประจำ{{ count > 1 ? ' · ' + count : '' }}
+                <div
+                  class="mt-1 flex min-w-0 items-center justify-center gap-0.5 rounded bg-emerald-100 px-0.5 py-0.5 text-[9px] font-semibold text-emerald-700 sm:block sm:px-1.5 sm:py-1 sm:text-[11px]"
+                  [attr.aria-label]="'ฝึกซ้อมประจำ ' + count + ' ครั้ง'"
+                >
+                  <span class="size-1.5 shrink-0 rounded-full bg-emerald-500 sm:hidden"></span>
+                  <span class="sm:hidden">{{ count }}</span>
+                  <span class="hidden sm:inline">ประจำ{{ count > 1 ? ' · ' + count : '' }}</span>
                 </div>
               }
               @if (privateCount(day.records); as count) {
-                <div class="mt-1 rounded bg-blue-100 px-1.5 py-1 text-[11px] font-medium text-blue-700">
-                  ส่วนตัว{{ count > 1 ? ' · ' + count : '' }}
+                <div
+                  class="mt-1 flex min-w-0 items-center justify-center gap-0.5 rounded bg-blue-100 px-0.5 py-0.5 text-[9px] font-semibold text-blue-700 sm:block sm:px-1.5 sm:py-1 sm:text-[11px]"
+                  [attr.aria-label]="'ฝึกซ้อมส่วนตัว ' + count + ' ครั้ง'"
+                >
+                  <span class="size-1.5 shrink-0 rounded-full bg-blue-500 sm:hidden"></span>
+                  <span class="sm:hidden">{{ count }}</span>
+                  <span class="hidden sm:inline">ส่วนตัว{{ count > 1 ? ' · ' + count : '' }}</span>
                 </div>
               }
             </div>

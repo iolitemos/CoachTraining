@@ -26,6 +26,20 @@
       </div>
 
       <div>
+        <label for="athleteType" class="mb-1 block text-sm font-medium text-text">
+          ประเภทนักกีฬา <span class="text-danger">*</span>
+        </label>
+        <select
+          id="athleteType"
+          formControlName="athleteType"
+          class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
+        >
+          <option value="Affiliated">นักกีฬาในสังกัด</option>
+          <option value="General">นักกีฬาทั่วไป</option>
+        </select>
+      </div>
+
+      <div>
         <label for="fullName" class="mb-1 block text-sm font-medium text-text">
           ชื่อ-นามสกุล <span class="text-danger">*</span>
         </label>

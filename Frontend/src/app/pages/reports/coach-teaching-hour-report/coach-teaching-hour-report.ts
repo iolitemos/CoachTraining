@@ -1,5 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { EmptyState } from '../../../shared/empty-state/empty-state';
@@ -10,6 +11,7 @@ import { CoachTeachingHourReportResponse } from '../../../models/coach-teaching-
 import { CoachService } from '../../../services/coach.service';
 import { CoachTeachingHourReportService } from '../../../services/coach-teaching-hour-report.service';
 import { DateInput } from '../../../shared/date-input/date-input';
+import { FilterStateService } from '../../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -54,9 +56,19 @@ export class CoachTeachingHourReport implements OnInit {
   constructor(
     private readonly reportService: CoachTeachingHourReportService,
     private readonly coachService: CoachService,
+    private readonly filterState: FilterStateService,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
+    const defaults = currentMonthRange();
+    const filters = this.filterState.restore<{ coachId: number | null; startDate: string; endDate: string; trainingType: string }>('coach-teaching-report', {
+      coachId: null, startDate: defaults.startDate, endDate: defaults.endDate, trainingType: '',
+    }, this.route.snapshot.queryParamMap, ['coachId']);
+    this.coachId = filters.coachId;
+    this.startDate = filters.startDate;
+    this.endDate = filters.endDate;
+    this.trainingType = filters.trainingType as TrainingType | '';
     void this.coachService.getActiveOptions().then((options) => this.coachOptions.set(options));
     void this.load();
   }
@@ -79,6 +91,9 @@ export class CoachTeachingHourReport implements OnInit {
   }
 
   applyFilters(): void {
+    this.filterState.save('coach-teaching-report', {
+      coachId: this.coachId, startDate: this.startDate, endDate: this.endDate, trainingType: this.trainingType,
+    }, this.route);
     void this.load();
   }
 }

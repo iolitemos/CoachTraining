@@ -11,6 +11,7 @@
 <div class="mt-4">
   <app-search-filter-toolbar
     placeholder="ค้นหารหัสโค้ช ชื่อ-นามสกุล หรือชื่อเล่น"
+    [initialSearchTerm]="search()"
     (search)="onSearch($event)"
   />
 </div>

@@ -1,5 +1,6 @@
 import { Component, computed, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { LucideSearch, LucideX } from '@lucide/angular';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
@@ -14,6 +15,7 @@ import {
 import { AthleteService } from '../../../services/athlete.service';
 import { AthleteAttendanceReportService } from '../../../services/athlete-attendance-report.service';
 import { DateInput } from '../../../shared/date-input/date-input';
+import { FilterStateService } from '../../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -89,10 +91,25 @@ export class AthleteAttendanceReport implements OnInit {
   constructor(
     private readonly athleteService: AthleteService,
     private readonly reportService: AthleteAttendanceReportService,
+    private readonly filterState: FilterStateService,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
-    void this.load();
+    const defaults = currentMonthRange();
+    const filters = this.filterState.restore<{ athleteId: number | null; athleteLabel: string; startDate: string; endDate: string }>('athlete-attendance-report', {
+      athleteId: null, athleteLabel: '', startDate: defaults.startDate, endDate: defaults.endDate,
+    }, this.route.snapshot.queryParamMap, ['athleteId']);
+    this.startDate = filters.startDate;
+    this.endDate = filters.endDate;
+    if (filters.athleteId && filters.athleteLabel) {
+      this.selectedAthlete.set({ athleteId: filters.athleteId, athleteCode: '', fullName: filters.athleteLabel, nickname: null });
+      void this.load();
+    } else if (filters.athleteId) {
+      void this.restoreAthlete(filters.athleteId);
+    } else {
+      void this.load();
+    }
   }
 
   async load(): Promise<void> {
@@ -112,6 +129,16 @@ export class AthleteAttendanceReport implements OnInit {
   }
 
   applyFilters(): void {
+    const athlete = this.selectedAthlete();
+    const state = {
+      athleteId: athlete?.athleteId ?? null,
+      athleteLabel: athlete ? athletePickerLabel(athlete) : '',
+      startDate: this.startDate,
+      endDate: this.endDate,
+    };
+    this.filterState.save('athlete-attendance-report', state, this.route, {
+      athleteId: state.athleteId, startDate: state.startDate, endDate: state.endDate,
+    });
     void this.load();
   }
 
@@ -135,6 +162,22 @@ export class AthleteAttendanceReport implements OnInit {
 
   clearAthlete(): void {
     this.selectedAthlete.set(null);
+  }
+
+  private async restoreAthlete(athleteId: number): Promise<void> {
+    try {
+      const athlete = await this.athleteService.getById(athleteId);
+      this.selectedAthlete.set({
+        athleteId: athlete.athleteId,
+        athleteCode: athlete.athleteCode,
+        fullName: athlete.fullName,
+        nickname: athlete.nickname,
+      });
+    } catch {
+      this.selectedAthlete.set(null);
+    } finally {
+      void this.load();
+    }
   }
 
   openCalendar(item: AthleteAttendanceReportItem): void {

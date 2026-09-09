@@ -1,4 +1,5 @@
 using CoachTraining.Api.DTOs.Athletes;
+using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -65,5 +66,46 @@ public class AthleteServiceTests
 
         Assert.Single(results);
         Assert.Equal("A001", results[0].AthleteCode);
+    }
+
+    [Fact]
+    public async Task CreateAndUpdateAsync_PersistsAthleteType()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+
+        var (created, createError) = await service.CreateAsync(new AthleteCreateDto
+        {
+            AthleteCode = "A001",
+            AthleteType = AthleteType.General,
+            FullName = "General Athlete",
+        }, actionByUserId: 1);
+
+        Assert.Null(createError);
+        Assert.Equal(AthleteType.General, created!.AthleteType);
+
+        var (updated, updateError) = await service.UpdateAsync(created.AthleteId, new AthleteUpdateDto
+        {
+            AthleteType = AthleteType.Affiliated,
+            FullName = created.FullName,
+        }, actionByUserId: 1);
+
+        Assert.Null(updateError);
+        Assert.Equal(AthleteType.Affiliated, updated!.AthleteType);
+    }
+
+    [Fact]
+    public async Task ListAsync_FiltersAthletesByTypeBeforePagination()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+        await service.CreateAsync(new AthleteCreateDto { AthleteCode = "A001", AthleteType = AthleteType.Affiliated, FullName = "Affiliated Athlete" }, 1);
+        await service.CreateAsync(new AthleteCreateDto { AthleteCode = "A002", AthleteType = AthleteType.General, FullName = "General Athlete" }, 1);
+
+        var result = await service.ListAsync(new DTOs.Common.PagedRequest { Page = 1, PageSize = 20 }, AthleteType.General);
+
+        Assert.Single(result.Items);
+        Assert.Equal("A002", result.Items[0].AthleteCode);
+        Assert.Equal(1, result.TotalCount);
     }
 }

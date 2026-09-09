@@ -2,6 +2,7 @@ using CoachTraining.Api.Constants;
 using CoachTraining.Api.DTOs.Athletes;
 using CoachTraining.Api.DTOs.Common;
 using CoachTraining.Api.Helpers;
+using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,11 +32,11 @@ public class AthletesController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = Roles.Administrator)]
-    public async Task<IActionResult> List([FromQuery] PagedRequest request)
+    public async Task<IActionResult> List([FromQuery] PagedRequest request, [FromQuery] AthleteType athleteType = AthleteType.Affiliated)
     {
         try
         {
-            var result = await _athleteService.ListAsync(request);
+            var result = await _athleteService.ListAsync(request, athleteType);
             return Ok(new ApiResponse<PagedResponse<AthleteListItemDto>>(result));
         }
         catch (Exception ex)

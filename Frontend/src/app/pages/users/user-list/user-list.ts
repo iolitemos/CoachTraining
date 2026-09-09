@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { SearchFilterToolbar } from '../../../shared/search-filter-toolbar/search-filter-toolbar';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
@@ -10,6 +10,7 @@ import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirma
 import { getRoleLabel } from '../../../models/auth.model';
 import { UserListItem } from '../../../models/user.model';
 import { UserService } from '../../../services/user.service';
+import { FilterStateService } from '../../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -41,9 +42,12 @@ export class UserList implements OnInit {
 
   getRoleLabel = getRoleLabel;
 
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService, private readonly filterState: FilterStateService, private readonly route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const filters = this.filterState.restore<{ search: string; page: number }>('users', { search: '', page: 1 }, this.route.snapshot.queryParamMap, ['page']);
+    this.search.set(filters.search);
+    this.page.set(filters.page ?? 1);
     void this.load();
   }
 
@@ -62,12 +66,18 @@ export class UserList implements OnInit {
   onSearch(term: string): void {
     this.search.set(term);
     this.page.set(1);
+    this.rememberFilters();
     void this.load();
   }
 
   onPageChange(page: number): void {
     this.page.set(page);
+    this.rememberFilters();
     void this.load();
+  }
+
+  private rememberFilters(): void {
+    this.filterState.save('users', { search: this.search(), page: this.page() }, this.route);
   }
 
   requestStatusChange(user: UserListItem): void {

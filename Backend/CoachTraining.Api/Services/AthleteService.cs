@@ -2,6 +2,7 @@ using CoachTraining.Api.Data;
 using CoachTraining.Api.DTOs.Athletes;
 using CoachTraining.Api.DTOs.Common;
 using CoachTraining.Api.Models;
+using CoachTraining.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoachTraining.Api.Services;
@@ -20,9 +21,9 @@ public class AthleteService : IAthleteService
         _logger = logger;
     }
 
-    public async Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request)
+    public async Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request, AthleteType athleteType)
     {
-        var query = _db.Athletes.AsQueryable();
+        var query = _db.Athletes.Where(a => a.AthleteType == athleteType);
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
@@ -64,6 +65,7 @@ public class AthleteService : IAthleteService
             var athlete = new Athlete
             {
                 AthleteCode = dto.AthleteCode,
+                AthleteType = dto.AthleteType,
                 FullName = dto.FullName,
                 Nickname = dto.Nickname,
                 DateOfBirth = dto.DateOfBirth,
@@ -101,6 +103,7 @@ public class AthleteService : IAthleteService
         // touches past Attendance/PrivateSessionAthlete rows — those keep their
         // own snapshot (AthleteCodeSnapshot/AthleteNameSnapshot) taken at the time.
         athlete.FullName = dto.FullName;
+        athlete.AthleteType = dto.AthleteType;
         athlete.Nickname = dto.Nickname;
         athlete.DateOfBirth = dto.DateOfBirth;
         athlete.PhoneNumber = dto.PhoneNumber;
@@ -156,6 +159,7 @@ public class AthleteService : IAthleteService
                 AthleteCode = a.AthleteCode,
                 FullName = a.FullName,
                 Nickname = a.Nickname,
+                AthleteType = a.AthleteType,
             })
             .ToListAsync();
     }
@@ -164,6 +168,7 @@ public class AthleteService : IAthleteService
     {
         AthleteId = athlete.AthleteId,
         AthleteCode = athlete.AthleteCode,
+        AthleteType = athlete.AthleteType,
         FullName = athlete.FullName,
         Nickname = athlete.Nickname,
         DateOfBirth = athlete.DateOfBirth,
@@ -175,6 +180,7 @@ public class AthleteService : IAthleteService
     {
         AthleteId = athlete.AthleteId,
         AthleteCode = athlete.AthleteCode,
+        AthleteType = athlete.AthleteType,
         FullName = athlete.FullName,
         Nickname = athlete.Nickname,
         DateOfBirth = athlete.DateOfBirth,

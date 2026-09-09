@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { SearchFilterToolbar } from '../../../shared/search-filter-toolbar/search-filter-toolbar';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
@@ -10,6 +10,7 @@ import { StatusBadge } from '../../../shared/status-badge/status-badge';
 import { PrivateSessionListItem } from '../../../models/private-session.model';
 import { PrivateSessionService } from '../../../services/private-session.service';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
+import { FilterStateService } from '../../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -27,9 +28,12 @@ export class PrivateSessionList implements OnInit {
   totalCount = signal(0);
   search = signal('');
 
-  constructor(private readonly privateSessionService: PrivateSessionService) {}
+  constructor(private readonly privateSessionService: PrivateSessionService, private readonly filterState: FilterStateService, private readonly route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const filters = this.filterState.restore<{ search: string; page: number }>('private-sessions-list', { search: '', page: 1 }, this.route.snapshot.queryParamMap, ['page']);
+    this.search.set(filters.search);
+    this.page.set(filters.page ?? 1);
     void this.load();
   }
 
@@ -48,11 +52,17 @@ export class PrivateSessionList implements OnInit {
   onSearch(term: string): void {
     this.search.set(term);
     this.page.set(1);
+    this.rememberFilters();
     void this.load();
   }
 
   onPageChange(page: number): void {
     this.page.set(page);
+    this.rememberFilters();
     void this.load();
+  }
+
+  private rememberFilters(): void {
+    this.filterState.save('private-sessions-list', { search: this.search(), page: this.page() }, this.route);
   }
 }

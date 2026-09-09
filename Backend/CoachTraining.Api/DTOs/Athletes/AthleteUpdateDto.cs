@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CoachTraining.Api.Models.Enums;
 
 namespace CoachTraining.Api.DTOs.Athletes;
 
@@ -6,6 +7,9 @@ namespace CoachTraining.Api.DTOs.Athletes;
 /// Attendance/PrivateSessionAthlete records and used as the business identifier.</summary>
 public class AthleteUpdateDto
 {
+    [EnumDataType(typeof(AthleteType), ErrorMessage = "ประเภทนักกีฬาไม่ถูกต้อง")]
+    public AthleteType AthleteType { get; set; } = AthleteType.Affiliated;
+
     [Required(ErrorMessage = "กรุณากรอกชื่อ-นามสกุล")]
     [MaxLength(200)]
     public string FullName { get; set; } = string.Empty;
@@ -45,4 +49,5 @@ public class AthleteOptionDto
     public string AthleteCode { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string? Nickname { get; set; }
+    public AthleteType AthleteType { get; set; }
 }

@@ -26,6 +26,7 @@
 
 ### 1.2 Frontend Foundation
 
+- [x] Persist list, dashboard, and report filters per user with URL query parameters taking priority over sessionStorage.
 - [x] Standardize displayed dates and date-picker inputs across the frontend as `dd MMM yyyy` using Thai abbreviated month names and Gregorian years.
 - [x] Configure Tailwind CSS.
 - [x] Configure Prompt as the application font.
@@ -81,6 +82,7 @@
 - [x] Create Athlete entity with explicit `AthleteId` primary key and common audit columns.
 - [x] Add unique Athlete Code constraint.
 - [x] Add athlete profile fields defined in `requirement.md`.
+- [x] Add Athlete Type classification for Affiliated Athlete and General Athlete with an EF Core migration.
 - [x] Preserve inactive athletes through soft delete/status rules rather than destructive deletion.
 
 ### 2.4 Routine Schedule Data
@@ -307,6 +309,7 @@
 - [x] Add API to search active athletes for Routine attendance selection.
 - [x] Add API to search active athletes for Private Training assignment.
 - [x] Preserve historical attendance when athlete profile/status changes.
+- [x] Accept, validate, and return Athlete Type in Athlete management APIs.
 
 ### 4.3 Routine Training Backend
 
@@ -589,6 +592,8 @@
 - [x] Add Athlete activate/deactivate action.
 - [x] Make Athlete list and forms responsive.
 - [x] Add a touch-friendly Athlete card list for mobile while preserving the desktop table.
+- [x] Add required Athlete Type selection to Athlete forms and display it in Athlete lists.
+- [x] Separate the Athlete list into Affiliated Athlete and General Athlete tabs with server-side filtering and correct pagination.
 
 ### 5.3 Routine Training Frontend
 
@@ -849,7 +854,7 @@
 - [x] Make report layout responsive.
 - [x] Show participation-only summaries, athlete nickname followed by full name, and default filters to the current month as requested by the user.
 - [x] Use a compact athlete summary table with on-demand expandable attendance history.
-- [x] Present athlete attendance details in a monthly calendar modal with green Routine and blue Private markers.
+- [x] Present athlete attendance details in a responsive monthly calendar modal, including a seven-day mobile calendar with green Routine and blue Private markers.
 
 ### 5.17 History and Audit Frontend
 

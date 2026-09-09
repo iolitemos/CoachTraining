@@ -1,11 +1,12 @@
 using CoachTraining.Api.DTOs.Athletes;
 using CoachTraining.Api.DTOs.Common;
+using CoachTraining.Api.Models.Enums;
 
 namespace CoachTraining.Api.Services;
 
 public interface IAthleteService
 {
-    Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request);
+    Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request, AthleteType athleteType);
     Task<AthleteDetailDto?> GetByIdAsync(int athleteId);
     Task<(AthleteDetailDto? Result, string? Error)> CreateAsync(AthleteCreateDto dto, int actionByUserId);
     Task<(AthleteDetailDto? Result, string? Error)> UpdateAsync(int athleteId, AthleteUpdateDto dto, int actionByUserId);

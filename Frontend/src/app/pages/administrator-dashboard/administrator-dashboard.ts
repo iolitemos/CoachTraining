@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   LucideUsers,
 } from '@lucide/angular';
@@ -15,6 +15,7 @@ import { CoachService } from '../../services/coach.service';
 import { AdministratorDashboardService } from '../../services/administrator-dashboard.service';
 import { DateInput } from '../../shared/date-input/date-input';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
+import { FilterStateService } from '../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -52,12 +53,21 @@ export class AdministratorDashboard implements OnInit {
   constructor(
     private readonly dashboardService: AdministratorDashboardService,
     private readonly coachService: CoachService,
+    private readonly filterState: FilterStateService,
+    private readonly route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
     const today = new Date();
-    this.startDate = this.toDateInputValue(new Date(today.getFullYear(), today.getMonth(), 1));
-    this.endDate = this.toDateInputValue(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+    const filters = this.filterState.restore<{ startDate: string; endDate: string; coachId: number | null; trainingType: string }>('administrator-dashboard', {
+      startDate: this.toDateInputValue(new Date(today.getFullYear(), today.getMonth(), 1)),
+      endDate: this.toDateInputValue(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+      coachId: null, trainingType: '',
+    }, this.route.snapshot.queryParamMap, ['coachId']);
+    this.startDate = filters.startDate;
+    this.endDate = filters.endDate;
+    this.coachId = filters.coachId;
+    this.trainingType = filters.trainingType as TrainingType | '';
     void this.coachService.getActiveOptions().then((options) => this.coachOptions.set(options));
     void this.load();
   }
@@ -88,6 +98,9 @@ export class AdministratorDashboard implements OnInit {
   }
 
   applyFilters(): void {
+    this.filterState.save('administrator-dashboard', {
+      startDate: this.startDate, endDate: this.endDate, coachId: this.coachId, trainingType: this.trainingType,
+    }, this.route);
     void this.load();
   }
 

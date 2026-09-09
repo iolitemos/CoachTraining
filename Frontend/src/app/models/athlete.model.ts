@@ -1,7 +1,10 @@
 /** Athlete Management (requirement.md 4.3). */
+export type AthleteType = 'Affiliated' | 'General';
+
 export interface AthleteListItem {
   athleteId: number;
   athleteCode: string;
+  athleteType: AthleteType;
   fullName: string;
   nickname: string | null;
   dateOfBirth: string | null;
@@ -12,6 +15,7 @@ export interface AthleteListItem {
 export interface AthleteDetail {
   athleteId: number;
   athleteCode: string;
+  athleteType: AthleteType;
   fullName: string;
   nickname: string | null;
   dateOfBirth: string | null;
@@ -26,6 +30,7 @@ export interface AthleteDetail {
 
 export interface AthleteCreateRequest {
   athleteCode: string;
+  athleteType: AthleteType;
   fullName: string;
   nickname: string | null;
   dateOfBirth: string | null;
@@ -46,6 +51,10 @@ export interface AthleteOption {
   athleteCode: string;
   fullName: string;
   nickname: string | null;
+}
+
+export function athleteTypeLabel(type: AthleteType): string {
+  return type === 'Affiliated' ? 'นักกีฬาในสังกัด' : 'นักกีฬาทั่วไป';
 }
 
 /** Compact label for athlete pickers: "nickname - full name", with a safe fallback. */

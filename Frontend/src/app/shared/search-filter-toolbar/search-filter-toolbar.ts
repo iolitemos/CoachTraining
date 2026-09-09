@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideListFilter, LucideSearch } from '@lucide/angular';
 
@@ -17,8 +17,15 @@ export class SearchFilterToolbar {
   placeholder = input('ค้นหา...');
   /** Number of advanced filters currently applied, shown as a badge on the filter button. */
   activeFilterCount = input(0);
+  initialSearchTerm = input('');
 
   searchTerm = '';
+
+  constructor() {
+    effect(() => {
+      this.searchTerm = this.initialSearchTerm();
+    });
+  }
 
   search = output<string>();
   filterClick = output<void>();

@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { LucidePencil, LucideTrash2 } from '@lucide/angular';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { SearchFilterToolbar } from '../../../shared/search-filter-toolbar/search-filter-toolbar';
@@ -13,6 +13,7 @@ import { RoutineScheduleListItem } from '../../../models/routine-schedule.model'
 import { RoutineScheduleService } from '../../../services/routine-schedule.service';
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
+import { FilterStateService } from '../../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -46,9 +47,12 @@ export class RoutineScheduleList implements OnInit {
   deleteProcessing = signal(false);
   actionError = signal<string | null>(null);
 
-  constructor(private readonly routineScheduleService: RoutineScheduleService) {}
+  constructor(private readonly routineScheduleService: RoutineScheduleService, private readonly filterState: FilterStateService, private readonly route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const filters = this.filterState.restore<{ search: string; page: number }>('routine-schedules-list', { search: '', page: 1 }, this.route.snapshot.queryParamMap, ['page']);
+    this.search.set(filters.search);
+    this.page.set(filters.page ?? 1);
     void this.load();
   }
 
@@ -71,12 +75,18 @@ export class RoutineScheduleList implements OnInit {
   onSearch(term: string): void {
     this.search.set(term);
     this.page.set(1);
+    this.rememberFilters();
     void this.load();
   }
 
   onPageChange(page: number): void {
     this.page.set(page);
+    this.rememberFilters();
     void this.load();
+  }
+
+  private rememberFilters(): void {
+    this.filterState.save('routine-schedules-list', { search: this.search(), page: this.page() }, this.route);
   }
 
   requestDelete(schedule: RoutineScheduleListItem): void {

@@ -1,4 +1,5 @@
 using CoachTraining.Api.Models.Common;
+using CoachTraining.Api.Models.Enums;
 
 namespace CoachTraining.Api.Models;
 
@@ -8,6 +9,8 @@ public class Athlete : AuditableEntity
     public int AthleteId { get; set; }
 
     public string AthleteCode { get; set; } = string.Empty;
+
+    public AthleteType AthleteType { get; set; } = AthleteType.Affiliated;
 
     public string FullName { get; set; } = string.Empty;
 

@@ -7,6 +7,7 @@ import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indi
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { AthleteService } from '../../../services/athlete.service';
 import { DateInput } from '../../../shared/date-input/date-input';
+import { AthleteType } from '../../../models/athlete.model';
 
 @Component({
   selector: 'app-athlete-form',
@@ -28,6 +29,7 @@ export class AthleteForm implements OnInit {
 
   form = this.fb.group({
     athleteCode: ['', [Validators.required, Validators.maxLength(30)]],
+    athleteType: this.fb.control<AthleteType>('Affiliated', { nonNullable: true, validators: Validators.required }),
     fullName: ['', [Validators.required, Validators.maxLength(200)]],
     nickname: ['', Validators.maxLength(100)],
     dateOfBirth: [''],
@@ -53,6 +55,7 @@ export class AthleteForm implements OnInit {
         const athlete = await this.athleteService.getById(this.athleteId()!);
         this.form.patchValue({
           athleteCode: athlete.athleteCode,
+          athleteType: athlete.athleteType,
           fullName: athlete.fullName,
           nickname: athlete.nickname ?? '',
           dateOfBirth: athlete.dateOfBirth ?? '',
@@ -83,6 +86,7 @@ export class AthleteForm implements OnInit {
 
     const value = this.form.getRawValue();
     const payload = {
+      athleteType: value.athleteType!,
       fullName: value.fullName!,
       nickname: value.nickname || null,
       dateOfBirth: value.dateOfBirth || null,
