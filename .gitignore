@@ -4,3 +4,9 @@
 ## Editors
 .vscode/
 .idea/
+
+## Build and publish outputs
+**/bin/
+**/obj/
+**/publish/
+**/publish.zip

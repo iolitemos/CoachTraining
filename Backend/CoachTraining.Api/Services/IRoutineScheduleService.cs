@@ -8,6 +8,8 @@ public interface IRoutineScheduleService
     Task<PagedResponse<RoutineScheduleListItemDto>> ListAsync(PagedRequest request);
     Task<RoutineScheduleDetailDto?> GetByIdAsync(int routineScheduleId);
     Task<RoutineScheduleSaveResult> CreateAsync(RoutineScheduleCreateDto dto, int actionByUserId);
+    Task<(CoachRoutineScheduleBatchCreateResult? Result, string? Error, List<string> Conflicts)> CreateOwnBatchAsync(
+        int coachId, CoachRoutineScheduleBatchCreateDto dto, int actionByUserId);
     Task<RoutineScheduleSaveResult> UpdateAsync(int routineScheduleId, RoutineScheduleUpdateDto dto, int actionByUserId);
     Task<(bool Found, string? Error)> DeleteAsync(int routineScheduleId, int actionByUserId);
     Task<(bool Found, bool Forbidden, string? Error)> DeleteOwnAsync(int routineScheduleId, int coachId, int actionByUserId);

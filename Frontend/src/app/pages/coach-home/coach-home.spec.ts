@@ -51,6 +51,16 @@ describe('CoachHome calendar', () => {
     expect(component.activeTab()).toBe('calendar');
   });
 
+  it('hides overdue sessions by default and toggles their visibility', () => {
+    expect(component.overdueSessionsExpanded()).toBe(false);
+
+    component.toggleOverdueSessions();
+    expect(component.overdueSessionsExpanded()).toBe(true);
+
+    component.toggleOverdueSessions();
+    expect(component.overdueSessionsExpanded()).toBe(false);
+  });
+
   it('opens the self-service create page with the held calendar date', () => {
     vi.useFakeTimers();
     const router = TestBed.inject(Router);

@@ -670,6 +670,9 @@
 - [x] Add a responsive monthly calendar and selected-date agenda for the signed-in Coach's sessions.
 - [x] Split Coach Home into Overview and Calendar tabs with touch-friendly responsive controls.
 - [x] Allow a Coach to create only the Coach's own Routine Training schedule from Coach Home without conflict override permission.
+- [ ] Allow a Coach to create Routine Training over a start/end date range by selecting one or more weekdays. <!-- Implemented and tested; awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
+- [ ] Allow a Coach to create Routine Training on every calendar date in a selected range without choosing weekdays. <!-- Implemented and tested; awaiting successful frontend production build. -->
+- [ ] Validate all selected occurrences for schedule conflicts before batch creation. <!-- Implemented and backend tests pass; close with the same frontend production-build validation above. -->
 - [x] Open the Coach's Routine Training create form with the selected date after a calendar-day long press.
 - [x] Allow a Coach to delete only the Coach's own untouched Scheduled Routine Training from the calendar.
 - [x] Use distinct calendar colors and legends for Routine and Private Training on desktop and mobile.
@@ -678,6 +681,7 @@
 - [x] Match the selected calendar-day border to a darker shade of its Routine or Private Training background.
 - [x] Show nickname-only colleague presence on dates shared with the signed-in Coach without exposing other session details.
 - [x] Add distinct colors to Coach Home summary statuses and consistently color Routine/Private type badges.
+- [x] Allow Coach self-service Routine Training creation across a date range filtered by selected weekdays.
 
 ### 5.6 Coach Session Frontend
 

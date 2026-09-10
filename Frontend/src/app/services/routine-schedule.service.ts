@@ -4,6 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiSuccessBody, PagedResult } from '../models/paged-result.model';
 import {
+  CoachRoutineScheduleBatchCreateRequest,
+  CoachRoutineScheduleBatchCreateResult,
   RoutineScheduleDetail,
   RoutineScheduleListItem,
   RoutineScheduleSaveRequest,
@@ -64,6 +66,18 @@ export class RoutineScheduleService {
     const response = await firstValueFrom(
       this.http.post<ApiSuccessBody<RoutineScheduleSaveResult>>(
         `${environment.apiBaseUrl}/coach/routine-schedules`,
+        request,
+      ),
+    );
+    return response.data;
+  }
+
+  async createOwnBatch(
+    request: CoachRoutineScheduleBatchCreateRequest,
+  ): Promise<CoachRoutineScheduleBatchCreateResult> {
+    const response = await firstValueFrom(
+      this.http.post<ApiSuccessBody<CoachRoutineScheduleBatchCreateResult>>(
+        `${environment.apiBaseUrl}/coach/routine-schedules/batch`,
         request,
       ),
     );

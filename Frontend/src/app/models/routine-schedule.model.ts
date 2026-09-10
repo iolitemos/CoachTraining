@@ -51,6 +51,20 @@ export interface RoutineScheduleSaveRequest {
   remarks: string | null;
 }
 
+export interface CoachRoutineScheduleBatchCreateRequest {
+  startTime: string;
+  endTime: string;
+  startDate: string;
+  endDate: string;
+  daysOfWeek: number[];
+  remarks: string | null;
+}
+
+export interface CoachRoutineScheduleBatchCreateResult {
+  createdCount: number;
+  createdDates: string[];
+}
+
 export interface RoutineTemplateConflictDetail {
   conflictingRoutineScheduleId: number;
   conflictingRoutineScheduleName: string;

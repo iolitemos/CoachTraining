@@ -184,4 +184,63 @@ describe('RoutineScheduleForm', () => {
 
     expect(component.isSelfService()).toBe(true);
   });
+
+  it('should create selected weekdays in a date range for Coach self-service', async () => {
+    (
+      TestBed.inject(ActivatedRoute).snapshot as {
+        data?: Record<string, unknown>;
+      }
+    ).data = { selfService: true };
+
+    await component.ngOnInit();
+    component.setScheduleMode('range');
+    component.setRangePattern('weekdays');
+    component.form.patchValue({
+      startTime: '18:00',
+      endTime: '20:00',
+      effectiveStartDate: '2026-09-01',
+    });
+    component.effectiveEndDate.setValue('2026-09-10');
+    component.selectedDaysOfWeek.set([1, 5]);
+
+    expect(component.selectedOccurrenceCount()).toBe(2);
+
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/coach/routine-schedules/batch'));
+    expect(request.request.body).toEqual({
+      startTime: '18:00',
+      endTime: '20:00',
+      startDate: '2026-09-01',
+      endDate: '2026-09-10',
+      daysOfWeek: [1, 5],
+      remarks: null,
+    });
+    request.flush({ message: 'Success', data: { createdCount: 2, createdDates: ['2026-09-04', '2026-09-07'] } });
+    await submitPromise;
+  });
+
+  it('should create every date in a short range without weekday selection', async () => {
+    (
+      TestBed.inject(ActivatedRoute).snapshot as {
+        data?: Record<string, unknown>;
+      }
+    ).data = { selfService: true };
+
+    await component.ngOnInit();
+    component.setScheduleMode('range');
+    component.setRangePattern('everyDay');
+    component.form.patchValue({ effectiveStartDate: '2026-09-01' });
+    component.effectiveEndDate.setValue('2026-09-03');
+
+    expect(component.selectedOccurrenceCount()).toBe(3);
+
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/coach/routine-schedules/batch'));
+    expect(request.request.body.daysOfWeek).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    request.flush({
+      message: 'Success',
+      data: { createdCount: 3, createdDates: ['2026-09-01', '2026-09-02', '2026-09-03'] },
+    });
+    await submitPromise;
+  });
 });

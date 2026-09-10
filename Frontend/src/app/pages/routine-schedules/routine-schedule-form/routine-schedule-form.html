@@ -41,7 +41,25 @@
       </div>
       }
 
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      @if (isSelfService() && !isEditMode()) {
+        <fieldset>
+          <legend class="mb-2 text-sm font-medium text-text">รูปแบบการเพิ่ม</legend>
+          <div class="grid grid-cols-2 gap-2 rounded-xl bg-background p-1">
+            <button type="button" class="min-h-11 rounded-lg px-3 text-sm font-medium transition-colors"
+              [class.bg-surface]="scheduleMode() === 'single'" [class.text-primary-700]="scheduleMode() === 'single'"
+              [class.text-text-secondary]="scheduleMode() !== 'single'" (click)="setScheduleMode('single')">
+              วันเดียว
+            </button>
+            <button type="button" class="min-h-11 rounded-lg px-3 text-sm font-medium transition-colors"
+              [class.bg-surface]="scheduleMode() === 'range'" [class.text-primary-700]="scheduleMode() === 'range'"
+              [class.text-text-secondary]="scheduleMode() !== 'range'" (click)="setScheduleMode('range')">
+              ช่วงวันที่
+            </button>
+          </div>
+        </fieldset>
+      }
+
+      <div class="grid grid-cols-2 gap-3 sm:gap-4">
         <div>
           <label for="startTime" class="mb-1 block text-sm font-medium text-text">
             เวลาเริ่ม <span class="text-danger">*</span>
@@ -73,15 +91,64 @@
         </div>
       </div>
 
-      <div>
-        <label for="effectiveStartDate" class="mb-1 block text-sm font-medium text-text">
-          วันที่ฝึกซ้อม <span class="text-danger">*</span>
-        </label>
-        <app-date-input class="block w-full" inputId="effectiveStartDate" formControlName="effectiveStartDate" ariaLabel="วันที่ฝึกซ้อม" />
-        @if (form.controls.effectiveStartDate.invalid && form.controls.effectiveStartDate.touched) {
-          <p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่ฝึกซ้อม</p>
+      <div
+        class="grid gap-3 sm:gap-4"
+        [class.grid-cols-1]="!isSelfService() || scheduleMode() !== 'range'"
+        [class.grid-cols-2]="isSelfService() && scheduleMode() === 'range'"
+      >
+        <div>
+          <label for="effectiveStartDate" class="mb-1 block text-sm font-medium text-text">
+            {{ isSelfService() && scheduleMode() === 'range' ? 'วันที่เริ่ม' : 'วันที่ฝึกซ้อม' }} <span class="text-danger">*</span>
+          </label>
+          <app-date-input class="block w-full" inputId="effectiveStartDate" formControlName="effectiveStartDate" ariaLabel="วันที่ฝึกซ้อม" />
+          @if (form.controls.effectiveStartDate.invalid && form.controls.effectiveStartDate.touched) {
+            <p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่ฝึกซ้อม</p>
+          }
+        </div>
+        @if (isSelfService() && scheduleMode() === 'range') {
+          <div>
+            <label for="effectiveEndDate" class="mb-1 block text-sm font-medium text-text">
+              วันที่สิ้นสุด <span class="text-danger">*</span>
+            </label>
+            <app-date-input class="block w-full" inputId="effectiveEndDate" [formControl]="effectiveEndDate" ariaLabel="วันที่สิ้นสุด" />
+          </div>
         }
       </div>
+
+      @if (isSelfService() && !isEditMode() && scheduleMode() === 'range') {
+        <fieldset>
+          <legend class="mb-2 text-sm font-medium text-text">รูปแบบวันที่ในช่วง <span class="text-danger">*</span></legend>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-medium transition-colors"
+              [class.border-primary-500]="rangePattern() === 'everyDay'" [class.bg-primary-50]="rangePattern() === 'everyDay'"
+              [class.text-primary-700]="rangePattern() === 'everyDay'" [class.border-border]="rangePattern() !== 'everyDay'"
+              [attr.aria-pressed]="rangePattern() === 'everyDay'" (click)="setRangePattern('everyDay')">
+              ทุกวันในช่วง
+            </button>
+            <button type="button" class="min-h-11 rounded-lg border px-3 text-sm font-medium transition-colors"
+              [class.border-primary-500]="rangePattern() === 'weekdays'" [class.bg-primary-50]="rangePattern() === 'weekdays'"
+              [class.text-primary-700]="rangePattern() === 'weekdays'" [class.border-border]="rangePattern() !== 'weekdays'"
+              [attr.aria-pressed]="rangePattern() === 'weekdays'" (click)="setRangePattern('weekdays')">
+              เลือกวันในสัปดาห์
+            </button>
+          </div>
+          @if (rangePattern() === 'weekdays') {
+            <div class="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7">
+              @for (day of weekDays; track day.value) {
+                <button type="button" class="min-h-11 rounded-lg border px-2 text-xs font-medium transition-colors"
+                  [class.border-primary-500]="selectedDaysOfWeek().includes(day.value)"
+                  [class.bg-primary-50]="selectedDaysOfWeek().includes(day.value)"
+                  [class.text-primary-700]="selectedDaysOfWeek().includes(day.value)"
+                  [class.border-border]="!selectedDaysOfWeek().includes(day.value)"
+                  [class.text-text-secondary]="!selectedDaysOfWeek().includes(day.value)"
+                  [attr.aria-pressed]="selectedDaysOfWeek().includes(day.value)"
+                  (click)="toggleDay(day.value)">{{ day.label }}</button>
+              }
+            </div>
+          }
+          <p class="mt-2 text-xs text-text-secondary">ระบบจะเพิ่มทั้งหมด {{ selectedOccurrenceCount() }} รายการในช่วงวันที่เลือก</p>
+        </fieldset>
+      }
 
       <div>
         <label for="remarks" class="mb-1 block text-sm font-medium text-text">หมายเหตุ</label>

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachTraining.Api.Controllers;
 
 /// <summary>Restricted Coach self-service creation for the signed-in Coach's own
-/// single-date Routine Training schedule.</summary>
+/// Routine Training schedules.</summary>
 [ApiController]
 [Route("api/coach/routine-schedules")]
 [Authorize(Roles = Roles.Coach)]
@@ -67,6 +67,38 @@ public class CoachRoutineSchedulesController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Route: api/coach/routine-schedules Controller: CoachRoutineSchedulesController Function: Create UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถเพิ่มตารางฝึกซ้อมได้"));
+        }
+    }
+
+    [HttpPost("batch")]
+    public async Task<IActionResult> CreateBatch([FromBody] CoachRoutineScheduleBatchCreateDto dto)
+    {
+        if (_currentUser.CoachId is not int coachId || _currentUser.UserId is not int userId)
+        {
+            return BadRequest(new ApiErrorResponse("บัญชีนี้ไม่ได้เชื่อมโยงกับข้อมูลโค้ช"));
+        }
+
+        try
+        {
+            var (result, error, conflicts) = await _routineScheduleService.CreateOwnBatchAsync(coachId, dto, userId);
+            if (conflicts.Count > 0)
+            {
+                return Conflict(new ApiErrorResponse(
+                    error!, conflicts.Select(message => new ApiFieldError("schedule", message)).ToList()));
+            }
+
+            if (error is not null)
+            {
+                return BadRequest(new ApiErrorResponse(error));
+            }
+
+            return StatusCode(201, new ApiResponse<CoachRoutineScheduleBatchCreateResult>(
+                result!, $"เพิ่มตารางฝึกซ้อมสำเร็จ {result!.CreatedCount} รายการ"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/coach/routine-schedules/batch Controller: CoachRoutineSchedulesController Function: CreateBatch UserId: {UserId}", _currentUser.UserId);
             return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถเพิ่มตารางฝึกซ้อมได้"));
         }
     }

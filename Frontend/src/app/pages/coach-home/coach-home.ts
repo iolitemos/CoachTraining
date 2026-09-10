@@ -77,6 +77,7 @@ export class CoachHome implements OnInit {
   calendarColleagues = signal<CoachCalendarColleague[]>([]);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
+  overdueSessionsExpanded = signal(false);
   pendingDelete = signal<TrainingSessionListItem | null>(null);
   deleteProcessing = signal(false);
   calendarActionError = signal<string | null>(null);
@@ -139,6 +140,10 @@ export class CoachHome implements OnInit {
 
   selectTab(tab: CoachHomeTab): void {
     this.activeTab.set(tab);
+  }
+
+  toggleOverdueSessions(): void {
+    this.overdueSessionsExpanded.update((expanded) => !expanded);
   }
 
   async loadCalendar(): Promise<void> {

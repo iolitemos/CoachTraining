@@ -118,6 +118,68 @@ public class RoutineScheduleService : IRoutineScheduleService
         }
     }
 
+    public async Task<(CoachRoutineScheduleBatchCreateResult? Result, string? Error, List<string> Conflicts)> CreateOwnBatchAsync(
+        int coachId, CoachRoutineScheduleBatchCreateDto dto, int actionByUserId)
+    {
+        var coach = await _db.Coaches.FirstOrDefaultAsync(c => c.CoachId == coachId);
+        if (coach is null)
+        {
+            return (null, "ไม่พบข้อมูลโค้ชที่เลือก", []);
+        }
+
+        if (!coach.IsActive)
+        {
+            return (null, "ไม่สามารถกำหนดตารางฝึกซ้อมให้โค้ชที่ปิดใช้งานได้", []);
+        }
+
+        var selectedDays = dto.DaysOfWeek.ToHashSet();
+        var dates = Enumerable.Range(0, dto.EndDate.DayNumber - dto.StartDate.DayNumber + 1)
+            .Select(offset => dto.StartDate.AddDays(offset))
+            .Where(date => selectedDays.Contains(date.DayOfWeek))
+            .ToList();
+
+        if (dates.Count == 0)
+        {
+            return (null, "ไม่พบวันที่ตรงกับวันในสัปดาห์ที่เลือก", []);
+        }
+
+        var conflicts = new List<string>();
+        foreach (var date in dates)
+        {
+            var dateConflicts = await _conflictService.CheckRoutineTemplateOverlapAsync(
+                coachId, dto.StartTime, dto.EndTime, date);
+            conflicts.AddRange(dateConflicts.Select(conflict => conflict.Message));
+        }
+
+        if (conflicts.Count > 0)
+        {
+            return (null, "พบตารางฝึกซ้อมของโค้ชทับซ้อนกัน", conflicts);
+        }
+
+        var result = new CoachRoutineScheduleBatchCreateResult();
+        foreach (var date in dates)
+        {
+            var saveResult = await CreateAsync(new RoutineScheduleCreateDto
+            {
+                CoachId = coachId,
+                StartTime = dto.StartTime,
+                EndTime = dto.EndTime,
+                EffectiveStartDate = date,
+                Remarks = dto.Remarks,
+            }, actionByUserId);
+
+            if (saveResult.Error is not null)
+            {
+                return (null, saveResult.Error, saveResult.Conflicts.Select(conflict => conflict.Message).ToList());
+            }
+
+            result.CreatedDates.Add(date);
+        }
+
+        result.CreatedCount = result.CreatedDates.Count;
+        return (result, null, []);
+    }
+
     public async Task<RoutineScheduleSaveResult> UpdateAsync(int routineScheduleId, RoutineScheduleUpdateDto dto, int actionByUserId)
     {
         var schedule = await _db.RoutineSchedules.Include(rs => rs.Coach).FirstOrDefaultAsync(rs => rs.RoutineScheduleId == routineScheduleId);

@@ -163,12 +163,29 @@ app.MapControllers();
 // Health-check endpoint for deployment validation (DEV/QAS/PROD).
 app.MapHealthChecks("/health");
 
-// Seed roles + a default Administrator account so the system is usable before
-// any user is manually created. Idempotent; safe to run on every startup.
+// Apply any pending EF Core migrations, then seed roles + a default Administrator
+// account so the system is usable before any user is manually created.
+// Both steps are idempotent; safe to run on every startup.
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var db = services.GetRequiredService<ApplicationDbContext>();
+    var migrationLogger = services.GetRequiredService<ILoggerFactory>().CreateLogger("DbMigrator");
+
+    var pendingMigrations = (await db.Database.GetPendingMigrationsAsync()).ToList();
+    if (pendingMigrations.Count > 0)
+    {
+        migrationLogger.LogInformation(
+            "Applying {Count} pending EF Core migration(s): {Migrations}",
+            pendingMigrations.Count,
+            string.Join(", ", pendingMigrations));
+        await db.Database.MigrateAsync();
+    }
+    else
+    {
+        migrationLogger.LogInformation("No pending EF Core migrations.");
+    }
+
     var passwordHasher = services.GetRequiredService<IPasswordHasher<User>>();
     var seedLogger = services.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
     await DbSeeder.SeedAsync(db, passwordHasher, app.Configuration, seedLogger);

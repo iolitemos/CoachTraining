@@ -17,6 +17,12 @@ import { DateInput } from '../../../shared/date-input/date-input';
   styleUrl: './routine-schedule-form.css',
 })
 export class RoutineScheduleForm implements OnInit {
+  readonly weekDays = [
+    { value: 1, label: 'จันทร์' }, { value: 2, label: 'อังคาร' },
+    { value: 3, label: 'พุธ' }, { value: 4, label: 'พฤหัสบดี' },
+    { value: 5, label: 'ศุกร์' }, { value: 6, label: 'เสาร์' },
+    { value: 0, label: 'อาทิตย์' },
+  ];
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -30,6 +36,10 @@ export class RoutineScheduleForm implements OnInit {
   submitting = signal(false);
   errorMessage = signal<string | null>(null);
   conflictMessages = signal<string[]>([]);
+  scheduleMode = signal<'single' | 'range'>('single');
+  rangePattern = signal<'everyDay' | 'weekdays'>('everyDay');
+  selectedDaysOfWeek = signal<number[]>([]);
+  effectiveEndDate = this.fb.control(getTodayIsoDate());
 
   coachOptions = signal<CoachOption[]>([]);
   form = this.fb.group({
@@ -39,6 +49,19 @@ export class RoutineScheduleForm implements OnInit {
     effectiveStartDate: [getTodayIsoDate(), Validators.required],
     remarks: [''],
   });
+
+  selectedOccurrenceCount(): number {
+    if (this.scheduleMode() === 'single') return 1;
+    const start = parseIsoDate(this.form.controls.effectiveStartDate.value);
+    const end = parseIsoDate(this.effectiveEndDate.value);
+    if (!start || !end || end < start) return 0;
+    const selectedDays = new Set(this.effectiveDaysOfWeek());
+    let count = 0;
+    for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      if (selectedDays.has(date.getDay())) count++;
+    }
+    return count;
+  }
 
   async ngOnInit(): Promise<void> {
     const selfService = this.route.snapshot.data?.['selfService'] === true;
@@ -102,9 +125,47 @@ export class RoutineScheduleForm implements OnInit {
     this.form.patchValue({
       effectiveStartDate: date,
     });
+    this.effectiveEndDate.setValue(date);
+    this.selectedDaysOfWeek.set([selectedDate.getDay()]);
+  }
+
+  setScheduleMode(mode: 'single' | 'range'): void {
+    this.scheduleMode.set(mode);
+    if (mode === 'range' && this.selectedDaysOfWeek().length === 0) {
+      const date = parseIsoDate(this.form.controls.effectiveStartDate.value);
+      this.selectedDaysOfWeek.set([date?.getDay() ?? new Date().getDay()]);
+    }
+  }
+
+  toggleDay(day: number): void {
+    this.selectedDaysOfWeek.update((days) =>
+      days.includes(day) ? days.filter((value) => value !== day) : [...days, day],
+    );
+  }
+
+  setRangePattern(pattern: 'everyDay' | 'weekdays'): void {
+    this.rangePattern.set(pattern);
+    if (pattern === 'weekdays' && this.selectedDaysOfWeek().length === 0) {
+      const date = parseIsoDate(this.form.controls.effectiveStartDate.value);
+      this.selectedDaysOfWeek.set([date?.getDay() ?? new Date().getDay()]);
+    }
+  }
+
+  effectiveDaysOfWeek(): number[] {
+    return this.rangePattern() === 'everyDay' ? [0, 1, 2, 3, 4, 5, 6] : this.selectedDaysOfWeek();
   }
 
   async onSubmit(): Promise<void> {
+    if (this.isSelfService() && !this.isEditMode() && this.scheduleMode() === 'range') {
+      const startDate = this.form.controls.effectiveStartDate.value!;
+      const endDate = this.effectiveEndDate.value!;
+      if (!endDate || endDate < startDate || this.effectiveDaysOfWeek().length === 0 || this.selectedOccurrenceCount() === 0) {
+        this.errorMessage.set('กรุณาเลือกช่วงวันที่และวันในสัปดาห์ให้ถูกต้อง');
+        this.form.markAllAsTouched();
+        return;
+      }
+    }
+
     if (this.form.invalid || this.submitting()) {
       this.form.markAllAsTouched();
       return;
@@ -127,12 +188,23 @@ export class RoutineScheduleForm implements OnInit {
       if (this.isEditMode()) {
         await this.routineScheduleService.update(this.routineScheduleId()!, payload);
       } else if (this.isSelfService()) {
-        await this.routineScheduleService.createOwn({
-          startTime: payload.startTime,
-          endTime: payload.endTime,
-          effectiveStartDate: payload.effectiveStartDate,
-          remarks: payload.remarks,
-        });
+        if (this.scheduleMode() === 'range') {
+          await this.routineScheduleService.createOwnBatch({
+            startTime: payload.startTime,
+            endTime: payload.endTime,
+            startDate: payload.effectiveStartDate,
+            endDate: this.effectiveEndDate.value!,
+            daysOfWeek: this.effectiveDaysOfWeek(),
+            remarks: payload.remarks,
+          });
+        } else {
+          await this.routineScheduleService.createOwn({
+            startTime: payload.startTime,
+            endTime: payload.endTime,
+            effectiveStartDate: payload.effectiveStartDate,
+            remarks: payload.remarks,
+          });
+        }
       } else {
         await this.routineScheduleService.create(payload);
       }
@@ -169,4 +241,13 @@ function getTodayIsoDate(): string {
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function parseIsoDate(value: string | null): Date | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+    ? date
+    : null;
 }

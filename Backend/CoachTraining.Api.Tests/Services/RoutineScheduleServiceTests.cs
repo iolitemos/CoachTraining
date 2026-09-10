@@ -98,6 +98,31 @@ public class RoutineScheduleServiceTests
     }
 
     [Fact]
+    public async Task CreateOwnBatchAsync_CreatesOnlySelectedWeekdaysWithinRange()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+
+        var result = await CreateService(db).CreateOwnBatchAsync(
+            coach.CoachId,
+            new CoachRoutineScheduleBatchCreateDto
+            {
+                StartDate = new DateOnly(2026, 9, 1),
+                EndDate = new DateOnly(2026, 9, 10),
+                DaysOfWeek = [DayOfWeek.Monday, DayOfWeek.Friday],
+                StartTime = new TimeOnly(18, 0),
+                EndTime = new TimeOnly(20, 0),
+            },
+            actionByUserId: 1);
+
+        Assert.Null(result.Error);
+        Assert.Empty(result.Conflicts);
+        Assert.Equal([new DateOnly(2026, 9, 4), new DateOnly(2026, 9, 7)], result.Result!.CreatedDates);
+        Assert.Equal(2, await db.RoutineSchedules.CountAsync());
+        Assert.Equal(2, await db.TrainingSessions.CountAsync());
+    }
+
+    [Fact]
     public async Task CreateAsync_WithInactiveCoach_ReturnsError()
     {
         using var db = TestDbContextFactory.Create();
