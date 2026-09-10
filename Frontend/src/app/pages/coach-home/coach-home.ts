@@ -3,8 +3,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   LucideArrowRight,
   LucideCalendarCheck2,
+  LucideCalendarDays,
+  LucideChevronRight,
   LucideCircleCheckBig,
   LucideClipboardCheck,
+  LucideClock,
   LucideDumbbell,
   LucideHourglass,
   LucideRepeat,
@@ -54,8 +57,11 @@ interface CalendarDay {
     StatusBadge,
     LucideArrowRight,
     LucideCalendarCheck2,
+    LucideCalendarDays,
+    LucideChevronRight,
     LucideCircleCheckBig,
     LucideClipboardCheck,
+    LucideClock,
     LucideDumbbell,
     LucideHourglass,
     LucideRepeat,
@@ -121,6 +127,20 @@ export class CoachHome implements OnInit {
       .filter((day) => day.isCurrentMonth)
       .reduce((total, day) => total + day.sessions.length, 0),
   );
+
+  upcomingSessionsPreview = computed(() => {
+    const sessions = this.dashboard()?.upcomingSessions ?? [];
+    const visibleDates = new Set<string>();
+
+    return sessions.filter((session) => {
+      if (!visibleDates.has(session.sessionDate) && visibleDates.size >= 3) {
+        return false;
+      }
+
+      visibleDates.add(session.sessionDate);
+      return true;
+    });
+  });
 
   constructor(
     private readonly coachDashboardService: CoachDashboardService,
@@ -294,7 +314,36 @@ export class CoachHome implements OnInit {
     const fmt = (d: Date) => d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
     return `${fmt(start)} - ${fmt(end)}`;
   }
+
+  sessionDuration(session: Pick<CoachDashboardSession, 'scheduledStartDateTime' | 'scheduledEndDateTime'>): string {
+    const start = new Date(session.scheduledStartDateTime);
+    const end = new Date(session.scheduledEndDateTime);
+    const minutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000));
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours === 0) return `${remainingMinutes} นาที`;
+    if (remainingMinutes === 0) return `${hours} ชั่วโมง`;
+    return `${hours} ชม. ${remainingMinutes} นาที`;
+  }
+
+  sessionDay(session: Pick<CoachDashboardSession, 'sessionDate'>): string {
+    return String(Number(session.sessionDate.slice(8, 10)));
+  }
+
+  sessionMonthYear(session: Pick<CoachDashboardSession, 'sessionDate'>): string {
+    const [year, month] = session.sessionDate.split('-').map(Number);
+    return `${THAI_SHORT_MONTHS[month - 1]} ${year}`;
+  }
+
+  sessionWeekday(session: Pick<CoachDashboardSession, 'sessionDate'>): string {
+    const [year, month, day] = session.sessionDate.split('-').map(Number);
+    return THAI_WEEKDAYS[new Date(year, month - 1, day).getDay()];
+  }
 }
+
+const THAI_SHORT_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const THAI_WEEKDAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);

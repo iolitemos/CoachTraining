@@ -61,6 +61,35 @@ describe('CoachHome calendar', () => {
     expect(component.overdueSessionsExpanded()).toBe(false);
   });
 
+  it('limits the upcoming preview to the first three session dates', () => {
+    component.dashboard.set({
+      upcomingSessions: [
+        { trainingSessionId: 1, sessionDate: '2026-09-11' },
+        { trainingSessionId: 2, sessionDate: '2026-09-11' },
+        { trainingSessionId: 3, sessionDate: '2026-09-12' },
+        { trainingSessionId: 4, sessionDate: '2026-09-13' },
+        { trainingSessionId: 5, sessionDate: '2026-09-14' },
+      ],
+    } as never);
+
+    expect(component.upcomingSessionsPreview().map((session) => session.trainingSessionId)).toEqual([
+      1, 2, 3, 4,
+    ]);
+  });
+
+  it('formats compact session date and duration details with a Gregorian year', () => {
+    const session = {
+      sessionDate: '2026-09-12',
+      scheduledStartDateTime: '2026-09-12T18:30:00',
+      scheduledEndDateTime: '2026-09-12T20:00:00',
+    } as never;
+
+    expect(component.sessionDay(session)).toBe('12');
+    expect(component.sessionMonthYear(session)).toBe('ก.ย. 2026');
+    expect(component.sessionWeekday(session)).toBe('เสาร์');
+    expect(component.sessionDuration(session)).toBe('1 ชม. 30 นาที');
+  });
+
   it('opens the self-service create page with the held calendar date', () => {
     vi.useFakeTimers();
     const router = TestBed.inject(Router);

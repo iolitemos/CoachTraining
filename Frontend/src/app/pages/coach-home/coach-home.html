@@ -1,5 +1,113 @@
 <app-page-header title="หน้าหลักโค้ช" subtitle="ภาพรวมเซสชันฝึกซ้อมและงานที่ต้องดำเนินการ" />
 
+<div class="mt-4">
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดเซสชันของคุณ..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดเซสชันของคุณได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (dashboard(); as d) {
+        <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <section class="min-w-0 rounded-2xl border border-blue-200 bg-blue-50/30 p-3 sm:p-4">
+            <div class="flex items-center gap-3">
+              <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                <svg lucideCalendarDays [size]="22"></svg>
+              </span>
+              <div class="min-w-0">
+                <h2 class="font-semibold text-text">เซสชันวันนี้</h2>
+                <p class="truncate text-xs text-text-secondary">รายการฝึกซ้อมที่ต้องดำเนินการในวันนี้</p>
+              </div>
+              <span class="ml-auto shrink-0 rounded-xl bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+                {{ d.todaySessions.length }}
+              </span>
+            </div>
+
+            @if (d.todaySessions.length === 0) {
+              <p class="mt-3 rounded-xl border border-dashed border-blue-200 bg-surface/70 px-3 py-5 text-center text-sm text-text-secondary">ไม่มีเซสชันวันนี้</p>
+            } @else {
+              <ul class="mt-3 space-y-2">
+                @for (session of d.todaySessions; track session.trainingSessionId) {
+                  <li>
+                    <a [routerLink]="['/coach/sessions', session.trainingSessionId]" class="grid grid-cols-[4.5rem_minmax(0,1fr)_1rem] items-center gap-3 rounded-xl border border-border bg-surface p-3 shadow-sm transition-colors hover:border-blue-300">
+                      <div class="border-r border-blue-100 pr-3 text-center">
+                        <p class="text-2xl font-semibold leading-none text-blue-700">{{ sessionDay(session) }}</p>
+                        <p class="mt-1 text-[11px] font-medium text-text">{{ sessionMonthYear(session) }}</p>
+                        <span class="mt-1 inline-block rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">{{ sessionWeekday(session) }}</span>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <p class="inline-flex items-center gap-1 font-semibold text-text"><svg lucideClock [size]="15" class="text-blue-600"></svg>{{ timeRange(session) }}</p>
+                          <span class="text-xs text-text-secondary">{{ sessionDuration(session) }}</span>
+                        </div>
+                        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" [class.bg-emerald-100]="session.trainingType === 'Routine'" [class.text-emerald-800]="session.trainingType === 'Routine'" [class.bg-blue-100]="session.trainingType === 'Private'" [class.text-blue-800]="session.trainingType === 'Private'">
+                            {{ trainingTypeLabel(session) }}
+                          </span>
+                          <app-status-badge [status]="session.status" />
+                        </div>
+                      </div>
+                      <svg lucideChevronRight [size]="18" class="text-blue-600"></svg>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
+          <section class="min-w-0 rounded-2xl border border-border bg-surface p-3 sm:p-4">
+            <div class="flex items-center gap-3">
+              <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                <svg lucideClock [size]="22"></svg>
+              </span>
+              <div class="min-w-0">
+                <h2 class="font-semibold text-text">เซสชันถัดไป</h2>
+                <p class="truncate text-xs text-text-secondary">รายการฝึกซ้อมที่กำลังจะมาถึง</p>
+              </div>
+              <span class="ml-auto shrink-0 rounded-xl bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
+                {{ upcomingSessionsPreview().length }}
+              </span>
+            </div>
+
+            @if (upcomingSessionsPreview().length === 0) {
+              <p class="mt-3 rounded-xl border border-dashed border-border bg-secondary-50 px-3 py-5 text-center text-sm text-text-secondary">ไม่มีเซสชันถัดไป</p>
+            } @else {
+              <ul class="mt-3 space-y-2">
+                @for (session of upcomingSessionsPreview(); track session.trainingSessionId) {
+                  <li>
+                    <a [routerLink]="['/coach/sessions', session.trainingSessionId]" class="grid grid-cols-[4.5rem_minmax(0,1fr)_1rem] items-center gap-3 rounded-xl border border-border bg-surface p-3 shadow-sm transition-colors hover:border-blue-300">
+                      <div class="border-r border-blue-100 pr-3 text-center">
+                        <p class="text-2xl font-semibold leading-none text-blue-700">{{ sessionDay(session) }}</p>
+                        <p class="mt-1 text-[11px] font-medium text-text">{{ sessionMonthYear(session) }}</p>
+                        <span class="mt-1 inline-block rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">{{ sessionWeekday(session) }}</span>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <p class="inline-flex items-center gap-1 font-semibold text-text"><svg lucideClock [size]="15" class="text-blue-600"></svg>{{ timeRange(session) }}</p>
+                          <span class="text-xs text-text-secondary">{{ sessionDuration(session) }}</span>
+                        </div>
+                        <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium" [class.bg-emerald-100]="session.trainingType === 'Routine'" [class.text-emerald-800]="session.trainingType === 'Routine'" [class.bg-blue-100]="session.trainingType === 'Private'" [class.text-blue-800]="session.trainingType === 'Private'">
+                            {{ trainingTypeLabel(session) }}
+                          </span>
+                          <app-status-badge [status]="session.status" />
+                        </div>
+                      </div>
+                      <svg lucideChevronRight [size]="18" class="text-blue-600"></svg>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
+      }
+    }
+  }
+</div>
+
 <div class="mt-4 grid grid-cols-2 rounded-xl border border-border bg-surface p-1" role="tablist" aria-label="มุมมองหน้าหลักโค้ช">
   <button
     type="button"
@@ -31,12 +139,8 @@
 
 <div class="mt-4">
   @switch (state()) {
-    @case ('loading') {
-      <app-loading-indicator label="กำลังโหลดข้อมูลหน้าหลัก..." />
-    }
-    @case ('error') {
-      <app-error-state message="ไม่สามารถโหลดข้อมูลหน้าหลักได้" (retry)="load()" />
-    }
+    @case ('loading') {}
+    @case ('error') {}
     @case ('ready') {
       @if (dashboard(); as d) {
         <div [class.hidden]="activeTab() !== 'overview'" role="tabpanel">
@@ -140,71 +244,6 @@
             </section>
           }
 
-          <!-- Today -->
-          <section class="mt-6">
-            <h2 class="text-sm font-semibold text-text">เซสชันวันนี้</h2>
-            @if (d.todaySessions.length === 0) {
-              <p class="mt-2 rounded-lg border border-dashed border-border p-3 text-sm text-text-secondary">
-                ไม่มีเซสชันฝึกซ้อมวันนี้
-              </p>
-            } @else {
-              <ul class="mt-2 flex flex-col gap-2">
-                @for (session of d.todaySessions; track session.trainingSessionId) {
-                  <li>
-                    <a
-                      [routerLink]="['/coach/sessions', session.trainingSessionId]"
-                      class="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary-300"
-                    >
-                      <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <span class="rounded-full px-2.5 py-1 text-xs font-medium" [class.bg-emerald-100]="session.trainingType === 'Routine'" [class.text-emerald-800]="session.trainingType === 'Routine'" [class.bg-blue-100]="session.trainingType === 'Private'" [class.text-blue-800]="session.trainingType === 'Private'">{{ trainingTypeLabel(session) }}</span>
-                          <app-status-badge [status]="session.status" />
-                        </div>
-                        <p class="mt-1 text-sm font-medium text-text">{{ timeRange(session) }}</p>
-                        @if (session.requiredNextAction) {
-                          <p class="mt-1 text-xs text-primary-700">{{ session.requiredNextAction }}</p>
-                        }
-                      </div>
-                      <svg lucideArrowRight [size]="18" class="shrink-0 text-text-secondary"></svg>
-                    </a>
-                  </li>
-                }
-              </ul>
-            }
-          </section>
-
-          <!-- Upcoming -->
-          <section class="mt-6">
-            <h2 class="text-sm font-semibold text-text">เซสชันถัดไป</h2>
-            @if (d.upcomingSessions.length === 0) {
-              <p class="mt-2 rounded-lg border border-dashed border-border p-3 text-sm text-text-secondary">
-                ไม่มีเซสชันฝึกซ้อมถัดไป
-              </p>
-            } @else {
-              <ul class="mt-2 flex flex-col gap-2">
-                @for (session of d.upcomingSessions; track session.trainingSessionId) {
-                  <li>
-                    <a
-                      [routerLink]="['/coach/sessions', session.trainingSessionId]"
-                      class="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary-300"
-                    >
-                      <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2">
-                          <span class="rounded-full px-2.5 py-1 text-xs font-medium" [class.bg-emerald-100]="session.trainingType === 'Routine'" [class.text-emerald-800]="session.trainingType === 'Routine'" [class.bg-blue-100]="session.trainingType === 'Private'" [class.text-blue-800]="session.trainingType === 'Private'">{{ trainingTypeLabel(session) }}</span>
-                          <app-status-badge [status]="session.status" />
-                        </div>
-                        <p class="mt-1 text-sm font-medium text-text">{{ session.sessionDate | displayDate }} · {{ timeRange(session) }}</p>
-                        @if (session.requiredNextAction) {
-                          <p class="mt-1 text-xs text-primary-700">{{ session.requiredNextAction }}</p>
-                        }
-                      </div>
-                      <svg lucideArrowRight [size]="18" class="shrink-0 text-text-secondary"></svg>
-                    </a>
-                  </li>
-                }
-              </ul>
-            }
-          </section>
         }
         </div>
 
