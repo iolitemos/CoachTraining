@@ -19,15 +19,16 @@ export class AthleteService {
 
   constructor(private readonly http: HttpClient) {}
 
-  async list(page: number, pageSize: number, search: string, athleteType: AthleteType): Promise<PagedResult<AthleteListItem>> {
+  async list(page: number, pageSize: number, search: string, athleteType: AthleteType, age: number | null = null): Promise<PagedResult<AthleteListItem>> {
     const params = new HttpParams()
       .set('page', page)
       .set('pageSize', pageSize)
       .set('search', search ?? '')
       .set('athleteType', athleteType);
+    const filteredParams = age === null ? params : params.set('age', age);
 
     const response = await firstValueFrom(
-      this.http.get<ApiSuccessBody<PagedResult<AthleteListItem>>>(this.baseUrl, { params }),
+      this.http.get<ApiSuccessBody<PagedResult<AthleteListItem>>>(this.baseUrl, { params: filteredParams }),
     );
     return response.data;
   }
@@ -61,11 +62,26 @@ export class AthleteService {
     );
   }
 
+  async downloadUpdateTemplate(): Promise<Blob> {
+    return await firstValueFrom(
+      this.http.get(`${this.baseUrl}/update-template`, { responseType: 'blob' }),
+    );
+  }
+
   async import(file: File): Promise<AthleteImportResult> {
     const formData = new FormData();
     formData.append('file', file);
     const response = await firstValueFrom(
       this.http.post<ApiSuccessBody<AthleteImportResult>>(`${this.baseUrl}/import`, formData),
+    );
+    return response.data;
+  }
+
+  async importUpdates(file: File): Promise<AthleteImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await firstValueFrom(
+      this.http.post<ApiSuccessBody<AthleteImportResult>>(`${this.baseUrl}/import-update`, formData),
     );
     return response.data;
   }

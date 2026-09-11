@@ -111,6 +111,12 @@ export const routes: Routes = [
         loadChildren: () => import('./pages/athletes/athletes.routes').then((m) => m.ATHLETES_ROUTES),
       },
       {
+        path: 'competition-matches',
+        canActivate: [roleGuard],
+        data: { roles: [AppRole.Administrator] },
+        loadChildren: () => import('./pages/competition-matches/competition-matches.routes').then((m) => m.COMPETITION_MATCHES_ROUTES),
+      },
+      {
         path: 'routine-schedules',
         canActivate: [roleGuard],
         data: { roles: [AppRole.Administrator] },

@@ -6,13 +6,15 @@ namespace CoachTraining.Api.Services;
 
 public interface IAthleteService
 {
-    Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request, AthleteType athleteType);
+    Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request, AthleteType athleteType, int? age = null);
     Task<AthleteDetailDto?> GetByIdAsync(int athleteId);
     Task<(AthleteDetailDto? Result, string? Error)> CreateAsync(AthleteCreateDto dto, int actionByUserId);
     Task<(AthleteDetailDto? Result, string? Error)> UpdateAsync(int athleteId, AthleteUpdateDto dto, int actionByUserId);
     Task<bool> SetStatusAsync(int athleteId, bool isActive, int actionByUserId);
     byte[] CreateImportTemplate();
+    Task<byte[]> CreateUpdateTemplateAsync();
     Task<AthleteImportResultDto> ImportAsync(Stream fileStream, int actionByUserId);
+    Task<AthleteImportResultDto> ImportUpdatesAsync(Stream fileStream, int actionByUserId);
 
     /// <summary>Active athletes matching a search term — shared by Routine attendance
     /// selection and Private Training assignment (todo.md 4.2).</summary>

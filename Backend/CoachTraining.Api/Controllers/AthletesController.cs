@@ -33,11 +33,13 @@ public class AthletesController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = Roles.Administrator)]
-    public async Task<IActionResult> List([FromQuery] PagedRequest request, [FromQuery] AthleteType athleteType = AthleteType.Affiliated)
+    public async Task<IActionResult> List([FromQuery] PagedRequest request, [FromQuery] AthleteType athleteType = AthleteType.Affiliated, [FromQuery] int? age = null)
     {
         try
         {
-            var result = await _athleteService.ListAsync(request, athleteType);
+            if (age is < 0 or > 150)
+                return BadRequest(new ApiErrorResponse("อายุต้องอยู่ระหว่าง 0 ถึง 150 ปี"));
+            var result = await _athleteService.ListAsync(request, athleteType, age);
             return Ok(new ApiResponse<PagedResponse<AthleteListItemDto>>(result));
         }
         catch (Exception ex)
@@ -133,6 +135,44 @@ public class AthletesController : ControllerBase
         {
             _logger.LogError(ex, "Route: api/athletes/import Controller: AthletesController Function: Import UserId: {UserId} FileName: {FileName}", _currentUser.UserId, Path.GetFileName(file.FileName));
             return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถนำเข้ารายชื่อนักกีฬาได้"));
+        }
+    }
+
+    [HttpGet("update-template")]
+    [Authorize(Roles = Roles.Administrator)]
+    public async Task<IActionResult> DownloadUpdateTemplate()
+    {
+        try
+        {
+            var content = await _athleteService.CreateUpdateTemplateAsync();
+            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "athlete-bulk-update.xlsx");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/athletes/update-template Controller: AthletesController Function: DownloadUpdateTemplate UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถดาวน์โหลดแบบฟอร์มอัปเดตได้"));
+        }
+    }
+
+    [HttpPost("import-update")]
+    [Authorize(Roles = Roles.Administrator)]
+    [RequestSizeLimit(MaxImportFileSize)]
+    public async Task<IActionResult> ImportUpdates([FromForm] IFormFile? file)
+    {
+        if (file is null || file.Length == 0) return BadRequest(new ApiErrorResponse("กรุณาเลือกไฟล์สำหรับอัปเดต"));
+        if (file.Length > MaxImportFileSize || !string.Equals(Path.GetExtension(file.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new ApiErrorResponse("รองรับเฉพาะไฟล์ .xlsx ขนาดไม่เกิน 5 MB"));
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var result = await _athleteService.ImportUpdatesAsync(stream, _currentUser.UserId!.Value);
+            return Ok(new ApiResponse<AthleteImportResultDto>(result, $"อัปเดตนักกีฬา {result.ImportedCount} รายการสำเร็จ"));
+        }
+        catch (AthleteImportValidationException ex) { return BadRequest(new { message = ex.Message, errors = ex.Errors }); }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/athletes/import-update Controller: AthletesController Function: ImportUpdates UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถอัปเดตข้อมูลนักกีฬาได้"));
         }
     }
 

@@ -21,6 +21,9 @@ public class AthleteCreateDto
 
     public DateOnly? DateOfBirth { get; set; }
 
+    [Range(1900, 2100, ErrorMessage = "ปีเกิดต้องอยู่ระหว่าง 1900 ถึง 2100")]
+    public int? BirthYear { get; set; }
+
     [MaxLength(30)]
     public string? PhoneNumber { get; set; }
 

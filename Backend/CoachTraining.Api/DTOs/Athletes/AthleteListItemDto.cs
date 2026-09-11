@@ -10,6 +10,8 @@ public class AthleteListItemDto
     public string FullName { get; set; } = string.Empty;
     public string? Nickname { get; set; }
     public DateOnly? DateOfBirth { get; set; }
+    public int? BirthYear { get; set; }
+    public int? Age { get; set; }
     public string? AthleteLevel { get; set; }
     public bool IsActive { get; set; }
 }

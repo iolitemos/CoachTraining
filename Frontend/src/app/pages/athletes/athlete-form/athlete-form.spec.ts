@@ -50,4 +50,15 @@ describe('AthleteForm', () => {
     expect(component.form.controls.fullName.invalid).toBe(true);
     expect(component.submitting()).toBe(false);
   });
+
+  it('includes birth year when creating an athlete', async () => {
+    await component.ngOnInit();
+    component.form.patchValue({ athleteCode: 'A001', fullName: 'Test Athlete', birthYear: 2012 });
+
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/athletes') && r.method === 'POST');
+    expect(request.request.body.birthYear).toBe(2012);
+    request.flush({ message: 'Success', data: { athleteId: 1 } });
+    await submitPromise;
+  });
 });

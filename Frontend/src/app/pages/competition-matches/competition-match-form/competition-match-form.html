@@ -1,0 +1,19 @@
+<app-page-header [title]="isEditMode() ? 'แก้ไขรายการแข่งขัน' : 'เพิ่มรายการแข่งขัน'" subtitle="ระบุชื่อรายการ สถานที่ และช่วงวันที่แข่งขัน">
+  <a actions routerLink="/competition-matches" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
+</app-page-header>
+
+<div class="mt-4 w-full max-w-2xl">
+  @if (loading()) { <app-loading-indicator label="กำลังโหลดข้อมูล..." /> }
+  @else {
+    <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div><label for="name" class="mb-1 block text-sm font-medium text-text">ชื่อรายการ <span class="text-danger">*</span></label><input id="name" type="text" formControlName="name" class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none" />@if (form.controls.name.invalid && form.controls.name.touched) {<p class="mt-1 text-xs text-danger">กรุณากรอกชื่อรายการ</p>}</div>
+      <div><label for="province" class="mb-1 block text-sm font-medium text-text">จังหวัด <span class="text-danger">*</span></label><input id="province" type="text" formControlName="province" class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none" />@if (form.controls.province.invalid && form.controls.province.touched) {<p class="mt-1 text-xs text-danger">กรุณากรอกจังหวัด</p>}</div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div><label for="startDate" class="mb-1 block text-sm font-medium text-text">วันที่เริ่มแข่ง <span class="text-danger">*</span></label><input id="startDate" type="date" formControlName="startDate" class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none" />@if (form.controls.startDate.invalid && form.controls.startDate.touched) {<p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่เริ่มแข่ง</p>}</div>
+        <div><label for="endDate" class="mb-1 block text-sm font-medium text-text">วันที่สิ้นสุดการแข่งขัน <span class="text-danger">*</span></label><input id="endDate" type="date" formControlName="endDate" class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none" />@if (form.controls.endDate.invalid && form.controls.endDate.touched) {<p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่สิ้นสุดการแข่งขัน</p>} @if (dateRangeInvalid()) {<p class="mt-1 text-xs text-danger">วันที่สิ้นสุดการแข่งขันต้องไม่ก่อนวันที่เริ่มแข่ง</p>}</div>
+      </div>
+      @if (errorMessage()) {<p class="rounded-lg bg-danger-surface px-3 py-2 text-sm text-danger">{{ errorMessage() }}</p>}
+      <button type="submit" [disabled]="submitting()" class="mt-2 min-h-11 w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60 sm:ml-auto sm:w-auto sm:min-w-32">{{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}</button>
+    </form>
+  }
+</div>

@@ -10,6 +10,8 @@ public class AthleteDetailDto
     public string FullName { get; set; } = string.Empty;
     public string? Nickname { get; set; }
     public DateOnly? DateOfBirth { get; set; }
+    public int? BirthYear { get; set; }
+    public int? Age { get; set; }
     public string? PhoneNumber { get; set; }
     public string? ParentName { get; set; }
     public string? ParentPhoneNumber { get; set; }

@@ -18,7 +18,7 @@ public class AthleteService : IAthleteService
     private const int LastTemplateRow = 1003;
     private static readonly string[] ImportHeaders =
     [
-        "รหัสนักกีฬา*", "ประเภทนักกีฬา*", "ชื่อ-นามสกุล*", "ชื่อเล่น", "วันเกิด",
+        "รหัสนักกีฬา*", "ประเภทนักกีฬา*", "ชื่อ-นามสกุล*", "ชื่อเล่น", "วันเกิด", "ปีเกิด",
         "เบอร์ติดต่อ", "ชื่อผู้ปกครอง", "เบอร์ติดต่อผู้ปกครอง", "ระดับนักกีฬา", "วันที่เข้าร่วม", "หมายเหตุ"
     ];
 
@@ -31,7 +31,7 @@ public class AthleteService : IAthleteService
         _logger = logger;
     }
 
-    public async Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request, AthleteType athleteType)
+    public async Task<PagedResponse<AthleteListItemDto>> ListAsync(PagedRequest request, AthleteType athleteType, int? age = null)
     {
         var query = _db.Athletes.Where(a => a.AthleteType == athleteType);
 
@@ -42,6 +42,12 @@ public class AthleteService : IAthleteService
                 a.AthleteCode.ToUpper().Contains(search) ||
                 a.FullName.ToUpper().Contains(search) ||
                 (a.Nickname != null && a.Nickname.ToUpper().Contains(search)));
+        }
+
+        if (age is not null)
+        {
+            var targetBirthYear = DateTime.UtcNow.Year - age.Value;
+            query = query.Where(a => (a.BirthYear ?? (a.DateOfBirth == null ? null : a.DateOfBirth.Value.Year)) == targetBirthYear);
         }
 
         var totalCount = await query.CountAsync();
@@ -66,6 +72,9 @@ public class AthleteService : IAthleteService
     {
         try
         {
+            var birthYearError = ValidateBirthYear(dto.BirthYear, dto.DateOfBirth);
+            if (birthYearError is not null) return (null, birthYearError);
+
             var codeTaken = await _db.Athletes.AnyAsync(a => a.AthleteCode == dto.AthleteCode);
             if (codeTaken)
             {
@@ -79,6 +88,7 @@ public class AthleteService : IAthleteService
                 FullName = dto.FullName,
                 Nickname = dto.Nickname,
                 DateOfBirth = dto.DateOfBirth,
+                BirthYear = dto.BirthYear ?? dto.DateOfBirth?.Year,
                 PhoneNumber = dto.PhoneNumber,
                 ParentName = dto.ParentName,
                 ParentPhoneNumber = dto.ParentPhoneNumber,
@@ -108,6 +118,8 @@ public class AthleteService : IAthleteService
         {
             return (null, null);
         }
+        var birthYearError = ValidateBirthYear(dto.BirthYear, dto.DateOfBirth);
+        if (birthYearError is not null) return (null, birthYearError);
 
         // Historical integrity (CLAUDE.md 4.5): editing profile fields never
         // touches past Attendance/PrivateSessionAthlete rows — those keep their
@@ -116,6 +128,7 @@ public class AthleteService : IAthleteService
         athlete.AthleteType = dto.AthleteType;
         athlete.Nickname = dto.Nickname;
         athlete.DateOfBirth = dto.DateOfBirth;
+        athlete.BirthYear = dto.BirthYear ?? dto.DateOfBirth?.Year;
         athlete.PhoneNumber = dto.PhoneNumber;
         athlete.ParentName = dto.ParentName;
         athlete.ParentPhoneNumber = dto.ParentPhoneNumber;
@@ -154,13 +167,13 @@ public class AthleteService : IAthleteService
         sheet.ShowGridLines = false;
 
         sheet.Cell("A1").Value = "เทมเพลตนำเข้ารายชื่อนักกีฬา";
-        sheet.Range("A1:K1").Merge();
+        sheet.Range("A1:L1").Merge();
         sheet.Cell("A1").Style.Font.Bold = true;
         sheet.Cell("A1").Style.Font.FontSize = 14;
         sheet.Cell("A1").Style.Font.FontColor = XLColor.White;
         sheet.Cell("A1").Style.Fill.SetBackgroundColor(XLColor.FromHtml("#047857"));
         sheet.Cell("A2").Value = "กรอกข้อมูลตั้งแต่แถวที่ 4 ช่องที่มี * จำเป็นต้องกรอก วันที่ใช้รูปแบบ วว/ดด/ปปปป (ค.ศ.)";
-        sheet.Range("A2:K2").Merge();
+        sheet.Range("A2:L2").Merge();
         sheet.Cell("A2").Style.Font.Italic = true;
         sheet.Cell("A2").Style.Font.FontColor = XLColor.FromHtml("#475569");
 
@@ -177,16 +190,49 @@ public class AthleteService : IAthleteService
         header.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
 
         sheet.Range(FirstDataRow, 1, LastTemplateRow, 1).Style.NumberFormat.Format = "@";
-        sheet.Range(FirstDataRow, 6, LastTemplateRow, 6).Style.NumberFormat.Format = "@";
-        sheet.Range(FirstDataRow, 8, LastTemplateRow, 8).Style.NumberFormat.Format = "@";
+        sheet.Range(FirstDataRow, 6, LastTemplateRow, 6).Style.NumberFormat.Format = "0";
+        sheet.Range(FirstDataRow, 7, LastTemplateRow, 7).Style.NumberFormat.Format = "@";
+        sheet.Range(FirstDataRow, 9, LastTemplateRow, 9).Style.NumberFormat.Format = "@";
         sheet.Range(FirstDataRow, 5, LastTemplateRow, 5).Style.DateFormat.Format = "dd/mm/yyyy";
-        sheet.Range(FirstDataRow, 10, LastTemplateRow, 10).Style.DateFormat.Format = "dd/mm/yyyy";
+        sheet.Range(FirstDataRow, 11, LastTemplateRow, 11).Style.DateFormat.Format = "dd/mm/yyyy";
         sheet.Range(FirstDataRow, 2, LastTemplateRow, 2).CreateDataValidation().List("\"นักกีฬาในสังกัด,นักกีฬาทั่วไป\"");
         sheet.SheetView.FreezeRows(HeaderRow);
         sheet.Columns().AdjustToContents(1, FirstDataRow);
         foreach (var column in sheet.Columns(1, ImportHeaders.Length))
         {
             column.Width = Math.Min(Math.Max(column.Width + 2, 14), 28);
+        }
+
+        using var output = new MemoryStream();
+        workbook.SaveAs(output);
+        return output.ToArray();
+    }
+
+    public async Task<byte[]> CreateUpdateTemplateAsync()
+    {
+        using var source = new MemoryStream(CreateImportTemplate());
+        using var workbook = new XLWorkbook(source);
+        var sheet = workbook.Worksheet("รายชื่อนักกีฬา");
+        sheet.Cell("A1").Value = "แบบฟอร์มอัปเดตข้อมูลนักกีฬาหลายคน";
+        sheet.Cell("A2").Value = "แก้ไขข้อมูลที่ต้องการแล้วนำไฟล์กลับเข้า ระบบใช้รหัสนักกีฬาเพื่อจับคู่และจะไม่เปลี่ยนรหัสหรือสถานะ";
+
+        var athletes = await _db.Athletes.AsNoTracking().OrderBy(a => a.AthleteCode).ToListAsync();
+        for (var index = 0; index < athletes.Count; index++)
+        {
+            var athlete = athletes[index];
+            var row = FirstDataRow + index;
+            sheet.Cell(row, 1).Value = athlete.AthleteCode;
+            sheet.Cell(row, 2).Value = athlete.AthleteType == AthleteType.Affiliated ? "นักกีฬาในสังกัด" : "นักกีฬาทั่วไป";
+            sheet.Cell(row, 3).Value = athlete.FullName;
+            sheet.Cell(row, 4).Value = athlete.Nickname ?? string.Empty;
+            if (athlete.DateOfBirth is not null) sheet.Cell(row, 5).Value = athlete.DateOfBirth.Value.ToDateTime(TimeOnly.MinValue);
+            if (athlete.BirthYear is not null) sheet.Cell(row, 6).Value = athlete.BirthYear.Value;
+            sheet.Cell(row, 7).Value = athlete.PhoneNumber ?? string.Empty;
+            sheet.Cell(row, 8).Value = athlete.ParentName ?? string.Empty;
+            sheet.Cell(row, 9).Value = athlete.ParentPhoneNumber ?? string.Empty;
+            sheet.Cell(row, 10).Value = athlete.AthleteLevel ?? string.Empty;
+            if (athlete.JoinDate is not null) sheet.Cell(row, 11).Value = athlete.JoinDate.Value.ToDateTime(TimeOnly.MinValue);
+            sheet.Cell(row, 12).Value = athlete.Remarks ?? string.Empty;
         }
 
         using var output = new MemoryStream();
@@ -274,6 +320,65 @@ public class AthleteService : IAthleteService
         }
     }
 
+    public async Task<AthleteImportResultDto> ImportUpdatesAsync(Stream fileStream, int actionByUserId)
+    {
+        try
+        {
+            using var workbook = new XLWorkbook(fileStream);
+            var sheet = workbook.Worksheets.FirstOrDefault();
+            if (sheet is null) throw new AthleteImportValidationException([Error(0, "file", "ไม่พบแผ่นงานในไฟล์")]);
+            var errors = ValidateHeaders(sheet);
+            if (errors.Count > 0) throw new AthleteImportValidationException(errors);
+
+            var rows = new List<(int Row, Athlete Values)>();
+            var lastRow = sheet.LastRowUsed()?.RowNumber() ?? HeaderRow;
+            for (var rowNumber = FirstDataRow; rowNumber <= lastRow; rowNumber++)
+            {
+                var cells = Enumerable.Range(1, ImportHeaders.Length).Select(column => sheet.Cell(rowNumber, column).GetFormattedString().Trim()).ToArray();
+                if (cells.All(string.IsNullOrWhiteSpace)) continue;
+                var values = ParseRow(sheet.Row(rowNumber), rowNumber, actionByUserId, errors);
+                if (values is not null) rows.Add((rowNumber, values));
+            }
+            if (rows.Count == 0 && errors.Count == 0) errors.Add(Error(0, "file", "ไม่พบข้อมูลนักกีฬาสำหรับอัปเดต"));
+
+            foreach (var duplicate in rows.GroupBy(x => x.Values.AthleteCode, StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1))
+                foreach (var row in duplicate) errors.Add(Error(row.Row, "athleteCode", $"รหัสนักกีฬา {duplicate.Key} ซ้ำกันในไฟล์"));
+
+            var codes = rows.Select(x => x.Values.AthleteCode).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var existing = await _db.Athletes.Where(a => codes.Contains(a.AthleteCode)).ToListAsync();
+            var existingByCode = existing.ToDictionary(a => a.AthleteCode, StringComparer.OrdinalIgnoreCase);
+            foreach (var row in rows.Where(row => !existingByCode.ContainsKey(row.Values.AthleteCode)))
+                errors.Add(Error(row.Row, "athleteCode", $"ไม่พบรหัสนักกีฬา {row.Values.AthleteCode} ในระบบ"));
+            if (errors.Count > 0) throw new AthleteImportValidationException(errors.OrderBy(error => error.Row).ToList());
+
+            foreach (var row in rows)
+            {
+                var athlete = existingByCode[row.Values.AthleteCode];
+                athlete.AthleteType = row.Values.AthleteType;
+                athlete.FullName = row.Values.FullName;
+                athlete.Nickname = row.Values.Nickname;
+                athlete.DateOfBirth = row.Values.DateOfBirth;
+                athlete.BirthYear = row.Values.BirthYear;
+                athlete.PhoneNumber = row.Values.PhoneNumber;
+                athlete.ParentName = row.Values.ParentName;
+                athlete.ParentPhoneNumber = row.Values.ParentPhoneNumber;
+                athlete.AthleteLevel = row.Values.AthleteLevel;
+                athlete.JoinDate = row.Values.JoinDate;
+                athlete.Remarks = row.Values.Remarks;
+                athlete.UpdatedByUserId = actionByUserId;
+                athlete.UpdatedDate = DateTime.UtcNow;
+            }
+            await _db.SaveChangesAsync();
+            return new AthleteImportResultDto { ImportedCount = rows.Count, TotalRows = rows.Count };
+        }
+        catch (AthleteImportValidationException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to bulk update athletes. Service: AthleteService Function: ImportUpdatesAsync ActionByUserId: {ActionByUserId}", actionByUserId);
+            throw;
+        }
+    }
+
     private static List<AthleteImportValidationErrorDto> ValidateHeaders(IXLWorksheet sheet)
     {
         var errors = new List<AthleteImportValidationErrorDto>();
@@ -308,13 +413,14 @@ public class AthleteService : IAthleteService
         }
 
         var nickname = Optional(row, 4, 100, rowNumber, "nickname", errors);
-        var phone = Optional(row, 6, 30, rowNumber, "phoneNumber", errors);
-        var parent = Optional(row, 7, 200, rowNumber, "parentName", errors);
-        var parentPhone = Optional(row, 8, 30, rowNumber, "parentPhoneNumber", errors);
-        var level = Optional(row, 9, 100, rowNumber, "athleteLevel", errors);
-        var remarks = row.Cell(11).GetFormattedString().Trim();
+        var phone = Optional(row, 7, 30, rowNumber, "phoneNumber", errors);
+        var parent = Optional(row, 8, 200, rowNumber, "parentName", errors);
+        var parentPhone = Optional(row, 9, 30, rowNumber, "parentPhoneNumber", errors);
+        var level = Optional(row, 10, 100, rowNumber, "athleteLevel", errors);
+        var remarks = row.Cell(12).GetFormattedString().Trim();
         var birthDate = ParseDate(row.Cell(5), rowNumber, "dateOfBirth", errors);
-        var joinDate = ParseDate(row.Cell(10), rowNumber, "joinDate", errors);
+        var birthYear = ParseBirthYear(row.Cell(6), birthDate, rowNumber, errors);
+        var joinDate = ParseDate(row.Cell(11), rowNumber, "joinDate", errors);
 
         if (errors.Any(x => x.Row == rowNumber))
         {
@@ -328,6 +434,7 @@ public class AthleteService : IAthleteService
             FullName = fullName,
             Nickname = nickname,
             DateOfBirth = birthDate,
+            BirthYear = birthYear,
             PhoneNumber = phone,
             ParentName = parent,
             ParentPhoneNumber = parentPhone,
@@ -364,6 +471,20 @@ public class AthleteService : IAthleteService
         if (DateOnly.TryParseExact(value, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)) return date;
         errors.Add(Error(rowNumber, field, "รูปแบบวันที่ไม่ถูกต้อง กรุณาใช้ วว/ดด/ปปปป (ค.ศ.)"));
         return null;
+    }
+
+    private static int? ParseBirthYear(IXLCell cell, DateOnly? birthDate, int rowNumber, List<AthleteImportValidationErrorDto> errors)
+    {
+        if (cell.IsEmpty()) return birthDate?.Year;
+        var value = cell.GetFormattedString().Trim();
+        if (!int.TryParse(value, out var year) || year < 1900 || year > DateTime.UtcNow.Year)
+        {
+            errors.Add(Error(rowNumber, "birthYear", $"ปีเกิดต้องอยู่ระหว่าง 1900 ถึง {DateTime.UtcNow.Year}"));
+            return null;
+        }
+        if (birthDate is not null && birthDate.Value.Year != year)
+            errors.Add(Error(rowNumber, "birthYear", "ปีเกิดไม่ตรงกับวันเกิด"));
+        return year;
     }
 
     private static AthleteImportValidationErrorDto Error(int row, string field, string message) => new() { Row = row, Field = field, Message = message };
@@ -403,6 +524,8 @@ public class AthleteService : IAthleteService
         FullName = athlete.FullName,
         Nickname = athlete.Nickname,
         DateOfBirth = athlete.DateOfBirth,
+        BirthYear = athlete.BirthYear ?? athlete.DateOfBirth?.Year,
+        Age = CalculateAge(athlete),
         AthleteLevel = athlete.AthleteLevel,
         IsActive = athlete.IsActive,
     };
@@ -415,6 +538,8 @@ public class AthleteService : IAthleteService
         FullName = athlete.FullName,
         Nickname = athlete.Nickname,
         DateOfBirth = athlete.DateOfBirth,
+        BirthYear = athlete.BirthYear ?? athlete.DateOfBirth?.Year,
+        Age = CalculateAge(athlete),
         PhoneNumber = athlete.PhoneNumber,
         ParentName = athlete.ParentName,
         ParentPhoneNumber = athlete.ParentPhoneNumber,
@@ -423,4 +548,19 @@ public class AthleteService : IAthleteService
         IsActive = athlete.IsActive,
         Remarks = athlete.Remarks,
     };
+
+    private static int? CalculateAge(Athlete athlete)
+    {
+        var year = athlete.BirthYear ?? athlete.DateOfBirth?.Year;
+        return year is null ? null : DateTime.UtcNow.Year - year.Value;
+    }
+
+    private static string? ValidateBirthYear(int? birthYear, DateOnly? birthDate)
+    {
+        if (birthYear is not null && (birthYear < 1900 || birthYear > DateTime.UtcNow.Year))
+            return $"ปีเกิดต้องอยู่ระหว่าง 1900 ถึง {DateTime.UtcNow.Year}";
+        if (birthYear is not null && birthDate is not null && birthYear != birthDate.Value.Year)
+            return "ปีเกิดไม่ตรงกับวันเกิด";
+        return null;
+    }
 }

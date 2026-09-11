@@ -16,6 +16,7 @@ import { AthleteType } from '../../../models/athlete.model';
   styleUrl: './athlete-form.css',
 })
 export class AthleteForm implements OnInit {
+  readonly currentYear = new Date().getFullYear();
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -33,6 +34,7 @@ export class AthleteForm implements OnInit {
     fullName: ['', [Validators.required, Validators.maxLength(200)]],
     nickname: ['', Validators.maxLength(100)],
     dateOfBirth: [''],
+    birthYear: this.fb.control<number | null>(null, [Validators.min(1900), Validators.max(this.currentYear)]),
     phoneNumber: ['', Validators.maxLength(30)],
     parentName: ['', Validators.maxLength(200)],
     parentPhoneNumber: ['', Validators.maxLength(30)],
@@ -40,6 +42,15 @@ export class AthleteForm implements OnInit {
     joinDate: [''],
     remarks: [''],
   });
+
+  calculatedAge(): number | null {
+    const birthYear = this.form.controls.birthYear.value;
+    if (birthYear) return this.currentYear - birthYear;
+    const dateOfBirth = this.form.controls.dateOfBirth.value;
+    if (!dateOfBirth) return null;
+    const year = Number(dateOfBirth.slice(0, 4));
+    return Number.isInteger(year) ? this.currentYear - year : null;
+  }
 
   async ngOnInit(): Promise<void> {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -59,6 +70,7 @@ export class AthleteForm implements OnInit {
           fullName: athlete.fullName,
           nickname: athlete.nickname ?? '',
           dateOfBirth: athlete.dateOfBirth ?? '',
+          birthYear: athlete.birthYear,
           phoneNumber: athlete.phoneNumber ?? '',
           parentName: athlete.parentName ?? '',
           parentPhoneNumber: athlete.parentPhoneNumber ?? '',
@@ -90,6 +102,7 @@ export class AthleteForm implements OnInit {
       fullName: value.fullName!,
       nickname: value.nickname || null,
       dateOfBirth: value.dateOfBirth || null,
+      birthYear: value.birthYear,
       phoneNumber: value.phoneNumber || null,
       parentName: value.parentName || null,
       parentPhoneNumber: value.parentPhoneNumber || null,

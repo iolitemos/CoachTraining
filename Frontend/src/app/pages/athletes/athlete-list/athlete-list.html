@@ -1,12 +1,30 @@
 <app-page-header title="จัดการนักกีฬา" subtitle="ข้อมูลหลักนักกีฬาที่ใช้ในการเช็คชื่อฝึกซ้อม">
   <div actions class="flex flex-wrap justify-end gap-2">
-    <button type="button" class="min-h-10 rounded-lg border border-primary-200 px-3 py-2 text-sm font-medium text-primary-700 disabled:opacity-60" [disabled]="downloadingTemplate()" (click)="downloadTemplate()">
-      {{ downloadingTemplate() ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลดเทมเพลต' }}
-    </button>
-    <button type="button" class="min-h-10 rounded-lg border border-primary-200 px-3 py-2 text-sm font-medium text-primary-700 disabled:opacity-60" [disabled]="importing()" (click)="chooseImportFile()">
-      {{ importing() ? 'กำลังนำเข้า...' : 'นำเข้ารายชื่อ' }}
-    </button>
+    <details class="group relative">
+      <summary class="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-lg border border-primary-200 bg-surface px-4 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-primary-50 [&::-webkit-details-marker]:hidden">
+        จัดการไฟล์ Excel
+        <span class="text-xs transition-transform group-open:rotate-180" aria-hidden="true">▼</span>
+      </summary>
+      <div class="absolute top-full right-0 z-30 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-surface p-2 shadow-lg">
+        <p class="px-3 py-1.5 text-xs font-medium text-text-secondary">เพิ่มนักกีฬาใหม่</p>
+        <button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-primary-50 disabled:opacity-60" [disabled]="downloadingTemplate()" (click)="downloadTemplate()">
+          {{ downloadingTemplate() ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลดเทมเพลตเพิ่มข้อมูล' }}
+        </button>
+        <button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-primary-50 disabled:opacity-60" [disabled]="importing()" (click)="chooseImportFile()">
+          {{ importing() ? 'กำลังนำเข้า...' : 'นำเข้าไฟล์เพิ่มข้อมูล' }}
+        </button>
+        <div class="my-1 border-t border-border"></div>
+        <p class="px-3 py-1.5 text-xs font-medium text-text-secondary">อัปเดตนักกีฬาที่มีอยู่</p>
+        <button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-blue-50 disabled:opacity-60" [disabled]="downloadingUpdateTemplate()" (click)="downloadUpdateTemplate()">
+          {{ downloadingUpdateTemplate() ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลดข้อมูลเพื่ออัปเดต' }}
+        </button>
+        <button type="button" class="flex min-h-10 w-full items-center rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-blue-50 disabled:opacity-60" [disabled]="importingUpdates()" (click)="chooseUpdateFile()">
+          {{ importingUpdates() ? 'กำลังอัปเดต...' : 'นำเข้าไฟล์อัปเดตข้อมูล' }}
+        </button>
+      </div>
+    </details>
     <input #importFileInput type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="sr-only" (change)="onImportFileSelected($event)" />
+    <input #updateFileInput type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="sr-only" (change)="onUpdateFileSelected($event)" />
     <a routerLink="/athletes/new" class="inline-flex min-h-10 items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700">
       เพิ่มนักกีฬา
     </a>
@@ -52,8 +70,15 @@
   </div>
 </div>
 
-<div class="mt-4">
-  <app-search-filter-toolbar placeholder="ค้นหารหัสนักกีฬา ชื่อ-นามสกุล หรือชื่อเล่น" [initialSearchTerm]="search()" (search)="onSearch($event)" />
+<div class="mt-4 flex min-w-0 items-center gap-2">
+  <app-search-filter-toolbar class="min-w-0 flex-1" placeholder="ค้นหารหัส ชื่อ หรือชื่อเล่น" [initialSearchTerm]="search()" (search)="onSearch($event)" />
+  <label class="w-22 shrink-0">
+    <span class="sr-only">ค้นหาอายุโดยเฉพาะ</span>
+    <input type="number" min="0" max="150" inputmode="numeric" placeholder="อายุ"
+      aria-label="ค้นหาอายุโดยเฉพาะ" [value]="age() ?? ''" (input)="onAgeInput($event)"
+      (keydown.enter)="$event.preventDefault(); onAgeSearch()"
+      class="h-9.5 w-full rounded-lg border border-border bg-surface px-2 text-center text-sm text-text placeholder:text-secondary-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none" />
+  </label>
 </div>
 
 <div class="mt-4">
@@ -88,8 +113,8 @@
 
               <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <dt class="text-xs text-text-secondary">วันเกิด</dt>
-                  <dd class="mt-0.5 text-text">{{ athlete.dateOfBirth | displayDate }}</dd>
+                  <dt class="text-xs text-text-secondary">ปีเกิด / อายุ</dt>
+                  <dd class="mt-0.5 text-text">{{ athlete.birthYear || '-' }} / {{ athlete.age !== null ? athlete.age + ' ปี' : '-' }}</dd>
                 </div>
                 <div>
                   <dt class="text-xs text-text-secondary">ระดับนักกีฬา</dt>
@@ -123,7 +148,8 @@
                 <th class="px-4 py-3 font-medium">ชื่อ-นามสกุล</th>
                 <th class="px-4 py-3 font-medium">ชื่อเล่น</th>
                 <th class="px-4 py-3 font-medium">ประเภท</th>
-                <th class="px-4 py-3 font-medium">วันเกิด</th>
+                <th class="px-4 py-3 font-medium">ปีเกิด</th>
+                <th class="px-4 py-3 font-medium">อายุ</th>
                 <th class="px-4 py-3 font-medium">ระดับ</th>
                 <th class="px-4 py-3 font-medium">สถานะ</th>
                 <th class="px-4 py-3 font-medium">การจัดการ</th>
@@ -136,7 +162,8 @@
                   <td class="px-4 py-3 text-text">{{ athlete.fullName }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ athlete.nickname || '-' }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ athleteTypeLabel(athlete.athleteType) }}</td>
-                  <td class="px-4 py-3 text-text-secondary">{{ athlete.dateOfBirth | displayDate }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ athlete.birthYear || '-' }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ athlete.age !== null ? athlete.age + ' ปี' : '-' }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ athlete.athleteLevel || '-' }}</td>
                   <td class="px-4 py-3">
                     <span

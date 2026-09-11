@@ -59,6 +59,13 @@
 
 ## 2. Database Design
 
+### 2.0 Competition Match Management (User-requested scope)
+
+- [x] Add Competition Match persistence and migration with name, province, start date, end date, audit fields, and soft delete.
+- [x] Add Administrator CRUD API with search, pagination, authorization, and date-range validation.
+- [x] Add responsive Thai Competition Match list/form pages with navigation and UI states.
+- [x] Add automated tests and pass backend/frontend builds.
+
 ### 2.1 Identity and Access Data
 
 - [x] Create User entity with explicit `UserId` primary key and common audit columns.
@@ -297,6 +304,10 @@
 
 ### 4.2 Athlete Management Backend
 
+- [x] Add Athlete birth year persistence, calculated age, and exact-age server-side filtering.
+- [x] Include birth year in Athlete import template and validate imported birth-year values.
+- [ ] Add downloadable prefilled Athlete bulk-update workbook and atomic update import. <!-- Implemented and tested; awaiting successful frontend production build. -->
+- [x] Apply the Athlete birth-year migration to DEV and backfill year values from existing birth dates.
 - [x] Add Administrator API to download the Athlete `.xlsx` import template.
 - [x] Add atomic Athlete template import with file, header, field, date, type, and duplicate-code validation.
 - [x] Create Athlete request/response DTOs (`FR-ATHLETE-001`–`004`).
@@ -583,6 +594,8 @@
 
 ### 5.2 Athlete Management Frontend
 
+- [ ] Add birth year and calculated age to Athlete forms/lists with a dedicated exact-age search. <!-- Implemented and tested; awaiting successful frontend production build. -->
+- [ ] Update Athlete import-template UI flow for the birth-year column. <!-- Implemented and tested; awaiting successful frontend production build. -->
 - [x] Add Athlete template download and `.xlsx` import actions with processing, success, and row-level error feedback.
 - [x] Create Athlete list page.
 - [x] Add Athlete search/filter/pagination.

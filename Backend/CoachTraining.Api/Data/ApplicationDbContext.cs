@@ -24,6 +24,7 @@ public class ApplicationDbContext : DbContext
     // 2.2 / 2.3 Coach and Athlete Data
     public DbSet<Coach> Coaches => Set<Coach>();
     public DbSet<Athlete> Athletes => Set<Athlete>();
+    public DbSet<CompetitionMatch> CompetitionMatches => Set<CompetitionMatch>();
 
     // 2.4 Routine Schedule Data
     public DbSet<RoutineSchedule> RoutineSchedules => Set<RoutineSchedule>();

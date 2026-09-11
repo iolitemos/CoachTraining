@@ -15,6 +15,7 @@ import {
   LucideUserPlus,
   LucideCalendarPlus2,
   LucideCalendarClock,
+  LucideTrophy,
 } from '@lucide/angular';
 import { AppRole, getRoleLabel } from '../../../models/auth.model';
 import { AuthService } from '../../../services/auth.service';
@@ -45,6 +46,7 @@ import { AuthService } from '../../../services/auth.service';
     LucideUserPlus,
     LucideCalendarPlus2,
     LucideCalendarClock,
+    LucideTrophy,
   ],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',

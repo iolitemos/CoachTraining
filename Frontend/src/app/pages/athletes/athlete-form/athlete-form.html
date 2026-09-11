@@ -10,6 +10,7 @@
     <app-loading-indicator label="กำลังโหลดข้อมูล..." />
   } @else {
     <form class="flex flex-col gap-4 rounded-xl border border-border bg-surface p-4 sm:p-5" [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <label for="athleteCode" class="mb-1 block text-sm font-medium text-text">
           รหัสนักกีฬา <span class="text-danger">*</span>
@@ -38,8 +39,10 @@
           <option value="General">นักกีฬาทั่วไป</option>
         </select>
       </div>
+      </div>
 
-      <div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
         <label for="fullName" class="mb-1 block text-sm font-medium text-text">
           ชื่อ-นามสกุล <span class="text-danger">*</span>
         </label>
@@ -52,9 +55,7 @@
         @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
           <p class="mt-1 text-xs text-danger">กรุณากรอกชื่อ-นามสกุล</p>
         }
-      </div>
-
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        </div>
         <div>
           <label for="nickname" class="mb-1 block text-sm font-medium text-text">ชื่อเล่น</label>
           <input
@@ -64,10 +65,21 @@
             class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
           />
         </div>
+      </div>
 
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label for="dateOfBirth" class="mb-1 block text-sm font-medium text-text">วันเกิด</label>
           <app-date-input class="block w-full" inputId="dateOfBirth" formControlName="dateOfBirth" ariaLabel="วันเกิด" />
+        </div>
+
+        <div>
+          <label for="birthYear" class="mb-1 block text-sm font-medium text-text">ปีเกิด (ค.ศ.)</label>
+          <input id="birthYear" type="number" min="1900" [max]="currentYear" inputmode="numeric" formControlName="birthYear"
+            class="min-h-11 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:outline-none" />
+          @if (form.controls.birthYear.invalid && form.controls.birthYear.touched) {
+            <p class="mt-1 text-xs text-danger">กรุณากรอกปีเกิดระหว่าง 1900 ถึง {{ currentYear }}</p>
+          }
         </div>
       </div>
 
@@ -115,9 +127,16 @@
         </div>
       </div>
 
-      <div>
-        <label for="joinDate" class="mb-1 block text-sm font-medium text-text">วันที่เข้าร่วม</label>
-        <app-date-input class="block w-full sm:max-w-xs" inputId="joinDate" formControlName="joinDate" ariaLabel="วันที่เข้าร่วม" />
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="joinDate" class="mb-1 block text-sm font-medium text-text">วันที่เข้าร่วม</label>
+          <app-date-input class="block w-full" inputId="joinDate" formControlName="joinDate" ariaLabel="วันที่เข้าร่วม" />
+        </div>
+        <div>
+          <label for="calculatedAge" class="mb-1 block text-sm font-medium text-text">อายุที่คำนวณได้</label>
+          <input id="calculatedAge" type="text" readonly [value]="calculatedAge() !== null ? calculatedAge() + ' ปี' : '-'"
+            class="min-h-11 w-full rounded-lg border border-border bg-secondary-50 px-3 py-2 text-sm text-text-secondary" />
+        </div>
       </div>
 
       <div>

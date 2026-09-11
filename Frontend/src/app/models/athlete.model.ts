@@ -8,6 +8,8 @@ export interface AthleteListItem {
   fullName: string;
   nickname: string | null;
   dateOfBirth: string | null;
+  birthYear: number | null;
+  age: number | null;
   athleteLevel: string | null;
   isActive: boolean;
 }
@@ -19,6 +21,8 @@ export interface AthleteDetail {
   fullName: string;
   nickname: string | null;
   dateOfBirth: string | null;
+  birthYear: number | null;
+  age: number | null;
   phoneNumber: string | null;
   parentName: string | null;
   parentPhoneNumber: string | null;
@@ -34,6 +38,7 @@ export interface AthleteCreateRequest {
   fullName: string;
   nickname: string | null;
   dateOfBirth: string | null;
+  birthYear: number | null;
   phoneNumber: string | null;
   parentName: string | null;
   parentPhoneNumber: string | null;

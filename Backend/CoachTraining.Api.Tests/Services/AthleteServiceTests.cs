@@ -112,6 +112,22 @@ public class AthleteServiceTests
     }
 
     [Fact]
+    public async Task ListAsync_FiltersByExactAgeAndReturnsBirthYearAndAge()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+        var targetAge = 14;
+        await service.CreateAsync(new AthleteCreateDto { AthleteCode = "A001", FullName = "Matched", BirthYear = DateTime.UtcNow.Year - targetAge }, 1);
+        await service.CreateAsync(new AthleteCreateDto { AthleteCode = "A002", FullName = "Other", BirthYear = DateTime.UtcNow.Year - 20 }, 1);
+
+        var result = await service.ListAsync(new DTOs.Common.PagedRequest { Page = 1, PageSize = 20 }, AthleteType.Affiliated, targetAge);
+
+        Assert.Single(result.Items);
+        Assert.Equal(DateTime.UtcNow.Year - targetAge, result.Items[0].BirthYear);
+        Assert.Equal(targetAge, result.Items[0].Age);
+    }
+
+    [Fact]
     public void CreateImportTemplate_ContainsExpectedHeadersAndValidation()
     {
         using var db = TestDbContextFactory.Create();
@@ -124,6 +140,7 @@ public class AthleteServiceTests
         Assert.Equal("รหัสนักกีฬา*", sheet.Cell("A3").GetString());
         Assert.Equal("ประเภทนักกีฬา*", sheet.Cell("B3").GetString());
         Assert.Equal("ชื่อ-นามสกุล*", sheet.Cell("C3").GetString());
+        Assert.Equal("ปีเกิด", sheet.Cell("F3").GetString());
         Assert.NotEmpty(sheet.DataValidations);
     }
 
@@ -133,8 +150,8 @@ public class AthleteServiceTests
         using var db = TestDbContextFactory.Create();
         var service = CreateService(db);
         using var stream = CreateImportFile(
-            ["A001", "นักกีฬาในสังกัด", "สมชาย ใจดี", "ชาย", new DateTime(2012, 5, 15), "0812345678", "", "", "เยาวชน", new DateTime(2026, 1, 10), ""],
-            ["A002", "General", "สมหญิง รักดี", "หญิง", "", "", "", "", "", "", ""]);
+            ["A001", "นักกีฬาในสังกัด", "สมชาย ใจดี", "ชาย", new DateTime(2012, 5, 15), 2012, "0812345678", "", "", "เยาวชน", new DateTime(2026, 1, 10), ""],
+            ["A002", "General", "สมหญิง รักดี", "หญิง", "", 2014, "", "", "", "", "", ""]);
 
         var result = await service.ImportAsync(stream, 1);
 
@@ -150,8 +167,8 @@ public class AthleteServiceTests
         var service = CreateService(db);
         await service.CreateAsync(new AthleteCreateDto { AthleteCode = "A001", FullName = "Existing" }, 1);
         using var stream = CreateImportFile(
-            ["A001", "นักกีฬาในสังกัด", "Duplicate", "", "", "", "", "", "", "", ""],
-            ["A002", "ประเภทไม่ถูกต้อง", "Invalid", "", "", "", "", "", "", "", ""]);
+            ["A001", "นักกีฬาในสังกัด", "Duplicate", "", "", "", "", "", "", "", "", ""],
+            ["A002", "ประเภทไม่ถูกต้อง", "Invalid", "", "", "", "", "", "", "", "", ""]);
 
         var exception = await Assert.ThrowsAsync<AthleteImportValidationException>(() => service.ImportAsync(stream, 1));
 
@@ -160,13 +177,44 @@ public class AthleteServiceTests
         Assert.Equal(1, await db.Athletes.CountAsync());
     }
 
+    [Fact]
+    public async Task UpdateTemplateAndImportUpdatesAsync_UpdatesExistingAthletesByCode()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+        await service.CreateAsync(new AthleteCreateDto
+        {
+            AthleteCode = "A001",
+            FullName = "Original Name",
+            BirthYear = 2012,
+        }, 1);
+
+        var template = await service.CreateUpdateTemplateAsync();
+        using var workbook = new XLWorkbook(new MemoryStream(template));
+        var sheet = workbook.Worksheet("รายชื่อนักกีฬา");
+        Assert.Equal("A001", sheet.Cell("A4").GetString());
+        sheet.Cell("C4").Value = "Updated Name";
+        sheet.Cell("F4").Value = 2013;
+        using var updatedFile = new MemoryStream();
+        workbook.SaveAs(updatedFile);
+        updatedFile.Position = 0;
+
+        var result = await service.ImportUpdatesAsync(updatedFile, 2);
+        var athlete = await db.Athletes.SingleAsync();
+
+        Assert.Equal(1, result.ImportedCount);
+        Assert.Equal("Updated Name", athlete.FullName);
+        Assert.Equal(2013, athlete.BirthYear);
+        Assert.Equal(2, athlete.UpdatedByUserId);
+    }
+
     private static MemoryStream CreateImportFile(params object[][] rows)
     {
         var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add("รายชื่อนักกีฬา");
         var headers = new[]
         {
-            "รหัสนักกีฬา*", "ประเภทนักกีฬา*", "ชื่อ-นามสกุล*", "ชื่อเล่น", "วันเกิด",
+            "รหัสนักกีฬา*", "ประเภทนักกีฬา*", "ชื่อ-นามสกุล*", "ชื่อเล่น", "วันเกิด", "ปีเกิด",
             "เบอร์ติดต่อ", "ชื่อผู้ปกครอง", "เบอร์ติดต่อผู้ปกครอง", "ระดับนักกีฬา", "วันที่เข้าร่วม", "หมายเหตุ"
         };
         for (var column = 1; column <= headers.Length; column++) sheet.Cell(3, column).Value = headers[column - 1];

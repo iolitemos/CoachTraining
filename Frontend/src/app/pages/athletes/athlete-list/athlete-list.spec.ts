@@ -50,6 +50,15 @@ describe('AthleteList', () => {
     expect(component.state()).toBe('error');
   });
 
+  it('sends the dedicated exact-age filter to the API', async () => {
+    component.age.set(14);
+    const loadPromise = component.load();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/athletes'));
+    expect(request.request.params.get('age')).toBe('14');
+    request.flush({ message: 'Success', data: { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 } });
+    await loadPromise;
+  });
+
   it('imports a valid workbook and reloads the athlete list', async () => {
     const file = new File(['workbook'], 'athletes.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const event = { target: { files: [file], value: file.name } } as unknown as Event;
@@ -77,5 +86,20 @@ describe('AthleteList', () => {
     await importPromise;
 
     expect(component.importErrors()).toEqual([{ row: 4, field: 'athleteCode', message: 'รหัสซ้ำ' }]);
+  });
+
+  it('imports an athlete bulk-update workbook and reloads the list', async () => {
+    const file = new File(['workbook'], 'athlete-bulk-update.xlsx');
+    const event = { target: { files: [file], value: file.name } } as unknown as Event;
+
+    const updatePromise = component.onUpdateFileSelected(event);
+    httpMock.expectOne((r) => r.url.endsWith('/athletes/import-update') && r.method === 'POST')
+      .flush({ message: 'Success', data: { importedCount: 3, totalRows: 3 } });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    httpMock.match((r) => r.url.endsWith('/athletes') && r.method === 'GET')
+      .forEach((request) => request.flush({ message: 'Success', data: { items: [], page: 1, pageSize: 20, totalCount: 0, totalPages: 0 } }));
+    await updatePromise;
+
+    expect(component.importMessage()).toBe('อัปเดตนักกีฬา 3 รายการสำเร็จ');
   });
 });
