@@ -95,11 +95,11 @@
         </div>
 
         <div>
-          <label for="athleteLevel" class="mb-1 block text-sm font-medium text-text">ระดับนักกีฬา</label>
+          <label for="province" class="mb-1 block text-sm font-medium text-text">จังหวัด</label>
           <input
-            id="athleteLevel"
+            id="province"
             type="text"
-            formControlName="athleteLevel"
+            formControlName="province"
             class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none"
           />
         </div>
@@ -129,13 +129,13 @@
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label for="joinDate" class="mb-1 block text-sm font-medium text-text">วันที่เข้าร่วม</label>
-          <app-date-input class="block w-full" inputId="joinDate" formControlName="joinDate" ariaLabel="วันที่เข้าร่วม" />
+          <label for="athleteLevel" class="mb-1 block text-sm font-medium text-text">ระดับนักกีฬา</label>
+          <input id="athleteLevel" type="text" formControlName="athleteLevel"
+            class="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none" />
         </div>
         <div>
-          <label for="calculatedAge" class="mb-1 block text-sm font-medium text-text">อายุที่คำนวณได้</label>
-          <input id="calculatedAge" type="text" readonly [value]="calculatedAge() !== null ? calculatedAge() + ' ปี' : '-'"
-            class="min-h-11 w-full rounded-lg border border-border bg-secondary-50 px-3 py-2 text-sm text-text-secondary" />
+          <label for="joinDate" class="mb-1 block text-sm font-medium text-text">วันที่เข้าร่วม</label>
+          <app-date-input class="block w-full" inputId="joinDate" formControlName="joinDate" ariaLabel="วันที่เข้าร่วม" />
         </div>
       </div>
 

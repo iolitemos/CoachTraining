@@ -19,7 +19,7 @@ public class AthleteService : IAthleteService
     private static readonly string[] ImportHeaders =
     [
         "รหัสนักกีฬา*", "ประเภทนักกีฬา*", "ชื่อ-นามสกุล*", "ชื่อเล่น", "วันเกิด", "ปีเกิด",
-        "เบอร์ติดต่อ", "ชื่อผู้ปกครอง", "เบอร์ติดต่อผู้ปกครอง", "ระดับนักกีฬา", "วันที่เข้าร่วม", "หมายเหตุ"
+        "เบอร์ติดต่อ", "ชื่อผู้ปกครอง", "เบอร์ติดต่อผู้ปกครอง", "ระดับนักกีฬา", "วันที่เข้าร่วม", "จังหวัด", "หมายเหตุ"
     ];
 
     private readonly ApplicationDbContext _db;
@@ -41,7 +41,8 @@ public class AthleteService : IAthleteService
             query = query.Where(a =>
                 a.AthleteCode.ToUpper().Contains(search) ||
                 a.FullName.ToUpper().Contains(search) ||
-                (a.Nickname != null && a.Nickname.ToUpper().Contains(search)));
+                (a.Nickname != null && a.Nickname.ToUpper().Contains(search)) ||
+                (a.Province != null && a.Province.ToUpper().Contains(search)));
         }
 
         if (age is not null)
@@ -94,6 +95,7 @@ public class AthleteService : IAthleteService
                 ParentPhoneNumber = dto.ParentPhoneNumber,
                 AthleteLevel = dto.AthleteLevel,
                 JoinDate = dto.JoinDate,
+                Province = dto.Province,
                 Remarks = dto.Remarks,
                 IsActive = true,
                 CreatedByUserId = actionByUserId,
@@ -134,6 +136,7 @@ public class AthleteService : IAthleteService
         athlete.ParentPhoneNumber = dto.ParentPhoneNumber;
         athlete.AthleteLevel = dto.AthleteLevel;
         athlete.JoinDate = dto.JoinDate;
+        athlete.Province = dto.Province;
         athlete.Remarks = dto.Remarks;
         athlete.UpdatedByUserId = actionByUserId;
         athlete.UpdatedDate = DateTime.UtcNow;
@@ -167,13 +170,13 @@ public class AthleteService : IAthleteService
         sheet.ShowGridLines = false;
 
         sheet.Cell("A1").Value = "เทมเพลตนำเข้ารายชื่อนักกีฬา";
-        sheet.Range("A1:L1").Merge();
+        sheet.Range("A1:M1").Merge();
         sheet.Cell("A1").Style.Font.Bold = true;
         sheet.Cell("A1").Style.Font.FontSize = 14;
         sheet.Cell("A1").Style.Font.FontColor = XLColor.White;
         sheet.Cell("A1").Style.Fill.SetBackgroundColor(XLColor.FromHtml("#047857"));
         sheet.Cell("A2").Value = "กรอกข้อมูลตั้งแต่แถวที่ 4 ช่องที่มี * จำเป็นต้องกรอก วันที่ใช้รูปแบบ วว/ดด/ปปปป (ค.ศ.)";
-        sheet.Range("A2:L2").Merge();
+        sheet.Range("A2:M2").Merge();
         sheet.Cell("A2").Style.Font.Italic = true;
         sheet.Cell("A2").Style.Font.FontColor = XLColor.FromHtml("#475569");
 
@@ -232,7 +235,8 @@ public class AthleteService : IAthleteService
             sheet.Cell(row, 9).Value = athlete.ParentPhoneNumber ?? string.Empty;
             sheet.Cell(row, 10).Value = athlete.AthleteLevel ?? string.Empty;
             if (athlete.JoinDate is not null) sheet.Cell(row, 11).Value = athlete.JoinDate.Value.ToDateTime(TimeOnly.MinValue);
-            sheet.Cell(row, 12).Value = athlete.Remarks ?? string.Empty;
+            sheet.Cell(row, 12).Value = athlete.Province ?? string.Empty;
+            sheet.Cell(row, 13).Value = athlete.Remarks ?? string.Empty;
         }
 
         using var output = new MemoryStream();
@@ -364,6 +368,7 @@ public class AthleteService : IAthleteService
                 athlete.ParentPhoneNumber = row.Values.ParentPhoneNumber;
                 athlete.AthleteLevel = row.Values.AthleteLevel;
                 athlete.JoinDate = row.Values.JoinDate;
+                athlete.Province = row.Values.Province;
                 athlete.Remarks = row.Values.Remarks;
                 athlete.UpdatedByUserId = actionByUserId;
                 athlete.UpdatedDate = DateTime.UtcNow;
@@ -417,7 +422,8 @@ public class AthleteService : IAthleteService
         var parent = Optional(row, 8, 200, rowNumber, "parentName", errors);
         var parentPhone = Optional(row, 9, 30, rowNumber, "parentPhoneNumber", errors);
         var level = Optional(row, 10, 100, rowNumber, "athleteLevel", errors);
-        var remarks = row.Cell(12).GetFormattedString().Trim();
+        var province = Optional(row, 12, 100, rowNumber, "province", errors);
+        var remarks = row.Cell(13).GetFormattedString().Trim();
         var birthDate = ParseDate(row.Cell(5), rowNumber, "dateOfBirth", errors);
         var birthYear = ParseBirthYear(row.Cell(6), birthDate, rowNumber, errors);
         var joinDate = ParseDate(row.Cell(11), rowNumber, "joinDate", errors);
@@ -440,6 +446,7 @@ public class AthleteService : IAthleteService
             ParentPhoneNumber = parentPhone,
             AthleteLevel = level,
             JoinDate = joinDate,
+            Province = province,
             Remarks = string.IsNullOrWhiteSpace(remarks) ? null : remarks,
             IsActive = true,
             CreatedByUserId = actionByUserId,
@@ -527,6 +534,7 @@ public class AthleteService : IAthleteService
         BirthYear = athlete.BirthYear ?? athlete.DateOfBirth?.Year,
         Age = CalculateAge(athlete),
         AthleteLevel = athlete.AthleteLevel,
+        Province = athlete.Province,
         IsActive = athlete.IsActive,
     };
 
@@ -545,6 +553,7 @@ public class AthleteService : IAthleteService
         ParentPhoneNumber = athlete.ParentPhoneNumber,
         AthleteLevel = athlete.AthleteLevel,
         JoinDate = athlete.JoinDate,
+        Province = athlete.Province,
         IsActive = athlete.IsActive,
         Remarks = athlete.Remarks,
     };

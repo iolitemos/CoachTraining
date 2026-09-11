@@ -17,6 +17,16 @@ export class CompetitionMatchService {
     return response.data;
   }
 
+  async listAll(): Promise<CompetitionMatch[]> {
+    const firstPage = await this.list(1, 100, '');
+    if (firstPage.totalPages <= 1) return firstPage.items;
+
+    const remainingPages = await Promise.all(
+      Array.from({ length: firstPage.totalPages - 1 }, (_, index) => this.list(index + 2, 100, '')),
+    );
+    return [firstPage, ...remainingPages].flatMap((page) => page.items);
+  }
+
   async getById(id: number): Promise<CompetitionMatch> {
     const response = await firstValueFrom(this.http.get<ApiSuccessBody<CompetitionMatch>>(`${this.baseUrl}/${id}`));
     return response.data;

@@ -11,6 +11,7 @@ export interface AthleteListItem {
   birthYear: number | null;
   age: number | null;
   athleteLevel: string | null;
+  province: string | null;
   isActive: boolean;
 }
 
@@ -28,6 +29,7 @@ export interface AthleteDetail {
   parentPhoneNumber: string | null;
   athleteLevel: string | null;
   joinDate: string | null;
+  province: string | null;
   isActive: boolean;
   remarks: string | null;
 }
@@ -44,6 +46,7 @@ export interface AthleteCreateRequest {
   parentPhoneNumber: string | null;
   athleteLevel: string | null;
   joinDate: string | null;
+  province: string | null;
   remarks: string | null;
 }
 

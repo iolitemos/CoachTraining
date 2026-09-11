@@ -13,5 +13,6 @@ public class AthleteListItemDto
     public int? BirthYear { get; set; }
     public int? Age { get; set; }
     public string? AthleteLevel { get; set; }
+    public string? Province { get; set; }
     public bool IsActive { get; set; }
 }

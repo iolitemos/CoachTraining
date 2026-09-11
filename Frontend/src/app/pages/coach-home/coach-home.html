@@ -299,21 +299,26 @@
                 <div class="grid grid-cols-7">
                   @for (day of calendarDays(); track day.isoDate) {
                     <div class="min-h-30 border-r border-b border-border p-2" [class.bg-secondary-50]="!day.isCurrentMonth">
-                      <button
-                        type="button"
-                        [attr.aria-label]="'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
-                        title="กดค้างเพื่อเพิ่มฝึกซ้อมประจำ"
-                        class="mb-2 flex size-7 items-center justify-center rounded-full text-xs font-medium hover:bg-primary-100"
-                        [class.bg-primary-600]="day.isToday"
-                        [class.text-white]="day.isToday"
-                        [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday"
-                        (pointerdown)="startDateLongPress(day)"
-                        (pointerup)="cancelDateLongPress()"
-                        (pointerleave)="cancelDateLongPress()"
-                        (pointercancel)="cancelDateLongPress()"
-                        (contextmenu)="$event.preventDefault()"
-                        (click)="selectDay(day)"
-                      >{{ day.dayNumber }}</button>
+                      <div class="mb-2 flex items-center gap-1">
+                        <button
+                          type="button"
+                          [attr.aria-label]="'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
+                          title="กดค้างเพื่อเพิ่มฝึกซ้อมประจำ"
+                          class="flex size-7 items-center justify-center rounded-full text-xs font-medium hover:bg-primary-100"
+                          [class.bg-primary-600]="day.isToday"
+                          [class.text-white]="day.isToday"
+                          [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday"
+                          (pointerdown)="startDateLongPress(day)"
+                          (pointerup)="cancelDateLongPress()"
+                          (pointerleave)="cancelDateLongPress()"
+                          (pointercancel)="cancelDateLongPress()"
+                          (contextmenu)="$event.preventDefault()"
+                          (click)="selectDay(day)"
+                        >{{ day.dayNumber }}</button>
+                        @if (day.competitionMatches.length > 0) {
+                          <span class="competition-trophy inline-flex size-6 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-xs leading-none shadow-sm" role="img" [attr.aria-label]="'มีการแข่งขัน ' + day.competitionMatches.length + ' รายการ'" [title]="day.competitionMatches[0].name">🏆</span>
+                        }
+                      </div>
                       <div class="space-y-1">
                         @for (session of day.sessions.slice(0, 3); track session.trainingSessionId) {
                           <div class="group/event relative">
@@ -386,6 +391,9 @@
                             <span class="size-1 rounded-full bg-blue-600"></span>
                           }
                         </span>
+                      }
+                      @if (day.competitionMatches.length > 0) {
+                        <span class="competition-trophy absolute -top-1 -right-1 inline-flex size-5 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-[10px] leading-none shadow-sm" role="img" aria-label="มีการแข่งขัน">🏆</span>
                       }
                     </button>
                   }

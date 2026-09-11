@@ -52,6 +52,7 @@ describe('RoutineScheduleCalendar', () => {
           totalPages: 1,
         },
       });
+    flushCompetitionMatches([]);
     await loadPromise;
 
     expect(
@@ -109,6 +110,7 @@ describe('RoutineScheduleCalendar', () => {
           totalPages: 1,
         },
       });
+    flushCompetitionMatches([]);
     await new Promise((resolve) => setTimeout(resolve));
     fixture.detectChanges();
 
@@ -125,8 +127,46 @@ describe('RoutineScheduleCalendar', () => {
     httpMock
       .expectOne((request) => request.url.endsWith('/routine-schedules'))
       .flush({ message: 'Error' }, { status: 500, statusText: 'Server Error' });
+    flushCompetitionMatches([]);
     await loadPromise;
 
     expect(component.state()).toBe('error');
   });
+
+  it('marks every date within a competition range and renders its details', async () => {
+    fixture.detectChanges();
+    httpMock.expectOne((request) => request.url.endsWith('/routine-schedules')).flush({
+      message: 'Success',
+      data: { items: [], page: 1, pageSize: 100, totalCount: 0, totalPages: 0 },
+    });
+    flushCompetitionMatches([
+      {
+        competitionMatchId: 7,
+        name: 'ชิงแชมป์ประเทศไทย',
+        province: 'เชียงใหม่',
+        startDate: '2026-01-05',
+        endDate: '2026-01-07',
+      },
+    ]);
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-04')?.competitionMatches).toHaveLength(0);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-05')?.competitionMatches).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-07')?.competitionMatches).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-08')?.competitionMatches).toHaveLength(0);
+
+    component.selectedDate.set('2026-01-05');
+    fixture.detectChanges();
+    const trophies = fixture.nativeElement.querySelectorAll('.competition-trophy') as NodeListOf<HTMLElement>;
+    expect(trophies.length).toBeGreaterThan(0);
+    const marks = fixture.nativeElement.querySelectorAll('.competition-mark') as NodeListOf<HTMLElement>;
+    expect(Array.from(marks).some((mark) => mark.textContent?.includes('ชิงแชมป์ประเทศไทย'))).toBe(true);
+  });
+
+  function flushCompetitionMatches(items: unknown[]): void {
+    httpMock.expectOne((request) => request.url.endsWith('/competition-matches')).flush({
+      message: 'Success',
+      data: { items, page: 1, pageSize: 100, totalCount: items.length, totalPages: items.length ? 1 : 0 },
+    });
+  }
 });

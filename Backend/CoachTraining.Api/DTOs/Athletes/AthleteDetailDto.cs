@@ -17,6 +17,7 @@ public class AthleteDetailDto
     public string? ParentPhoneNumber { get; set; }
     public string? AthleteLevel { get; set; }
     public DateOnly? JoinDate { get; set; }
+    public string? Province { get; set; }
     public bool IsActive { get; set; }
     public string? Remarks { get; set; }
 }

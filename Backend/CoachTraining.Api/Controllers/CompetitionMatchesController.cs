@@ -10,7 +10,7 @@ namespace CoachTraining.Api.Controllers;
 
 [ApiController]
 [Route("api/competition-matches")]
-[Authorize(Roles = Roles.Administrator)]
+[Authorize]
 public class CompetitionMatchesController : ControllerBase
 {
     private readonly ICompetitionMatchService _service;
@@ -25,6 +25,7 @@ public class CompetitionMatchesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = $"{Roles.Administrator},{Roles.ManagementViewer},{Roles.Coach}")]
     public async Task<IActionResult> List([FromQuery] PagedRequest request)
     {
         try { return Ok(new ApiResponse<PagedResponse<CompetitionMatchDto>>(await _service.ListAsync(request))); }
@@ -36,6 +37,7 @@ public class CompetitionMatchesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _service.GetByIdAsync(id);
@@ -45,6 +47,7 @@ public class CompetitionMatchesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Create([FromBody] CompetitionMatchRequestDto dto)
     {
         var result = await _service.CreateAsync(dto, _currentUser.UserId!.Value);
@@ -52,6 +55,7 @@ public class CompetitionMatchesController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Update(int id, [FromBody] CompetitionMatchRequestDto dto)
     {
         var result = await _service.UpdateAsync(id, dto, _currentUser.UserId!.Value);
@@ -61,6 +65,7 @@ public class CompetitionMatchesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Delete(int id)
     {
         var deleted = await _service.DeleteAsync(id, _currentUser.UserId!.Value);

@@ -6,8 +6,9 @@ import { ApiErrorBody } from '../../../models/paged-result.model';
 import { CompetitionMatchService } from '../../../services/competition-match.service';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { PageHeader } from '../../../shared/page-header/page-header';
+import { DateInput } from '../../../shared/date-input/date-input';
 
-@Component({ selector: 'app-competition-match-form', imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator], templateUrl: './competition-match-form.html' })
+@Component({ selector: 'app-competition-match-form', imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, DateInput], templateUrl: './competition-match-form.html' })
 export class CompetitionMatchForm implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);

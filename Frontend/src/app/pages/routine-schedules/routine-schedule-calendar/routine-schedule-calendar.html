@@ -102,20 +102,25 @@
               [class.bg-secondary-50]="!day.isCurrentMonth"
             >
               <div class="mb-2 flex items-center justify-between">
-                <button
-                  type="button"
-                  class="flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-primary-100 hover:text-primary-700"
-                  [class.ring-2]="selectedDate() === day.isoDate"
-                  [class.ring-emerald-700]="selectedDate() === day.isoDate && day.schedules.length > 0"
-                  [class.ring-secondary-400]="selectedDate() === day.isoDate && day.schedules.length === 0"
-                  [class.text-emerald-900]="day.schedules.length > 0"
-                  [class.text-white]="day.isToday && day.schedules.length === 0 && selectedDate() !== day.isoDate"
-                  [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday && selectedDate() !== day.isoDate"
-                  [style.background-color]="calendarDayBackground(day, selectedDate() === day.isoDate)"
-                  (click)="selectDay(day)"
-                >
-                  {{ day.dayNumber }}
-                </button>
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    class="flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-primary-100 hover:text-primary-700"
+                    [class.ring-2]="selectedDate() === day.isoDate"
+                    [class.ring-emerald-700]="selectedDate() === day.isoDate && day.schedules.length > 0"
+                    [class.ring-secondary-400]="selectedDate() === day.isoDate && day.schedules.length === 0"
+                    [class.text-emerald-900]="day.schedules.length > 0"
+                    [class.text-white]="day.isToday && day.schedules.length === 0 && selectedDate() !== day.isoDate"
+                    [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday && selectedDate() !== day.isoDate"
+                    [style.background-color]="calendarDayBackground(day, selectedDate() === day.isoDate)"
+                    (click)="selectDay(day)"
+                  >
+                    {{ day.dayNumber }}
+                  </button>
+                  @if (day.competitionMatches.length > 0) {
+                    <span class="competition-trophy inline-flex size-6 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-xs leading-none shadow-sm" role="img" [attr.aria-label]="'มีการแข่งขัน ' + day.competitionMatches.length + ' รายการ'" [title]="day.competitionMatches.length + ' รายการแข่งขัน'">🏆</span>
+                  }
+                </div>
                 <a
                   [routerLink]="['/routine-schedules/new']"
                   [queryParams]="{ date: day.isoDate }"
@@ -193,6 +198,9 @@
                   class="absolute bottom-1 size-1 rounded-full bg-emerald-700"
                 ></span>
               }
+              @if (day.competitionMatches.length > 0) {
+                <span class="competition-trophy absolute -top-1.5 -right-1.5 inline-flex size-5 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-[10px] leading-none shadow-sm" role="img" aria-label="มีการแข่งขัน">🏆</span>
+              }
             </button>
           }
         </div>
@@ -251,6 +259,16 @@
                 }
               </div>
             }
+            @if (day.competitionMatches.length > 0) {
+              <div class="mb-3 space-y-2">
+                @for (match of day.competitionMatches; track match.competitionMatchId) {
+                  <a [routerLink]="['/competition-matches', match.competitionMatchId, 'edit']" class="competition-mark block rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-amber-900">
+                    <p class="text-sm font-semibold">🏆 {{ match.name }}</p>
+                    <p class="mt-0.5 text-xs">{{ match.province }}</p>
+                  </a>
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -259,6 +277,7 @@
         class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-4 py-3 text-xs text-text-secondary"
       >
         <span>สีของรายการใช้แยกโค้ชแต่ละคน</span>
+        <span class="font-medium text-amber-800">🏆 เครื่องหมายสีเหลืองคือวันแข่งขัน</span>
         <span class="opacity-50">รายการสีจางคือรายการที่ปิดใช้งาน</span>
         <span>คลิกตารางเพื่อแก้ไข หรือเลือกวันที่เพื่อเพิ่มตารางใหม่</span>
       </div>

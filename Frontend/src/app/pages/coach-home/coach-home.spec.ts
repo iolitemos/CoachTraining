@@ -31,16 +31,39 @@ describe('CoachHome calendar', () => {
     const colleaguesRequest = httpMock.expectOne((r) =>
       r.url.endsWith('/dashboard/coach/calendar-colleagues'),
     );
+    const competitionRequest = httpMock.expectOne((r) => r.url.endsWith('/competition-matches'));
 
     request.flush({
       message: 'Success',
       data: { items: [], page: 1, pageSize: 100, totalCount: 0, totalPages: 0 },
     });
     colleaguesRequest.flush({ message: 'Success', data: [] });
+    competitionRequest.flush({
+      message: 'Success',
+      data: { items: [], page: 1, pageSize: 100, totalCount: 0, totalPages: 0 },
+    });
     await loadPromise;
 
     expect(component.calendarState()).toBe('ready');
     expect(component.calendarDays()).toHaveLength(42);
+  });
+
+  it('marks each day in a competition range', () => {
+    component.visibleMonth.set(new Date(2026, 0, 1));
+    component.calendarCompetitionMatches.set([
+      {
+        competitionMatchId: 1,
+        name: 'ชิงแชมป์ประเทศไทย',
+        province: 'เชียงใหม่',
+        startDate: '2026-01-05',
+        endDate: '2026-01-07',
+      },
+    ]);
+
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-04')?.competitionMatches).toHaveLength(0);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-05')?.competitionMatches).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-07')?.competitionMatches).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-08')?.competitionMatches).toHaveLength(0);
   });
 
   it('switches between overview and calendar tabs', () => {

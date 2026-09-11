@@ -10,6 +10,8 @@ import { PageHeader } from '../../../shared/page-header/page-header';
 import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
+import { CompetitionMatch } from '../../../models/competition-match.model';
+import { CompetitionMatchService } from '../../../services/competition-match.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -20,6 +22,7 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   schedules: RoutineScheduleListItem[];
+  competitionMatches: CompetitionMatch[];
 }
 
 const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
@@ -33,6 +36,7 @@ const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.
 export class RoutineScheduleCalendar implements OnInit {
   state = signal<ViewState>('loading');
   schedules = signal<RoutineScheduleListItem[]>([]);
+  competitionMatches = signal<CompetitionMatch[]>([]);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
   pendingDelete = signal<RoutineScheduleListItem | null>(null);
@@ -62,6 +66,9 @@ export class RoutineScheduleCalendar implements OnInit {
         schedules: this.schedules()
           .filter((schedule) => occursOn(schedule, date))
           .sort((a, b) => a.startTime.localeCompare(b.startTime)),
+        competitionMatches: this.competitionMatches().filter((match) =>
+          occursDuringCompetition(match, toIsoDate(date)),
+        ),
       };
     });
   });
@@ -76,7 +83,10 @@ export class RoutineScheduleCalendar implements OnInit {
       .reduce((total, day) => total + day.schedules.length, 0),
   );
 
-  constructor(private readonly routineScheduleService: RoutineScheduleService) {}
+  constructor(
+    private readonly routineScheduleService: RoutineScheduleService,
+    private readonly competitionMatchService: CompetitionMatchService,
+  ) {}
 
   ngOnInit(): void {
     void this.load();
@@ -85,7 +95,12 @@ export class RoutineScheduleCalendar implements OnInit {
   async load(): Promise<void> {
     this.state.set('loading');
     try {
-      this.schedules.set(await this.routineScheduleService.listAll());
+      const [schedules, competitionMatches] = await Promise.all([
+        this.routineScheduleService.listAll(),
+        this.competitionMatchService.listAll(),
+      ]);
+      this.schedules.set(schedules);
+      this.competitionMatches.set(competitionMatches);
       this.state.set('ready');
     } catch {
       this.state.set('error');
@@ -156,6 +171,10 @@ export class RoutineScheduleCalendar implements OnInit {
 
 function occursOn(schedule: RoutineScheduleListItem, date: Date): boolean {
   return schedule.effectiveStartDate === toIsoDate(date);
+}
+
+function occursDuringCompetition(match: CompetitionMatch, isoDate: string): boolean {
+  return match.startDate <= isoDate && isoDate <= match.endDate;
 }
 
 function startOfMonth(date: Date): Date {

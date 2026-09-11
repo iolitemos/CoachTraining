@@ -18,6 +18,7 @@ public class AthleteConfiguration : IEntityTypeConfiguration<Athlete>
         builder.Property(a => a.ParentName).HasMaxLength(200);
         builder.Property(a => a.ParentPhoneNumber).HasMaxLength(30);
         builder.Property(a => a.AthleteLevel).HasMaxLength(100);
+        builder.Property(a => a.Province).HasMaxLength(100);
 
         builder.HasIndex(a => a.AthleteCode).IsUnique();
 

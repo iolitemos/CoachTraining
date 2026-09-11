@@ -28,6 +28,8 @@ import { TrainingSessionListItem } from '../../models/training-session.model';
 import { TrainingSessionService } from '../../services/training-session.service';
 import { RoutineScheduleService } from '../../services/routine-schedule.service';
 import { ConfirmationDialog } from '../../shared/confirmation-dialog/confirmation-dialog';
+import { CompetitionMatch } from '../../models/competition-match.model';
+import { CompetitionMatchService } from '../../services/competition-match.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 type CoachHomeTab = 'overview' | 'calendar';
@@ -39,6 +41,7 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   sessions: TrainingSessionListItem[];
+  competitionMatches: CompetitionMatch[];
 }
 
 /**
@@ -81,6 +84,7 @@ export class CoachHome implements OnInit {
   calendarState = signal<ViewState>('loading');
   calendarSessions = signal<TrainingSessionListItem[]>([]);
   calendarColleagues = signal<CoachCalendarColleague[]>([]);
+  calendarCompetitionMatches = signal<CompetitionMatch[]>([]);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
   overdueSessionsExpanded = signal(false);
@@ -108,6 +112,9 @@ export class CoachHome implements OnInit {
         sessions: this.calendarSessions()
           .filter((session) => session.sessionDate === isoDate)
           .sort((a, b) => a.scheduledStartDateTime.localeCompare(b.scheduledStartDateTime)),
+        competitionMatches: this.calendarCompetitionMatches().filter(
+          (match) => match.startDate <= isoDate && isoDate <= match.endDate,
+        ),
       };
     });
   });
@@ -134,6 +141,7 @@ export class CoachHome implements OnInit {
     private readonly coachDashboardService: CoachDashboardService,
     private readonly trainingSessionService: TrainingSessionService,
     private readonly routineScheduleService: RoutineScheduleService,
+    private readonly competitionMatchService: CompetitionMatchService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
@@ -158,7 +166,7 @@ export class CoachHome implements OnInit {
     this.calendarState.set('loading');
     const days = this.calendarDays();
     try {
-      const [result, colleagues] = await Promise.all([
+      const [result, colleagues, competitionMatches] = await Promise.all([
         this.trainingSessionService.list({
           page: 1,
           pageSize: 100,
@@ -172,9 +180,11 @@ export class CoachHome implements OnInit {
           days[0].isoDate,
           days[days.length - 1].isoDate,
         ),
+        this.competitionMatchService.listAll(),
       ]);
       this.calendarSessions.set(result.items);
       this.calendarColleagues.set(colleagues);
+      this.calendarCompetitionMatches.set(competitionMatches);
       this.calendarState.set('ready');
     } catch {
       this.calendarState.set('error');

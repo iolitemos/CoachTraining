@@ -40,17 +40,9 @@ export class AthleteForm implements OnInit {
     parentPhoneNumber: ['', Validators.maxLength(30)],
     athleteLevel: ['', Validators.maxLength(100)],
     joinDate: [''],
+    province: ['', Validators.maxLength(100)],
     remarks: [''],
   });
-
-  calculatedAge(): number | null {
-    const birthYear = this.form.controls.birthYear.value;
-    if (birthYear) return this.currentYear - birthYear;
-    const dateOfBirth = this.form.controls.dateOfBirth.value;
-    if (!dateOfBirth) return null;
-    const year = Number(dateOfBirth.slice(0, 4));
-    return Number.isInteger(year) ? this.currentYear - year : null;
-  }
 
   async ngOnInit(): Promise<void> {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -76,6 +68,7 @@ export class AthleteForm implements OnInit {
           parentPhoneNumber: athlete.parentPhoneNumber ?? '',
           athleteLevel: athlete.athleteLevel ?? '',
           joinDate: athlete.joinDate ?? '',
+          province: athlete.province ?? '',
           remarks: athlete.remarks ?? '',
         });
         this.form.controls.athleteCode.disable();
@@ -108,6 +101,7 @@ export class AthleteForm implements OnInit {
       parentPhoneNumber: value.parentPhoneNumber || null,
       athleteLevel: value.athleteLevel || null,
       joinDate: value.joinDate || null,
+      province: value.province || null,
       remarks: value.remarks || null,
     };
 

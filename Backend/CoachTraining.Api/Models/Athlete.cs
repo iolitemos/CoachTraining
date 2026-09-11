@@ -30,6 +30,8 @@ public class Athlete : AuditableEntity
 
     public DateOnly? JoinDate { get; set; }
 
+    public string? Province { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public string? Remarks { get; set; }

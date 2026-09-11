@@ -304,6 +304,8 @@
 
 ### 4.2 Athlete Management Backend
 
+- [x] Add Province to Athlete create/update/list APIs and Excel import/update workflows.
+- [x] Apply the Athlete Province migration to DEV.
 - [x] Add Athlete birth year persistence, calculated age, and exact-age server-side filtering.
 - [x] Include birth year in Athlete import template and validate imported birth-year values.
 - [ ] Add downloadable prefilled Athlete bulk-update workbook and atomic update import. <!-- Implemented and tested; awaiting successful frontend production build. -->
@@ -594,6 +596,7 @@
 
 ### 5.2 Athlete Management Frontend
 
+- [ ] Add Province to Athlete create/edit form and responsive list views. <!-- Implemented and tested; awaiting successful frontend production build. -->
 - [ ] Add birth year and calculated age to Athlete forms/lists with a dedicated exact-age search. <!-- Implemented and tested; awaiting successful frontend production build. -->
 - [ ] Update Athlete import-template UI flow for the birth-year column. <!-- Implemented and tested; awaiting successful frontend production build. -->
 - [x] Add Athlete template download and `.xlsx` import actions with processing, success, and row-level error feedback.
@@ -613,6 +616,8 @@
 
 ### 5.3 Routine Training Frontend
 
+- [x] Mark every Competition Match date range on the Routine Schedule calendar and show match details for the selected date.
+- [x] Mark Competition Match date ranges with a circled trophy on the Coach Home calendar.
 - [x] Create Routine Schedule list page.
 - [x] Limit the Routine Schedule list to training date, time, Coach nickname, and edit/delete icon actions, ordered by training date.
 - [x] Create Routine Schedule monthly calendar view.

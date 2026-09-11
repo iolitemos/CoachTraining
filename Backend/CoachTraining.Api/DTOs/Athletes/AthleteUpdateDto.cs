@@ -36,6 +36,9 @@ public class AthleteUpdateDto
 
     public DateOnly? JoinDate { get; set; }
 
+    [MaxLength(100)]
+    public string? Province { get; set; }
+
     public string? Remarks { get; set; }
 }
 
