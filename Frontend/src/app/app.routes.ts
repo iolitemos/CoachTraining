@@ -70,14 +70,14 @@ export const routes: Routes = [
       {
         path: 'admin-dashboard',
         canActivate: [roleGuard],
-        data: { roles: [AppRole.Administrator, AppRole.ManagementViewer] },
+        data: { roles: [AppRole.Administrator, AppRole.ManagementViewer, AppRole.Coach] },
         loadComponent: () =>
           import('./pages/administrator-dashboard/administrator-dashboard').then((m) => m.AdministratorDashboard),
       },
       {
         path: 'reports/coach-teaching-hours',
         canActivate: [roleGuard],
-        data: { roles: [AppRole.Administrator, AppRole.ManagementViewer] },
+        data: { roles: [AppRole.Administrator, AppRole.ManagementViewer, AppRole.Coach] },
         loadComponent: () =>
           import('./pages/reports/coach-teaching-hour-report/coach-teaching-hour-report').then(
             (m) => m.CoachTeachingHourReport,
@@ -86,7 +86,7 @@ export const routes: Routes = [
       {
         path: 'reports/athlete-attendance',
         canActivate: [roleGuard],
-        data: { roles: [AppRole.Administrator, AppRole.ManagementViewer] },
+        data: { roles: [AppRole.Administrator, AppRole.ManagementViewer, AppRole.Coach] },
         loadComponent: () =>
           import('./pages/reports/athlete-attendance-report/athlete-attendance-report').then(
             (m) => m.AthleteAttendanceReport,

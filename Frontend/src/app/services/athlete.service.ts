@@ -6,6 +6,7 @@ import { ApiSuccessBody, PagedResult } from '../models/paged-result.model';
 import {
   AthleteCreateRequest,
   AthleteDetail,
+  AthleteImportResult,
   AthleteListItem,
   AthleteOption,
   AthleteType,
@@ -52,6 +53,21 @@ export class AthleteService {
 
   async setStatus(athleteId: number, isActive: boolean): Promise<void> {
     await firstValueFrom(this.http.patch(`${this.baseUrl}/${athleteId}/status`, { isActive }));
+  }
+
+  async downloadImportTemplate(): Promise<Blob> {
+    return await firstValueFrom(
+      this.http.get(`${this.baseUrl}/import-template`, { responseType: 'blob' }),
+    );
+  }
+
+  async import(file: File): Promise<AthleteImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await firstValueFrom(
+      this.http.post<ApiSuccessBody<AthleteImportResult>>(`${this.baseUrl}/import`, formData),
+    );
+    return response.data;
   }
 
   /** Active athletes only — used by Routine attendance selection and Private

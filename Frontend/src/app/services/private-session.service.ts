@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiSuccessBody, PagedResult } from '../models/paged-result.model';
-import { PrivateSessionDetail, PrivateSessionListItem, PrivateSessionSaveRequest } from '../models/private-session.model';
+import { PrivateSessionBatchCreateRequest, PrivateSessionBatchCreateResult, PrivateSessionDetail, PrivateSessionListItem, PrivateSessionSaveRequest } from '../models/private-session.model';
 
 @Injectable({ providedIn: 'root' })
 export class PrivateSessionService {
@@ -42,6 +42,13 @@ export class PrivateSessionService {
   async create(request: PrivateSessionSaveRequest): Promise<PrivateSessionDetail> {
     const response = await firstValueFrom(
       this.http.post<ApiSuccessBody<PrivateSessionDetail>>(this.baseUrl, request),
+    );
+    return response.data;
+  }
+
+  async createBatch(request: PrivateSessionBatchCreateRequest): Promise<PrivateSessionBatchCreateResult> {
+    const response = await firstValueFrom(
+      this.http.post<ApiSuccessBody<PrivateSessionBatchCreateResult>>(`${this.baseUrl}/batch`, request),
     );
     return response.data;
   }

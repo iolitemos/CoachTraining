@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, ElementRef, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { SearchFilterToolbar } from '../../../shared/search-filter-toolbar/search-filter-toolbar';
@@ -7,7 +8,7 @@ import { EmptyState } from '../../../shared/empty-state/empty-state';
 import { ErrorState } from '../../../shared/error-state/error-state';
 import { Pagination } from '../../../shared/pagination/pagination';
 import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
-import { AthleteListItem, AthleteType, athleteTypeLabel } from '../../../models/athlete.model';
+import { AthleteImportError, AthleteListItem, AthleteType, athleteTypeLabel } from '../../../models/athlete.model';
 import { AthleteService } from '../../../services/athlete.service';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 import { FilterStateService } from '../../../services/filter-state.service';
@@ -42,6 +43,11 @@ export class AthleteList implements OnInit {
 
   pendingStatusChange = signal<AthleteListItem | null>(null);
   statusChangeProcessing = signal(false);
+  importFileInput = viewChild<ElementRef<HTMLInputElement>>('importFileInput');
+  downloadingTemplate = signal(false);
+  importing = signal(false);
+  importMessage = signal<string | null>(null);
+  importErrors = signal<AthleteImportError[]>([]);
 
   constructor(private readonly athleteService: AthleteService, private readonly filterState: FilterStateService, private readonly route: ActivatedRoute) {}
 
@@ -111,6 +117,55 @@ export class AthleteList implements OnInit {
       await this.load();
     } finally {
       this.statusChangeProcessing.set(false);
+    }
+  }
+
+  async downloadTemplate(): Promise<void> {
+    this.downloadingTemplate.set(true);
+    this.importMessage.set(null);
+    try {
+      const blob = await this.athleteService.downloadImportTemplate();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'athlete-import-template.xlsx';
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.importMessage.set('ไม่สามารถดาวน์โหลดเทมเพลตได้ กรุณาลองใหม่');
+    } finally {
+      this.downloadingTemplate.set(false);
+    }
+  }
+
+  chooseImportFile(): void {
+    this.importFileInput()?.nativeElement.click();
+  }
+
+  async onImportFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    this.importMessage.set(null);
+    this.importErrors.set([]);
+    if (!file.name.toLowerCase().endsWith('.xlsx') || file.size > 5 * 1024 * 1024) {
+      this.importMessage.set('รองรับเฉพาะไฟล์ .xlsx ขนาดไม่เกิน 5 MB');
+      return;
+    }
+
+    this.importing.set(true);
+    try {
+      const result = await this.athleteService.import(file);
+      this.importMessage.set(`นำเข้านักกีฬา ${result.importedCount} รายการสำเร็จ`);
+      await this.load();
+    } catch (error) {
+      const body = error instanceof HttpErrorResponse ? error.error : null;
+      this.importErrors.set(Array.isArray(body?.errors) ? body.errors : []);
+      this.importMessage.set(body?.message ?? 'ไม่สามารถนำเข้ารายชื่อนักกีฬาได้');
+    } finally {
+      this.importing.set(false);
     }
   }
 }

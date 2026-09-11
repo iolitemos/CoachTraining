@@ -61,7 +61,7 @@
             หน้าหลักโค้ช
           </a>
         }
-        @if (authService.hasRole(appRole.Administrator, appRole.ManagementViewer)) {
+        @if (authService.hasRole(appRole.Administrator, appRole.ManagementViewer, appRole.Coach)) {
           <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">แดชบอร์ด</p>
           <a
             routerLink="/admin-dashboard"
@@ -211,7 +211,7 @@
               หน้าหลักโค้ช
             </a>
           }
-          @if (authService.hasRole(appRole.Administrator, appRole.ManagementViewer)) {
+          @if (authService.hasRole(appRole.Administrator, appRole.ManagementViewer, appRole.Coach)) {
             <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">แดชบอร์ด</p>
             <a
               routerLink="/admin-dashboard"

@@ -187,6 +187,48 @@ public class PrivateSessionService : IPrivateSessionService
         }
     }
 
+    public async Task<(PrivateSessionBatchCreateResult? Result, string? Error, List<ConflictDetail> Conflicts)> CreateBatchAsync(
+        PrivateSessionBatchCreateDto dto, int actionByUserId)
+    {
+        var selectedDays = dto.DaysOfWeek.ToHashSet();
+        var dates = Enumerable.Range(0, dto.EndDate.DayNumber - dto.StartDate.DayNumber + 1)
+            .Select(offset => dto.StartDate.AddDays(offset))
+            .Where(date => selectedDays.Contains(date.DayOfWeek))
+            .ToList();
+        if (dates.Count == 0)
+            return (null, "ไม่พบวันที่ตรงกับรูปแบบวันที่เลือก", []);
+
+        var conflicts = new List<ConflictDetail>();
+        foreach (var date in dates)
+        {
+            conflicts.AddRange(await CheckConflictsAsync(
+                dto.CoachId, dto.AthleteIds, date.ToDateTime(dto.StartTime), date.ToDateTime(dto.EndTime)));
+        }
+        if (conflicts.Count > 0)
+            return (null, "พบตารางฝึกซ้อมทับซ้อน", conflicts);
+
+        var result = new PrivateSessionBatchCreateResult();
+        foreach (var date in dates)
+        {
+            var saveResult = await CreateAsync(new PrivateSessionCreateDto
+            {
+                CoachId = dto.CoachId,
+                SessionDate = date,
+                StartTime = dto.StartTime,
+                EndTime = dto.EndTime,
+                Location = dto.Location,
+                Remarks = dto.Remarks,
+                AthleteIds = dto.AthleteIds,
+            }, actionByUserId);
+            if (saveResult.Error is not null)
+                return (null, saveResult.Error, saveResult.Conflicts);
+            result.CreatedDates.Add(date);
+        }
+
+        result.CreatedCount = result.CreatedDates.Count;
+        return (result, null, []);
+    }
+
     public async Task<PrivateSessionSaveResult> UpdateAsync(int trainingSessionId, PrivateSessionUpdateDto dto, int actionByUserId)
     {
         var session = await _db.TrainingSessions

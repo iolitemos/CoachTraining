@@ -107,6 +107,26 @@ public class PrivateSessionsController : ControllerBase
         }
     }
 
+    [HttpPost("batch")]
+    public async Task<IActionResult> CreateBatch([FromBody] PrivateSessionBatchCreateDto dto)
+    {
+        try
+        {
+            var (result, error, conflicts) = await _privateSessionService.CreateBatchAsync(dto, _currentUser.UserId!.Value);
+            if (conflicts.Count > 0)
+                return Conflict(ToConflictResponse(error!, conflicts));
+            if (error is not null)
+                return BadRequest(new ApiErrorResponse(error));
+            return StatusCode(201, new ApiResponse<PrivateSessionBatchCreateResult>(
+                result!, $"สร้างเซสชันฝึกซ้อมส่วนตัวสำเร็จ {result!.CreatedCount} รายการ"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/private-sessions/batch Controller: PrivateSessionsController Function: CreateBatch UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถสร้างเซสชันฝึกซ้อมส่วนตัวได้"));
+        }
+    }
+
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] PrivateSessionUpdateDto dto)
     {

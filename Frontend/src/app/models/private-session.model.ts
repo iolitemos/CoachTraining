@@ -44,3 +44,14 @@ export interface PrivateSessionSaveRequest {
   remarks: string | null;
   athleteIds: number[];
 }
+
+export interface PrivateSessionBatchCreateRequest extends Omit<PrivateSessionSaveRequest, 'sessionDate'> {
+  startDate: string;
+  endDate: string;
+  daysOfWeek: number[];
+}
+
+export interface PrivateSessionBatchCreateResult {
+  createdCount: number;
+  createdDates: string[];
+}

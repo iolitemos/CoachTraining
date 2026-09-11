@@ -1,12 +1,31 @@
 <app-page-header title="จัดการนักกีฬา" subtitle="ข้อมูลหลักนักกีฬาที่ใช้ในการเช็คชื่อฝึกซ้อม">
-  <a
-    actions
-    routerLink="/athletes/new"
-    class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
-  >
-    เพิ่มนักกีฬา
-  </a>
+  <div actions class="flex flex-wrap justify-end gap-2">
+    <button type="button" class="min-h-10 rounded-lg border border-primary-200 px-3 py-2 text-sm font-medium text-primary-700 disabled:opacity-60" [disabled]="downloadingTemplate()" (click)="downloadTemplate()">
+      {{ downloadingTemplate() ? 'กำลังดาวน์โหลด...' : 'ดาวน์โหลดเทมเพลต' }}
+    </button>
+    <button type="button" class="min-h-10 rounded-lg border border-primary-200 px-3 py-2 text-sm font-medium text-primary-700 disabled:opacity-60" [disabled]="importing()" (click)="chooseImportFile()">
+      {{ importing() ? 'กำลังนำเข้า...' : 'นำเข้ารายชื่อ' }}
+    </button>
+    <input #importFileInput type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="sr-only" (change)="onImportFileSelected($event)" />
+    <a routerLink="/athletes/new" class="inline-flex min-h-10 items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700">
+      เพิ่มนักกีฬา
+    </a>
+  </div>
 </app-page-header>
+
+@if (importMessage()) {
+  <section class="mt-4 rounded-xl border px-4 py-3 text-sm" [class]="importErrors().length ? 'border-danger/30 bg-danger/5 text-danger' : 'border-primary-200 bg-primary-50 text-primary-800'" aria-live="polite">
+    <p class="font-medium">{{ importMessage() }}</p>
+    @if (importErrors().length) {
+      <ul class="mt-2 max-h-48 list-disc space-y-1 overflow-y-auto pl-5">
+        @for (error of importErrors(); track error.row + '-' + error.field + '-' + $index) {
+          <li>{{ error.row > 0 ? 'แถว ' + error.row + ': ' : '' }}{{ error.message }}</li>
+        }
+      </ul>
+      <p class="mt-2 text-xs">ระบบยังไม่ได้เพิ่มข้อมูลจากไฟล์นี้ กรุณาแก้ไขแล้วนำเข้าใหม่</p>
+    }
+  </section>
+}
 
 <div class="mt-4 border-b border-border" role="tablist" aria-label="ประเภทนักกีฬา">
   <div class="flex gap-1 overflow-x-auto">

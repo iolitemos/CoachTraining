@@ -51,10 +51,12 @@ public class CoachDashboardService : ICoachDashboardService
             .ToListAsync();
 
         var upcomingSessions = await coachSessions
-            .Where(s => s.SessionDate > today && UpcomingStatuses.Contains(s.Status))
+            .Where(s =>
+                s.SessionDate > today &&
+                s.SessionDate <= monthEnd &&
+                UpcomingStatuses.Contains(s.Status))
             .OrderBy(s => s.SessionDate)
             .ThenBy(s => s.ScheduledStartDateTime)
-            .Take(10)
             .Select(ToDashboardSession)
             .ToListAsync();
 

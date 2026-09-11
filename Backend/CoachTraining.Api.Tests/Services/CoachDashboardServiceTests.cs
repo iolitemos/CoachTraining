@@ -60,6 +60,26 @@ public class CoachDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetDashboardAsync_ReturnsAllUpcomingSessionsOnlyThroughTheCurrentMonth()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var now = new DateTime(2026, 1, 10, 9, 0, 0);
+
+        db.TrainingSessions.AddRange(
+            Enumerable.Range(11, 15).Select(day =>
+                BuildSession(coach, new DateOnly(2026, 1, day), new TimeOnly(17, 0), new TimeOnly(19, 0), SessionStatus.Scheduled)));
+        db.TrainingSessions.Add(
+            BuildSession(coach, new DateOnly(2026, 2, 1), new TimeOnly(17, 0), new TimeOnly(19, 0), SessionStatus.Scheduled));
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetDashboardAsync(coach.CoachId, now);
+
+        Assert.Equal(15, result.UpcomingSessions.Count);
+        Assert.All(result.UpcomingSessions, session => Assert.Equal(1, session.SessionDate.Month));
+    }
+
+    [Fact]
     public async Task GetDashboardAsync_ComputesMonthlyCountsAndDistinctTeachingDays()
     {
         using var db = TestDbContextFactory.Create();

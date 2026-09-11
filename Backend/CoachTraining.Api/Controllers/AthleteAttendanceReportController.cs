@@ -9,10 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoachTraining.Api.Controllers;
 
 /// <summary>Athlete Attendance Report (requirement.md 6.19, todo.md 4.19) — Administrator
-/// and Management/Viewer (read-only, CLAUDE.md section 11).</summary>
+/// Administrator, Management/Viewer and Coach (read-only).</summary>
 [ApiController]
 [Route("api/reports/athlete-attendance")]
-[Authorize(Roles = $"{Roles.Administrator},{Roles.ManagementViewer}")]
+[Authorize(Roles = $"{Roles.Administrator},{Roles.ManagementViewer},{Roles.Coach}")]
 public class AthleteAttendanceReportController : ControllerBase
 {
     private readonly IAthleteAttendanceReportService _reportService;

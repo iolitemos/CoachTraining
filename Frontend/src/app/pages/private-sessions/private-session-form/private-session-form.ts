@@ -22,6 +22,12 @@ import { DateInput } from '../../../shared/date-input/date-input';
   styleUrl: './private-session-form.css',
 })
 export class PrivateSessionForm implements OnInit {
+  readonly weekDays = [
+    { value: 1, label: 'จันทร์' }, { value: 2, label: 'อังคาร' },
+    { value: 3, label: 'พุธ' }, { value: 4, label: 'พฤหัสบดี' },
+    { value: 5, label: 'ศุกร์' }, { value: 6, label: 'เสาร์' },
+    { value: 0, label: 'อาทิตย์' },
+  ];
   readonly athletePickerLabel = athletePickerLabel;
   readonly coachPickerLabel = coachPickerLabel;
   private readonly fb = inject(FormBuilder);
@@ -37,6 +43,10 @@ export class PrivateSessionForm implements OnInit {
   submitting = signal(false);
   errorMessage = signal<string | null>(null);
   conflictMessages = signal<string[]>([]);
+  scheduleMode = signal<'single' | 'range'>('single');
+  rangePattern = signal<'everyDay' | 'weekdays'>('everyDay');
+  selectedDaysOfWeek = signal<number[]>([]);
+  endDate = this.fb.control('');
 
   status = signal<TrainingSessionStatus | null>(null);
   /** Only Scheduled Private sessions may be edited (FR-PRIVATE-009). */
@@ -118,6 +128,41 @@ export class PrivateSessionForm implements OnInit {
     }
 
     this.form.patchValue({ sessionDate: date });
+    this.endDate.setValue(date);
+    this.selectedDaysOfWeek.set([selectedDate.getDay()]);
+  }
+
+  setScheduleMode(mode: 'single' | 'range'): void {
+    this.scheduleMode.set(mode);
+    if (mode === 'range' && !this.endDate.value) this.endDate.setValue(this.form.controls.sessionDate.value);
+  }
+
+  setRangePattern(pattern: 'everyDay' | 'weekdays'): void {
+    this.rangePattern.set(pattern);
+    if (pattern === 'weekdays' && this.selectedDaysOfWeek().length === 0) {
+      this.selectedDaysOfWeek.set([parseIsoDate(this.form.controls.sessionDate.value)?.getDay() ?? new Date().getDay()]);
+    }
+  }
+
+  toggleDay(day: number): void {
+    this.selectedDaysOfWeek.update((days) => days.includes(day) ? days.filter((item) => item !== day) : [...days, day]);
+  }
+
+  effectiveDaysOfWeek(): number[] {
+    return this.rangePattern() === 'everyDay' ? [0, 1, 2, 3, 4, 5, 6] : this.selectedDaysOfWeek();
+  }
+
+  selectedOccurrenceCount(): number {
+    if (this.scheduleMode() === 'single') return 1;
+    const start = parseIsoDate(this.form.controls.sessionDate.value);
+    const end = parseIsoDate(this.endDate.value);
+    if (!start || !end || end < start) return 0;
+    const selectedDays = new Set(this.effectiveDaysOfWeek());
+    let count = 0;
+    for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      if (selectedDays.has(date.getDay())) count++;
+    }
+    return count;
   }
 
   async searchAthletes(): Promise<void> {
@@ -163,6 +208,14 @@ export class PrivateSessionForm implements OnInit {
       return;
     }
 
+    if (!this.isEditMode() && this.scheduleMode() === 'range') {
+      const endDate = this.endDate.value;
+      if (!endDate || endDate < this.form.controls.sessionDate.value! || this.effectiveDaysOfWeek().length === 0 || this.selectedOccurrenceCount() === 0) {
+        this.errorMessage.set('กรุณาเลือกช่วงวันที่และรูปแบบวันให้ถูกต้อง');
+        return;
+      }
+    }
+
     this.submitting.set(true);
     this.errorMessage.set(null);
     this.conflictMessages.set([]);
@@ -181,6 +234,18 @@ export class PrivateSessionForm implements OnInit {
     try {
       if (this.isEditMode()) {
         await this.privateSessionService.update(this.trainingSessionId()!, payload);
+      } else if (this.scheduleMode() === 'range') {
+        await this.privateSessionService.createBatch({
+          coachId: payload.coachId,
+          startDate: payload.sessionDate,
+          endDate: this.endDate.value!,
+          daysOfWeek: this.effectiveDaysOfWeek(),
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+          location: payload.location,
+          remarks: payload.remarks,
+          athleteIds: payload.athleteIds,
+        });
       } else {
         await this.privateSessionService.create(payload);
       }
@@ -209,4 +274,11 @@ export class PrivateSessionForm implements OnInit {
 
     this.errorMessage.set('บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
   }
+}
+
+function parseIsoDate(value: string | null): Date | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day ? date : null;
 }

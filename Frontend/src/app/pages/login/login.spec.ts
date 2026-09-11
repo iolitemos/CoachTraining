@@ -1,7 +1,9 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { Login } from './login';
 
@@ -43,5 +45,19 @@ describe('Login', () => {
 
     expect(component.passwordVisible()).toBe(true);
     expect(component.form.controls.password.value).toBe('secret-password');
+  });
+
+  it('should only link the forgot-password button to the reset flow', () => {
+    fixture.detectChanges();
+
+    const passwordToggle = fixture.nativeElement.querySelector(
+      'button[aria-label="แสดงรหัสผ่าน"]',
+    ) as HTMLButtonElement;
+    const linkedButtons = fixture.debugElement.queryAll(By.directive(RouterLink));
+
+    expect(linkedButtons).toHaveLength(1);
+    expect(linkedButtons[0].nativeElement).not.toBe(passwordToggle);
+    expect(linkedButtons[0].nativeElement.textContent).toContain('ลืมรหัสผ่าน');
+    expect(linkedButtons[0].injector.get(RouterLink).urlTree?.toString()).toBe('/forgot-password');
   });
 });

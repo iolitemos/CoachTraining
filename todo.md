@@ -297,6 +297,8 @@
 
 ### 4.2 Athlete Management Backend
 
+- [x] Add Administrator API to download the Athlete `.xlsx` import template.
+- [x] Add atomic Athlete template import with file, header, field, date, type, and duplicate-code validation.
 - [x] Create Athlete request/response DTOs (`FR-ATHLETE-001`–`004`).
 - [x] Create Athlete service.
 - [x] Create Athlete controller with explicit routes.
@@ -581,6 +583,7 @@
 
 ### 5.2 Athlete Management Frontend
 
+- [x] Add Athlete template download and `.xlsx` import actions with processing, success, and row-level error feedback.
 - [x] Create Athlete list page.
 - [x] Add Athlete search/filter/pagination.
 - [x] Add Athlete list loading state.
@@ -649,6 +652,8 @@
 - [ ] Add authorized conflict-override UI only when backend permits override. <!-- Backend has no override operation yet (todo.md 4.14) — UI intentionally deferred until it exists -->
 - [ ] Require override reason when override is used. <!-- Same dependency as above -->
 - [x] Make Private Training pages responsive.
+- [ ] Allow Private Training batch creation for every date in a range or selected weekdays. <!-- Implemented and tested; awaiting successful frontend production build. -->
+- [ ] Validate coach and athlete conflicts for every selected Private Training occurrence before batch creation. <!-- Implemented and backend tests pass; close with frontend production-build validation. -->
 
 ### 5.5 Coach Home Frontend
 

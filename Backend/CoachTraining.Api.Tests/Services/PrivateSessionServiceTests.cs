@@ -59,6 +59,31 @@ public class PrivateSessionServiceTests
     }
 
     [Fact]
+    public async Task CreateBatchAsync_CreatesEveryDateInRangeWithSameAthletes()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var athlete = await SeedAthleteAsync(db);
+
+        var result = await CreateService(db).CreateBatchAsync(new PrivateSessionBatchCreateDto
+        {
+            CoachId = coach.CoachId,
+            AthleteIds = [athlete.AthleteId],
+            StartDate = new DateOnly(2026, 9, 1),
+            EndDate = new DateOnly(2026, 9, 3),
+            DaysOfWeek = [DayOfWeek.Sunday, DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday],
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(18, 0),
+        }, actionByUserId: 1);
+
+        Assert.Null(result.Error);
+        Assert.Empty(result.Conflicts);
+        Assert.Equal([new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 2), new DateOnly(2026, 9, 3)], result.Result!.CreatedDates);
+        Assert.Equal(3, await db.TrainingSessions.CountAsync());
+        Assert.Equal(3, await db.PrivateSessionAthletes.CountAsync());
+    }
+
+    [Fact]
     public async Task CreateAsync_WithNoAthletes_ReturnsError()
     {
         using var db = TestDbContextFactory.Create();

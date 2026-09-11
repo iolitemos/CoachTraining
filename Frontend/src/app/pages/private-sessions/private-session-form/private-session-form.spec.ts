@@ -112,4 +112,49 @@ describe('PrivateSessionForm', () => {
     expect(component.conflictMessages()).toEqual(['โค้ชมีตารางฝึกซ้อมในเวลานี้แล้ว']);
     expect(component.submitting()).toBe(false);
   });
+
+  it('should create Private Training on every date in a selected range', async () => {
+    await initInAddMode();
+    component.addAthlete({ athleteId: 1, athleteCode: 'A001', fullName: 'นักกีฬาทดสอบ', nickname: null });
+    component.setScheduleMode('range');
+    component.setRangePattern('everyDay');
+    component.form.setValue({
+      coachId: 1,
+      sessionDate: '2026-09-01',
+      startTime: '09:00',
+      endTime: '10:00',
+      location: 'สนาม A',
+      remarks: '',
+    });
+    component.endDate.setValue('2026-09-03');
+
+    expect(component.selectedOccurrenceCount()).toBe(3);
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/private-sessions/batch'));
+    expect(request.request.body).toMatchObject({
+      startDate: '2026-09-01',
+      endDate: '2026-09-03',
+      daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+      athleteIds: [1],
+    });
+    request.flush({ message: 'Success', data: { createdCount: 3, createdDates: ['2026-09-01', '2026-09-02', '2026-09-03'] } });
+    await submitPromise;
+  });
+
+  it('should create only selected weekdays in a Private Training date range', async () => {
+    await initInAddMode();
+    component.addAthlete({ athleteId: 1, athleteCode: 'A001', fullName: 'นักกีฬาทดสอบ', nickname: null });
+    component.setScheduleMode('range');
+    component.setRangePattern('weekdays');
+    component.selectedDaysOfWeek.set([1, 5]);
+    component.form.patchValue({ coachId: 1, sessionDate: '2026-09-01', startTime: '09:00', endTime: '10:00' });
+    component.endDate.setValue('2026-09-10');
+
+    expect(component.selectedOccurrenceCount()).toBe(2);
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/private-sessions/batch'));
+    expect(request.request.body.daysOfWeek).toEqual([1, 5]);
+    request.flush({ message: 'Success', data: { createdCount: 2, createdDates: ['2026-09-04', '2026-09-07'] } });
+    await submitPromise;
+  });
 });

@@ -19,6 +19,7 @@ namespace CoachTraining.Api.Controllers;
 [Authorize]
 public class AthletesController : ControllerBase
 {
+    private const long MaxImportFileSize = 5 * 1024 * 1024;
     private readonly IAthleteService _athleteService;
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<AthletesController> _logger;
@@ -85,6 +86,53 @@ public class AthletesController : ControllerBase
         {
             _logger.LogError(ex, "Route: api/athletes Controller: AthletesController Function: Create UserId: {UserId}", _currentUser.UserId);
             return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถสร้างข้อมูลนักกีฬาได้"));
+        }
+    }
+
+    [HttpGet("import-template")]
+    [Authorize(Roles = Roles.Administrator)]
+    public IActionResult DownloadImportTemplate()
+    {
+        try
+        {
+            var content = _athleteService.CreateImportTemplate();
+            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "athlete-import-template.xlsx");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/athletes/import-template Controller: AthletesController Function: DownloadImportTemplate UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถดาวน์โหลดเทมเพลตได้"));
+        }
+    }
+
+    [HttpPost("import")]
+    [Authorize(Roles = Roles.Administrator)]
+    [RequestSizeLimit(MaxImportFileSize)]
+    public async Task<IActionResult> Import([FromForm] IFormFile? file)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return BadRequest(new ApiErrorResponse("กรุณาเลือกไฟล์สำหรับนำเข้า"));
+        }
+        if (file.Length > MaxImportFileSize || !string.Equals(Path.GetExtension(file.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new ApiErrorResponse("รองรับเฉพาะไฟล์ .xlsx ขนาดไม่เกิน 5 MB"));
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var result = await _athleteService.ImportAsync(stream, _currentUser.UserId!.Value);
+            return Ok(new ApiResponse<AthleteImportResultDto>(result, $"นำเข้านักกีฬา {result.ImportedCount} รายการสำเร็จ"));
+        }
+        catch (AthleteImportValidationException ex)
+        {
+            return BadRequest(new { message = ex.Message, errors = ex.Errors });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/athletes/import Controller: AthletesController Function: Import UserId: {UserId} FileName: {FileName}", _currentUser.UserId, Path.GetFileName(file.FileName));
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถนำเข้ารายชื่อนักกีฬาได้"));
         }
     }
 

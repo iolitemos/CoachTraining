@@ -61,7 +61,7 @@ describe('CoachHome calendar', () => {
     expect(component.overdueSessionsExpanded()).toBe(false);
   });
 
-  it('limits the upcoming preview to the first three session dates', () => {
+  it('shows every upcoming session returned for the current month', () => {
     component.dashboard.set({
       upcomingSessions: [
         { trainingSessionId: 1, sessionDate: '2026-09-11' },
@@ -72,8 +72,8 @@ describe('CoachHome calendar', () => {
       ],
     } as never);
 
-    expect(component.upcomingSessionsPreview().map((session) => session.trainingSessionId)).toEqual([
-      1, 2, 3, 4,
+    expect(component.upcomingSessionsThisMonth().map((session) => session.trainingSessionId)).toEqual([
+      1, 2, 3, 4, 5,
     ]);
   });
 

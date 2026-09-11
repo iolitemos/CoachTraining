@@ -2,6 +2,8 @@ using CoachTraining.Api.DTOs.Athletes;
 using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using ClosedXML.Excel;
 using Xunit;
 
 namespace CoachTraining.Api.Tests.Services;
@@ -107,5 +109,79 @@ public class AthleteServiceTests
         Assert.Single(result.Items);
         Assert.Equal("A002", result.Items[0].AthleteCode);
         Assert.Equal(1, result.TotalCount);
+    }
+
+    [Fact]
+    public void CreateImportTemplate_ContainsExpectedHeadersAndValidation()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+
+        var bytes = service.CreateImportTemplate();
+        using var workbook = new XLWorkbook(new MemoryStream(bytes));
+        var sheet = workbook.Worksheet("รายชื่อนักกีฬา");
+
+        Assert.Equal("รหัสนักกีฬา*", sheet.Cell("A3").GetString());
+        Assert.Equal("ประเภทนักกีฬา*", sheet.Cell("B3").GetString());
+        Assert.Equal("ชื่อ-นามสกุล*", sheet.Cell("C3").GetString());
+        Assert.NotEmpty(sheet.DataValidations);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WithValidRows_CreatesAllAthletes()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+        using var stream = CreateImportFile(
+            ["A001", "นักกีฬาในสังกัด", "สมชาย ใจดี", "ชาย", new DateTime(2012, 5, 15), "0812345678", "", "", "เยาวชน", new DateTime(2026, 1, 10), ""],
+            ["A002", "General", "สมหญิง รักดี", "หญิง", "", "", "", "", "", "", ""]);
+
+        var result = await service.ImportAsync(stream, 1);
+
+        Assert.Equal(2, result.ImportedCount);
+        Assert.Equal(2, await db.Athletes.CountAsync());
+        Assert.Contains(db.Athletes, athlete => athlete.AthleteCode == "A002" && athlete.AthleteType == AthleteType.General);
+    }
+
+    [Fact]
+    public async Task ImportAsync_WithDuplicateOrInvalidRows_DoesNotPersistAnyRows()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+        await service.CreateAsync(new AthleteCreateDto { AthleteCode = "A001", FullName = "Existing" }, 1);
+        using var stream = CreateImportFile(
+            ["A001", "นักกีฬาในสังกัด", "Duplicate", "", "", "", "", "", "", "", ""],
+            ["A002", "ประเภทไม่ถูกต้อง", "Invalid", "", "", "", "", "", "", "", ""]);
+
+        var exception = await Assert.ThrowsAsync<AthleteImportValidationException>(() => service.ImportAsync(stream, 1));
+
+        Assert.Contains(exception.Errors, error => error.Row == 4 && error.Field == "athleteCode");
+        Assert.Contains(exception.Errors, error => error.Row == 5 && error.Field == "athleteType");
+        Assert.Equal(1, await db.Athletes.CountAsync());
+    }
+
+    private static MemoryStream CreateImportFile(params object[][] rows)
+    {
+        var workbook = new XLWorkbook();
+        var sheet = workbook.Worksheets.Add("รายชื่อนักกีฬา");
+        var headers = new[]
+        {
+            "รหัสนักกีฬา*", "ประเภทนักกีฬา*", "ชื่อ-นามสกุล*", "ชื่อเล่น", "วันเกิด",
+            "เบอร์ติดต่อ", "ชื่อผู้ปกครอง", "เบอร์ติดต่อผู้ปกครอง", "ระดับนักกีฬา", "วันที่เข้าร่วม", "หมายเหตุ"
+        };
+        for (var column = 1; column <= headers.Length; column++) sheet.Cell(3, column).Value = headers[column - 1];
+        for (var row = 0; row < rows.Length; row++)
+        {
+            for (var column = 0; column < rows[row].Length; column++)
+            {
+                sheet.Cell(row + 4, column + 1).Value = XLCellValue.FromObject(rows[row][column]);
+            }
+        }
+
+        var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        workbook.Dispose();
+        stream.Position = 0;
+        return stream;
     }
 }

@@ -11,7 +11,7 @@ namespace CoachTraining.Api.Controllers;
 /// <summary>Coach Management (requirement.md 4.2, todo.md 4.1) — Administrator only.</summary>
 [ApiController]
 [Route("api/coaches")]
-[Authorize(Roles = Roles.Administrator)]
+[Authorize]
 public class CoachesController : ControllerBase
 {
     private readonly ICoachService _coachService;
@@ -26,6 +26,7 @@ public class CoachesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> List([FromQuery] PagedRequest request)
     {
         try
@@ -41,6 +42,7 @@ public class CoachesController : ControllerBase
     }
 
     [HttpGet("options")]
+    [Authorize(Roles = $"{Roles.Administrator},{Roles.ManagementViewer},{Roles.Coach}")]
     public async Task<IActionResult> GetActiveOptions()
     {
         var options = await _coachService.GetActiveOptionsAsync();
@@ -48,6 +50,7 @@ public class CoachesController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> GetById(int id)
     {
         var coach = await _coachService.GetByIdAsync(id);
@@ -60,6 +63,7 @@ public class CoachesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Create([FromBody] CoachCreateDto dto)
     {
         try
@@ -80,6 +84,7 @@ public class CoachesController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Update(int id, [FromBody] CoachUpdateDto dto)
     {
         var (result, error) = await _coachService.UpdateAsync(id, dto, _currentUser.UserId!.Value);
@@ -97,6 +102,7 @@ public class CoachesController : ControllerBase
     }
 
     [HttpPatch("{id:int}/status")]
+    [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> SetStatus(int id, [FromBody] CoachStatusUpdateDto dto)
     {
         var success = await _coachService.SetStatusAsync(id, dto.IsActive, _currentUser.UserId!.Value);

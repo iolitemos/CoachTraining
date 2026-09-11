@@ -44,6 +44,17 @@ export interface AthleteCreateRequest {
 
 export type AthleteUpdateRequest = Omit<AthleteCreateRequest, 'athleteCode'>;
 
+export interface AthleteImportResult {
+  importedCount: number;
+  totalRows: number;
+}
+
+export interface AthleteImportError {
+  row: number;
+  field: string;
+  message: string;
+}
+
 /** Active-athlete-only search result — Routine attendance selection and
  * Private Training athlete assignment (requirement.md 5.7/9.6). */
 export interface AthleteOption {

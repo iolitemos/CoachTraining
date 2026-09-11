@@ -128,19 +128,7 @@ export class CoachHome implements OnInit {
       .reduce((total, day) => total + day.sessions.length, 0),
   );
 
-  upcomingSessionsPreview = computed(() => {
-    const sessions = this.dashboard()?.upcomingSessions ?? [];
-    const visibleDates = new Set<string>();
-
-    return sessions.filter((session) => {
-      if (!visibleDates.has(session.sessionDate) && visibleDates.size >= 3) {
-        return false;
-      }
-
-      visibleDates.add(session.sessionDate);
-      return true;
-    });
-  });
+  upcomingSessionsThisMonth = computed(() => this.dashboard()?.upcomingSessions ?? []);
 
   constructor(
     private readonly coachDashboardService: CoachDashboardService,
