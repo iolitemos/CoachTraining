@@ -856,6 +856,7 @@
 - [x] Default Administrator Dashboard filters to the current calendar month, show coach nicknames/colors split by training type, show participation-only athlete names/totals split by training type, and remove coach teaching hours from this page as requested by the user.
 - [x] Remove the Administrator Dashboard KPI card row as requested by the user.
 - [x] Add date-by-athlete attendance matrix tables with daily totals, period totals, and coach names for Routine and Private Training on the Administrator Dashboard.
+- [ ] Show Routine athlete attendance as progress bars whose maximum is the highest distinct teaching-day count among coaches in the filtered date range. <!-- Implemented; Angular compiler and all frontend tests pass, awaiting successful production build after an esbuild runtime deadlock. -->
 
 ### 5.15 Coach Teaching-Hour Report Frontend
 

@@ -10,7 +10,12 @@ import { ErrorState } from '../../shared/error-state/error-state';
 import { EmptyState } from '../../shared/empty-state/empty-state';
 import { CoachOption } from '../../models/coach.model';
 import { TrainingType } from '../../models/training-session.model';
-import { AdministratorDashboardResponse, CoachTeachingToday } from '../../models/administrator-dashboard.model';
+import {
+  AdministratorDashboardResponse,
+  AttendanceByTrainingType,
+  AthleteAttendanceSummaryItem,
+  CoachTeachingToday,
+} from '../../models/administrator-dashboard.model';
 import { CoachService } from '../../services/coach.service';
 import { AdministratorDashboardService } from '../../services/administrator-dashboard.service';
 import { DateInput } from '../../shared/date-input/date-input';
@@ -43,6 +48,7 @@ type ViewState = 'loading' | 'error' | 'ready';
   styleUrl: './administrator-dashboard.css',
 })
 export class AdministratorDashboard implements OnInit {
+  readonly Math = Math;
   state = signal<ViewState>('loading');
   dashboard = signal<AdministratorDashboardResponse | null>(null);
   coachOptions = signal<CoachOption[]>([]);
@@ -80,6 +86,35 @@ export class AdministratorDashboard implements OnInit {
 
   attendanceCount(attendances: { athleteId: number; attendanceCount: number }[], athleteId: number): number {
     return attendances.find((attendance) => attendance.athleteId === athleteId)?.attendanceCount ?? 0;
+  }
+
+  maxCoachTeachingDays(summary: AttendanceByTrainingType): number {
+    const teachingDatesByCoach = new Map<number, Set<string>>();
+
+    for (const day of summary.dailySummaries) {
+      for (const coach of day.coaches) {
+        const teachingDates = teachingDatesByCoach.get(coach.coachId) ?? new Set<string>();
+        teachingDates.add(day.date);
+        teachingDatesByCoach.set(coach.coachId, teachingDates);
+      }
+    }
+
+    return Math.max(0, ...Array.from(teachingDatesByCoach.values(), (dates) => dates.size));
+  }
+
+  athletesForSummary(
+    athletes: AthleteAttendanceSummaryItem[],
+    trainingType: string,
+  ): AthleteAttendanceSummaryItem[] {
+    if (trainingType !== 'Routine') {
+      return athletes;
+    }
+
+    return [...athletes].sort(
+      (left, right) =>
+        right.attendanceCount - left.attendanceCount ||
+        left.athleteName.localeCompare(right.athleteName, 'th'),
+    );
   }
 
   async load(): Promise<void> {

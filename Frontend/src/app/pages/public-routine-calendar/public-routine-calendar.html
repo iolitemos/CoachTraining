@@ -30,7 +30,7 @@
         </div>
       </section>
       <section class="mt-4 rounded-xl border border-border bg-surface p-4 shadow-sm">
-        <h2 class="font-semibold">ตารางวันที่ {{ selectedDate() | displayDate }}</h2>
+        <h2 class="font-semibold">รายละเอียดเพิ่มเติมของตารางวันที่ {{ selectedDate() | displayDate }}</h2>
         @if (selectedCompetitionMatches().length > 0) {
           <div class="mt-3 space-y-2">@for (match of selectedCompetitionMatches(); track match.name + match.startDate) { <article class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900"><p class="font-semibold">🏆 {{ match.name }}</p><p class="mt-1 text-sm">{{ match.province }} · {{ match.startDate | displayDate }}–{{ match.endDate | displayDate }}</p></article> }</div>
         }
