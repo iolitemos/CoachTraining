@@ -8,6 +8,10 @@ export interface CoachTeachingHourReportItem {
   coachNickname: string | null;
   coachColorHex: string;
   sessionCount: number;
+  plannedSessionCount: number;
+  actualSessionCount: number;
+  plannedDays: number;
+  actualDays: number;
   routineDays: number;
   privateDays: number;
   totalDays: number;
@@ -19,6 +23,8 @@ export interface CoachTeachingHourReportResponse {
   totalRoutineDays: number;
   totalPrivateDays: number;
   grandTotalDays: number;
+  totalPlannedDays: number;
+  totalActualDays: number;
 }
 
 export interface CoachTeachingHourReportFilter {

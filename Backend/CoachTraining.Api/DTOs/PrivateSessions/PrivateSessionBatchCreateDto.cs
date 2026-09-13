@@ -13,8 +13,8 @@ public class PrivateSessionBatchCreateDto : IValidatableObject
     [Required] public TimeOnly EndTime { get; set; }
     [MaxLength(200)] public string? Location { get; set; }
     public string? Remarks { get; set; }
-    [MinLength(1, ErrorMessage = "กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน")]
     public List<int> AthleteIds { get; set; } = [];
+    public List<GuestParticipantDto> GuestParticipants { get; set; } = [];
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -26,8 +26,12 @@ public class PrivateSessionBatchCreateDto : IValidatableObject
             yield return new ValidationResult("ช่วงวันที่ต้องไม่เกิน 366 วัน", [nameof(EndDate)]);
         if (DaysOfWeek.Count == 0 || DaysOfWeek.Any(day => !Enum.IsDefined(day)))
             yield return new ValidationResult("กรุณาเลือกรูปแบบวันอย่างน้อย 1 วัน", [nameof(DaysOfWeek)]);
-        if (AthleteIds.Count == 0 || AthleteIds.Distinct().Count() != AthleteIds.Count)
-            yield return new ValidationResult("กรุณาเลือกนักกีฬาโดยไม่ให้มีรายการซ้ำ", [nameof(AthleteIds)]);
+        if (AthleteIds.Distinct().Count() != AthleteIds.Count)
+            yield return new ValidationResult("พบนักกีฬาซ้ำในรายการที่เลือก", [nameof(AthleteIds)]);
+        if (AthleteIds.Count + GuestParticipants.Count == 0)
+            yield return new ValidationResult("กรุณาเพิ่มผู้เข้าร่วมอย่างน้อยหนึ่งคน", [nameof(AthleteIds), nameof(GuestParticipants)]);
+        if (GuestParticipants.Any(g => string.IsNullOrWhiteSpace(g.FullName)))
+            yield return new ValidationResult("กรุณากรอกชื่อผู้เรียนชั่วคราว", [nameof(GuestParticipants)]);
     }
 }
 

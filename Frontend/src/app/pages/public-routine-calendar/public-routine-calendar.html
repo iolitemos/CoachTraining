@@ -1,0 +1,42 @@
+<main class="min-h-screen bg-background px-3 py-5 text-text sm:px-6">
+  <div class="mx-auto max-w-6xl">
+    <header class="mb-4 rounded-xl border border-border bg-surface p-4 shadow-sm">
+      <p class="text-xs font-medium uppercase tracking-wide text-primary-700">ตารางฝึกซ้อม</p>
+      <h1 class="mt-1 text-xl font-semibold">ปฏิทินฝึกซ้อมประจำ</h1>
+      <p class="mt-1 text-sm text-text-secondary">ข้อมูลสำหรับนักกีฬาและผู้ปกครอง · ดูได้อย่างเดียว</p>
+    </header>
+
+    @if (state() === 'loading') {
+      <div class="rounded-xl border border-border bg-surface p-8 text-center text-text-secondary">กำลังโหลดปฏิทิน...</div>
+    } @else if (state() === 'invalid') {
+      <div class="rounded-xl border border-danger/30 bg-danger-surface p-8 text-center"><h2 class="font-semibold text-danger">ลิงก์นี้ไม่สามารถใช้งานได้</h2><p class="mt-2 text-sm text-text-secondary">ลิงก์อาจไม่ถูกต้องหรือถูกยกเลิกแล้ว กรุณาขอลิงก์ใหม่จากผู้ดูแล</p></div>
+    } @else if (state() === 'error') {
+      <div class="rounded-xl border border-border bg-surface p-8 text-center"><p class="text-text-secondary">ไม่สามารถโหลดปฏิทินได้</p><button class="mt-3 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white" (click)="load()">ลองอีกครั้ง</button></div>
+    } @else {
+      <section class="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+        <div class="flex items-center justify-between border-b border-border p-4">
+          <button class="size-10 rounded-lg border border-border" aria-label="เดือนก่อนหน้า" (click)="moveMonth(-1)">‹</button>
+          <h2 class="font-semibold">{{ monthLabel() }}</h2>
+          <button class="size-10 rounded-lg border border-border" aria-label="เดือนถัดไป" (click)="moveMonth(1)">›</button>
+        </div>
+        <div class="grid grid-cols-7 bg-secondary-50">@for (header of dayHeaders; track header) { <div class="p-2 text-center text-xs text-text-secondary">{{ header }}</div> }</div>
+        <div class="grid grid-cols-7">
+          @for (day of calendarDays(); track day.isoDate) {
+            <button type="button" class="min-h-16 border-r border-t border-border p-1 text-left sm:min-h-24" [class.opacity-40]="!day.isCurrentMonth" [class.bg-primary-50]="day.items.length > 0" [class.bg-amber-50]="day.items.length === 0 && day.competitionMatches.length > 0" [class.ring-2]="selectedDate() === day.isoDate" [class.ring-inset]="selectedDate() === day.isoDate" [class.ring-primary-600]="selectedDate() === day.isoDate" (click)="selectDay(day)">
+              <span class="flex items-center justify-between text-xs"><span>{{ day.dayNumber }}</span>@if (day.competitionMatches.length > 0) { <span title="วันแข่งขัน" aria-label="วันแข่งขัน">🏆</span> }</span>
+              <div class="mt-1 space-y-1">@for (item of day.items; track item.trainingDate + item.startTime + item.coachNickname) { <span class="block truncate rounded px-1 py-0.5 text-[10px] text-white sm:text-xs" [style.background-color]="item.coachColorHex">{{ item.coachNickname }}</span> }</div>
+            </button>
+          }
+        </div>
+      </section>
+      <section class="mt-4 rounded-xl border border-border bg-surface p-4 shadow-sm">
+        <h2 class="font-semibold">ตารางวันที่ {{ selectedDate() | displayDate }}</h2>
+        @if (selectedCompetitionMatches().length > 0) {
+          <div class="mt-3 space-y-2">@for (match of selectedCompetitionMatches(); track match.name + match.startDate) { <article class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900"><p class="font-semibold">🏆 {{ match.name }}</p><p class="mt-1 text-sm">{{ match.province }} · {{ match.startDate | displayDate }}–{{ match.endDate | displayDate }}</p></article> }</div>
+        }
+        @if (selectedItems().length === 0) { <p class="mt-3 rounded-lg bg-secondary-50 p-4 text-center text-sm text-text-secondary">ไม่มีรอบฝึกซ้อมในวันนี้</p> }
+        @else { <div class="mt-3 grid gap-2 sm:grid-cols-2">@for (item of selectedItems(); track item.startTime + item.coachNickname) { <article class="rounded-lg border border-border border-l-4 p-3" [style.border-left-color]="item.coachColorHex"><p class="font-medium">โค้ช {{ item.coachNickname }}</p><p class="mt-1 text-sm text-text-secondary">{{ item.startTime.slice(0, 5) }}–{{ item.endTime.slice(0, 5) }} น.</p></article> }</div> }
+      </section>
+    }
+  </div>
+</main>

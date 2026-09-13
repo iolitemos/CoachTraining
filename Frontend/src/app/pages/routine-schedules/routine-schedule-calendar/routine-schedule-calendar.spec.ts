@@ -22,6 +22,8 @@ describe('RoutineScheduleCalendar', () => {
   });
 
   afterEach(() => {
+    httpMock.match((request) => request.url.endsWith('/public/routine-calendar/share-link'))
+      .forEach((request) => request.flush({ message: 'Success', data: { isActive: false, tokenHint: null, createdDate: null } }));
     httpMock.verify();
   });
 

@@ -40,9 +40,13 @@ public static class TrainingSessionMapper
         ConflictOverrideReason = session.ConflictOverrideReason,
         Athletes = session.PrivateAthletes.Select(psa => new PrivateSessionAthleteDto
         {
+            PrivateSessionAthleteId = psa.PrivateSessionAthleteId,
             AthleteId = psa.AthleteId,
+            IsGuest = psa.IsGuest,
             AthleteCode = psa.AthleteCodeSnapshot,
             FullName = psa.AthleteNameSnapshot,
+            GuestPhone = psa.GuestPhone,
+            GuestRemark = psa.GuestRemark,
         }).ToList(),
         TrainingLog = session.TrainingLog is null ? null : new TrainingLogDto
         {

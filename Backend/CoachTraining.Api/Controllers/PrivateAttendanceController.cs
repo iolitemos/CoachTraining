@@ -51,12 +51,12 @@ public class PrivateAttendanceController : ControllerBase
         }
     }
 
-    [HttpPut("{athleteId:int}")]
-    public async Task<IActionResult> Set(int sessionId, int athleteId, [FromBody] PrivateAttendanceSetRequest request)
+    [HttpPut("participants/{privateSessionAthleteId:int}")]
+    public async Task<IActionResult> Set(int sessionId, int privateSessionAthleteId, [FromBody] PrivateAttendanceSetRequest request)
     {
         try
         {
-            var result = await _privateAttendanceService.SetAsync(sessionId, athleteId, request, IsAdministrator, _currentUser.CoachId, _currentUser.UserId!.Value);
+            var result = await _privateAttendanceService.SetAsync(sessionId, privateSessionAthleteId, request, IsAdministrator, _currentUser.CoachId, _currentUser.UserId!.Value);
 
             if (result.NotFound)
             {
@@ -77,7 +77,7 @@ public class PrivateAttendanceController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Route: api/training-sessions/{SessionId}/private-attendance/{AthleteId} Controller: PrivateAttendanceController Function: Set UserId: {UserId}", sessionId, athleteId, _currentUser.UserId);
+            _logger.LogError(ex, "Route: api/training-sessions/{SessionId}/private-attendance/participants/{PrivateSessionAthleteId} Controller: PrivateAttendanceController Function: Set UserId: {UserId}", sessionId, privateSessionAthleteId, _currentUser.UserId);
             return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถบันทึกข้อมูลการเข้าร่วมได้"));
         }
     }

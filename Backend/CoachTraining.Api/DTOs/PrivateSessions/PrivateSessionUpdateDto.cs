@@ -22,9 +22,8 @@ public class PrivateSessionUpdateDto : IValidatableObject
 
     public string? Remarks { get; set; }
 
-    [Required(ErrorMessage = "กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน")]
-    [MinLength(1, ErrorMessage = "กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน")]
     public List<int> AthleteIds { get; set; } = [];
+    public List<GuestParticipantDto> GuestParticipants { get; set; } = [];
 
     /// <summary>FR-CONFLICT-004 — Administrator confirms proceeding despite a detected coach/athlete conflict.</summary>
     public bool OverrideConflict { get; set; }
@@ -44,6 +43,11 @@ public class PrivateSessionUpdateDto : IValidatableObject
         {
             yield return new ValidationResult("พบนักกีฬาซ้ำในรายการที่เลือก", [nameof(AthleteIds)]);
         }
+
+        if (AthleteIds.Count + GuestParticipants.Count == 0)
+            yield return new ValidationResult("กรุณาเพิ่มผู้เข้าร่วมอย่างน้อยหนึ่งคน", [nameof(AthleteIds), nameof(GuestParticipants)]);
+        if (GuestParticipants.Any(g => string.IsNullOrWhiteSpace(g.FullName)))
+            yield return new ValidationResult("กรุณากรอกชื่อผู้เรียนชั่วคราว", [nameof(GuestParticipants)]);
 
         if (OverrideConflict && string.IsNullOrWhiteSpace(OverrideReason))
         {

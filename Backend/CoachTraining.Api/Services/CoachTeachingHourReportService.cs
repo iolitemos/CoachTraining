@@ -49,6 +49,11 @@ public class CoachTeachingHourReportService : ICoachTeachingHourReportService
                 s.TrainingType,
                 s.SessionDate,
                 s.Status,
+                s.AssignedCoachId,
+                AssignedCoachCode = s.AssignedCoachCodeSnapshot,
+                AssignedCoachName = s.AssignedCoachNameSnapshot,
+                AssignedCoachNickname = s.AssignedCoach.Nickname,
+                AssignedCoachColorHex = s.AssignedCoach.ColorHex,
                 CreditedCoachId = s.ActualCoachId ?? s.AssignedCoachId,
                 CreditedCoachCode = s.ActualCoachId != null ? s.ActualCoachCodeSnapshot! : s.AssignedCoachCodeSnapshot,
                 CreditedCoachName = s.ActualCoachId != null ? s.ActualCoachNameSnapshot! : s.AssignedCoachNameSnapshot,
@@ -57,46 +62,48 @@ public class CoachTeachingHourReportService : ICoachTeachingHourReportService
             })
             .ToListAsync();
 
-        // FR-RPT-COACH-008/009 — CountsAsCompletedTeaching already excludes
-        // Cancelled, Rescheduled(-original), and un-substituted Coach Absent
-        // sessions, and only counts sessions that reached Completed or a later
-        // finalized status per the approval rules.
-        var items = sessions
+        // Plan belongs to the originally assigned coach and excludes sessions that
+        // are no longer on the active schedule. Actual belongs to the coach who
+        // really taught and follows the centralized finalized-teaching rule.
+        var plannedSessions = sessions
+            .Where(s => s.Status is not SessionStatus.Cancelled and not SessionStatus.Rescheduled)
+            .ToList();
+        var actualSessions = sessions
             .Where(s => _sessionStatusService.CountsAsCompletedTeaching(s.Status))
-            .GroupBy(s => new
+            .ToList();
+        var coachIds = plannedSessions.Select(s => s.AssignedCoachId)
+            .Concat(actualSessions.Select(s => s.CreditedCoachId))
+            .Where(coachId => filter.CoachId is null || coachId == filter.CoachId.Value)
+            .Distinct();
+
+        var items = coachIds.Select(coachId =>
             {
-                s.CreditedCoachId,
-                s.CreditedCoachCode,
-                s.CreditedCoachName,
-                s.CreditedCoachNickname,
-                s.CreditedCoachColorHex,
-            })
-            .Select(g =>
-            {
-                var routineDays = g.Where(s => s.TrainingType == TrainingType.Routine)
-                    .Select(s => s.SessionDate)
-                    .Distinct()
-                    .Count();
-                var privateDays = g.Where(s => s.TrainingType == TrainingType.Private)
-                    .Select(s => s.SessionDate)
-                    .Distinct()
-                    .Count();
-                var totalDays = g.Select(s => s.SessionDate).Distinct().Count();
+                var planned = plannedSessions.Where(s => s.AssignedCoachId == coachId).ToList();
+                var actual = actualSessions.Where(s => s.CreditedCoachId == coachId).ToList();
+                var identity = actual.FirstOrDefault();
+                var plannedIdentity = planned.FirstOrDefault();
+                var routineDays = actual.Where(s => s.TrainingType == TrainingType.Routine).Select(s => s.SessionDate).Distinct().Count();
+                var privateDays = actual.Where(s => s.TrainingType == TrainingType.Private).Select(s => s.SessionDate).Distinct().Count();
 
                 return new CoachTeachingHourReportItemDto
                 {
-                    CoachId = g.Key.CreditedCoachId,
-                    CoachCode = g.Key.CreditedCoachCode,
-                    CoachFullName = g.Key.CreditedCoachName,
-                    CoachNickname = g.Key.CreditedCoachNickname,
-                    CoachColorHex = g.Key.CreditedCoachColorHex,
-                    SessionCount = g.Count(),
+                    CoachId = coachId,
+                    CoachCode = identity?.CreditedCoachCode ?? plannedIdentity!.AssignedCoachCode,
+                    CoachFullName = identity?.CreditedCoachName ?? plannedIdentity!.AssignedCoachName,
+                    CoachNickname = identity?.CreditedCoachNickname ?? plannedIdentity?.AssignedCoachNickname,
+                    CoachColorHex = identity?.CreditedCoachColorHex ?? plannedIdentity?.AssignedCoachColorHex ?? string.Empty,
+                    SessionCount = actual.Count,
+                    PlannedSessionCount = planned.Count,
+                    ActualSessionCount = actual.Count,
+                    PlannedDays = planned.Select(s => s.SessionDate).Distinct().Count(),
+                    ActualDays = actual.Select(s => s.SessionDate).Distinct().Count(),
                     RoutineDays = routineDays,
                     PrivateDays = privateDays,
-                    TotalDays = totalDays,
+                    TotalDays = actual.Select(s => s.SessionDate).Distinct().Count(),
                 };
             })
-            .OrderByDescending(i => i.TotalDays)
+            .OrderByDescending(i => i.ActualDays)
+            .ThenByDescending(i => i.PlannedDays)
             .ThenBy(i => i.CoachCode)
             .ToList();
 
@@ -106,6 +113,8 @@ public class CoachTeachingHourReportService : ICoachTeachingHourReportService
             TotalRoutineDays = items.Sum(i => i.RoutineDays),
             TotalPrivateDays = items.Sum(i => i.PrivateDays),
             GrandTotalDays = items.Sum(i => i.TotalDays),
+            TotalPlannedDays = items.Sum(i => i.PlannedDays),
+            TotalActualDays = items.Sum(i => i.ActualDays),
         };
     }
 }

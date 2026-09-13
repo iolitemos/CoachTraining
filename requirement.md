@@ -159,6 +159,8 @@ Private Training shall support:
 
 - One coach to one athlete.
 - One coach to multiple athletes.
+- Registered athletes selected from the Athlete Master.
+- Temporary / guest participants entered manually without creating an Athlete Master record.
 
 Core data:
 
@@ -166,7 +168,7 @@ Core data:
 - Start Time
 - End Time
 - Coach
-- Athlete(s)
+- Participant(s), consisting of registered athlete(s), temporary participant(s), or both
 - Location, when applicable
 - Remarks
 - Session Status
@@ -303,10 +305,10 @@ Purpose:
 
 1. Administrator or authorized user creates a Private Training session.
 2. User selects the coach.
-3. User selects one or more athletes.
+3. User adds one or more participants by selecting registered athletes from the Athlete Master and/or entering temporary participants manually.
 4. User defines the date, start time, and end time.
 5. User enters optional location and remarks when applicable.
-6. The system validates coach and athlete schedule conflicts.
+6. The system validates coach conflicts and registered-athlete schedule conflicts. Temporary participants are not included in cross-session conflict detection because they have no stable Athlete Master identity.
 7. If no blocking conflict exists, the Private Training session is scheduled.
 
 ### 5.4 Private Training Execution
@@ -314,8 +316,8 @@ Purpose:
 1. Coach opens the scheduled Private Training session.
 2. Coach starts or checks in to the session.
 3. The system records the actual coach and actual start information.
-4. The system displays the athletes assigned to the Private Training session.
-5. Coach records attendance status for each assigned athlete.
+4. The system displays all registered athletes and temporary participants assigned to the Private Training session.
+5. Coach records attendance status for each assigned participant.
 6. Coach records training notes when required.
 7. Coach completes the session.
 8. The system records the actual end information and teaching duration.
@@ -424,12 +426,14 @@ Purpose:
 
 - **FR-PRIVATE-001** Authorized users shall be able to create a Private Training session.
 - **FR-PRIVATE-002** A Private Training session shall require one coach.
-- **FR-PRIVATE-003** A Private Training session shall require at least one athlete.
-- **FR-PRIVATE-004** A Private Training session shall support multiple athletes.
+- **FR-PRIVATE-003** A Private Training session shall require at least one participant, who may be a registered athlete or a temporary participant.
+- **FR-PRIVATE-004** A Private Training session shall support multiple registered athletes and/or temporary participants.
 - **FR-PRIVATE-005** A Private Training session shall require a training date, start time, and end time.
 - **FR-PRIVATE-006** Location shall be optional for Private Training.
 - **FR-PRIVATE-007** The system shall identify coach schedule conflicts before saving or rescheduling a Private Training session.
-- **FR-PRIVATE-008** The system shall identify athlete schedule conflicts before saving or rescheduling a Private Training session.
+- **FR-PRIVATE-008** The system shall identify registered-athlete schedule conflicts before saving or rescheduling a Private Training session. Temporary participants shall be excluded because they have no stable Athlete Master identity.
+- **FR-PRIVATE-010** Authorized users shall be able to enter a temporary participant using a required name and optional phone number and remark without creating an Athlete Master record.
+- **FR-PRIVATE-011** Temporary-participant identity shall be snapshotted on the session and clearly distinguished from registered athletes.
 - **FR-PRIVATE-009** Administrator or another authorized user shall be able to edit future Private Training sessions.
 
 ### 6.6 Training Session Requirements
@@ -496,11 +500,11 @@ Private Training attendance statuses shall support:
 
 Requirements:
 
-- **FR-PATT-001** The system shall display all athletes assigned to the Private Training session.
-- **FR-PATT-002** Coach shall record an attendance status for each assigned athlete before final submission.
+- **FR-PATT-001** The system shall display all registered athletes and temporary participants assigned to the Private Training session.
+- **FR-PATT-002** Coach shall record an attendance status for each assigned participant before final submission.
 - **FR-PATT-003** Late attendance may include an arrival time and remark.
 - **FR-PATT-004** Absence or Leave / Excused may include a remark.
-- **FR-PATT-005** A Private Training session shall prevent duplicate attendance entries for the same athlete.
+- **FR-PATT-005** A Private Training session shall prevent duplicate attendance entries for the same assigned participant.
 
 ### 6.11 Training Log Requirements
 
@@ -606,6 +610,7 @@ Requirements:
 - **FR-RPT-ATH-005** Private Training attendance summaries may include Present, Absent, Late, and Leave / Excused counts.
 - **FR-RPT-ATH-006** Routine attendance shall report recorded attendance only and shall not infer absent sessions from sessions where the athlete was not selected.
 - **FR-RPT-ATH-007** The report shall not double-count attendance from rescheduled-original sessions.
+- **FR-RPT-ATH-008** Temporary participants shall be clearly distinguished from registered athletes in Private Training attendance reports and shall not be selectable through the Athlete Master filter.
 
 ### 6.20 History & Audit Requirements
 
@@ -628,6 +633,19 @@ Requirements:
 - **FR-AUDIT-001** Each tracked action shall identify the action type, action date/time, and responsible user.
 - **FR-AUDIT-002** Historical records shall remain available after related coaches or athletes become inactive.
 - **FR-AUDIT-003** Material changes to finalized operational records shall remain traceable.
+
+### 6.21 Public Routine Calendar Sharing Requirements
+
+- **FR-PUBLIC-CALENDAR-001** Administrator shall be able to create a secret share link for a read-only Routine Training calendar.
+- **FR-PUBLIC-CALENDAR-002** Creating a new share link shall immediately revoke every previously active Routine calendar share link.
+- **FR-PUBLIC-CALENDAR-003** Administrator shall be able to revoke the active share link immediately.
+- **FR-PUBLIC-CALENDAR-004** The system shall store only a secure hash of the secret token and shall reveal the raw token only when a new link is created.
+- **FR-PUBLIC-CALENDAR-005** A valid link shall expose only active Routine Training date, scheduled start/end time, Coach nickname, public calendar color, and published Competition Match name, province, and date range.
+- **FR-PUBLIC-CALENDAR-006** The public calendar shall not expose Coach/Athlete identifiers, Coach full name or code, attendance, internal remarks, management actions, or links to authenticated records.
+- **FR-PUBLIC-CALENDAR-007** Public calendar date-range queries shall be limited to a maximum of 63 inclusive days.
+- **FR-PUBLIC-CALENDAR-008** Invalid and revoked links shall not return calendar data.
+- **FR-PUBLIC-CALENDAR-009** Administrator shall be able to display and download a QR Code encoding the newly created secret share link without sending the token to an external QR service.
+- **FR-PUBLIC-CALENDAR-010** The public Routine calendar shall mark every date covered by a Competition Match and show its public details for the selected date.
 
 ---
 
@@ -669,7 +687,7 @@ This section contains only requirements specific to this project. Shared enginee
 
 ### 8.2 Private Training Rules
 
-- Private Training shall always identify the athlete(s) expected to attend.
+- Private Training shall always identify the registered athlete(s) and/or temporary participant(s) expected to attend.
 - Private Training may contain one or multiple athletes.
 - Location is optional for Private Training.
 - Attendance shall be recorded against the athletes assigned to the session.
@@ -753,9 +771,10 @@ Routine and Private sessions shall clearly display different attendance behavior
 
 ### 9.4 Private Attendance Screen
 
-- The screen shall display all athletes assigned to the Private Training session.
-- Attendance status shall be selectable for each athlete.
+- The screen shall display all registered athletes and temporary participants assigned to the Private Training session.
+- Attendance status shall be selectable for each participant.
 - Missing required attendance status shall be clearly identifiable before submission.
+- Temporary participants shall be clearly labelled and shall retain their session-time name snapshot.
 
 ### 9.5 Routine Schedule Screen
 
@@ -773,12 +792,15 @@ The Private Training form shall clearly support:
 
 - Coach selection
 - Multiple athlete selection
+- Manual temporary-participant entry with required name and optional phone number and remark
 - Date
 - Start time
 - End time
 - Optional location
 - Remarks
 - Session status
+
+Temporary participants shall not be created automatically in the Athlete Master. Attendance and reports shall identify them separately from registered athletes. Cross-session athlete conflict validation applies only to registered athletes.
 
 ### 9.7 Administrative Review Screen
 
@@ -858,6 +880,8 @@ Including:
 - Attendance viewing
 - Coach feedback viewing
 - Package balance viewing
+
+The secret-link, read-only Routine calendar defined by `FR-PUBLIC-CALENDAR-001`–`008` is a narrowly approved public-sharing feature and does not constitute an Athlete / Parent Portal. Accounts, personalized data, attendance, feedback, and other portal capabilities remain out of scope.
 
 ### 10.6 Self-Service Private Training Booking
 

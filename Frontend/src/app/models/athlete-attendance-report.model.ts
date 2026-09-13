@@ -15,7 +15,10 @@ export interface AthleteAttendanceRecord {
 
 /** One athlete's participation summary and history for the filtered range. */
 export interface AthleteAttendanceReportItem {
-  athleteId: number;
+  athleteId: number | null;
+  isGuest: boolean;
+  participantKey: string;
+  guestPhone: string | null;
   athleteCode: string;
   fullName: string;
   nickname: string | null;

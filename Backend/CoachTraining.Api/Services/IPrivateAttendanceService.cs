@@ -14,5 +14,5 @@ public interface IPrivateAttendanceService
     Task<PrivateAttendanceRosterResult?> GetRosterAsync(int trainingSessionId, bool isPrivilegedRole, int? currentCoachId);
 
     /// <summary>Creates or updates the attendance record for one already-assigned athlete.</summary>
-    Task<PrivateAttendanceActionResult> SetAsync(int trainingSessionId, int athleteId, PrivateAttendanceSetRequest request, bool isPrivilegedRole, int? currentCoachId, int actionByUserId);
+    Task<PrivateAttendanceActionResult> SetAsync(int trainingSessionId, int privateSessionAthleteId, PrivateAttendanceSetRequest request, bool isPrivilegedRole, int? currentCoachId, int actionByUserId);
 }

@@ -62,7 +62,7 @@ public class ScheduleConflictService : IScheduleConflictService
         }
 
         var query = _db.PrivateSessionAthletes
-            .Where(psa => athleteIds.Contains(psa.AthleteId))
+            .Where(psa => psa.AthleteId.HasValue && athleteIds.Contains(psa.AthleteId.Value))
             .Select(psa => new { psa.AthleteId, psa.AthleteNameSnapshot, Session = psa.TrainingSession })
             .Where(x =>
                 !NonOccupyingStatuses.Contains(x.Session.Status) &&

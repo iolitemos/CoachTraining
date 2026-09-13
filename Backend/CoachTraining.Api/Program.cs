@@ -86,6 +86,16 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
                 AutoReplenishment = true,
             }));
+    options.AddPolicy("PublicCalendar", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 60,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true,
+            }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
@@ -103,6 +113,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ISessionStatusService, SessionStatusService>();
 builder.Services.AddScoped<IScheduleConflictService, ScheduleConflictService>();
 builder.Services.AddScoped<IRoutineScheduleService, RoutineScheduleService>();
+builder.Services.AddScoped<IPublicRoutineCalendarService, PublicRoutineCalendarService>();
 builder.Services.AddScoped<IPrivateSessionService, PrivateSessionService>();
 builder.Services.AddScoped<ITrainingSessionService, TrainingSessionService>();
 builder.Services.AddScoped<ICoachTeachingService, CoachTeachingService>();

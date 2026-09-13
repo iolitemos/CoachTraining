@@ -94,8 +94,11 @@ public class ReschedulingService : IReschedulingService
                 replacement.PrivateAthletes.Add(new PrivateSessionAthlete
                 {
                     AthleteId = assignment.AthleteId,
+                    IsGuest = assignment.IsGuest,
                     AthleteCodeSnapshot = assignment.AthleteCodeSnapshot,
                     AthleteNameSnapshot = assignment.AthleteNameSnapshot,
+                    GuestPhone = assignment.GuestPhone,
+                    GuestRemark = assignment.GuestRemark,
                     CreatedByUserId = actionByUserId,
                 });
             }
@@ -160,7 +163,7 @@ public class ReschedulingService : IReschedulingService
 
         if (original.TrainingType == TrainingType.Private && original.PrivateAthletes.Count > 0)
         {
-            var athleteIds = original.PrivateAthletes.Select(psa => psa.AthleteId).ToList();
+            var athleteIds = original.PrivateAthletes.Where(psa => psa.AthleteId.HasValue).Select(psa => psa.AthleteId!.Value).ToList();
             conflicts.AddRange(await _conflictService.CheckAthleteOverlapAsync(
                 athleteIds, newStart, newEnd, excludeTrainingSessionId: original.TrainingSessionId));
         }

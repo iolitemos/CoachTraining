@@ -106,9 +106,9 @@ public class PrivateSessionService : IPrivateSessionService
         {
             // FR-PRIVATE-003: enforced here too, not only via the DTO's [MinLength],
             // since business validation must not rely solely on the API boundary.
-            if (dto.AthleteIds.Count == 0)
+            if (dto.AthleteIds.Count + dto.GuestParticipants.Count == 0)
             {
-                return new PrivateSessionSaveResult { Error = "กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน" };
+                return new PrivateSessionSaveResult { Error = "กรุณาเพิ่มผู้เข้าร่วมอย่างน้อยหนึ่งคน" };
             }
 
             var coach = await _db.Coaches.FirstOrDefaultAsync(c => c.CoachId == dto.CoachId);
@@ -169,6 +169,7 @@ public class PrivateSessionService : IPrivateSessionService
                     CreatedByUserId = actionByUserId,
                 });
             }
+            AddGuestParticipants(session, dto.GuestParticipants, actionByUserId);
 
             // Session + its athlete assignments are added in one SaveChangesAsync
             // call, so EF Core's implicit transaction keeps them atomic.
@@ -219,6 +220,7 @@ public class PrivateSessionService : IPrivateSessionService
                 Location = dto.Location,
                 Remarks = dto.Remarks,
                 AthleteIds = dto.AthleteIds,
+                GuestParticipants = dto.GuestParticipants,
             }, actionByUserId);
             if (saveResult.Error is not null)
                 return (null, saveResult.Error, saveResult.Conflicts);
@@ -245,9 +247,9 @@ public class PrivateSessionService : IPrivateSessionService
             return new PrivateSessionSaveResult { Error = "ไม่สามารถแก้ไขได้ เนื่องจากเซสชันเริ่มดำเนินการแล้วหรือถูกล็อก" };
         }
 
-        if (dto.AthleteIds.Count == 0)
+        if (dto.AthleteIds.Count + dto.GuestParticipants.Count == 0)
         {
-            return new PrivateSessionSaveResult { Error = "กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน" };
+            return new PrivateSessionSaveResult { Error = "กรุณาเพิ่มผู้เข้าร่วมอย่างน้อยหนึ่งคน" };
         }
 
         var coach = await _db.Coaches.FirstOrDefaultAsync(c => c.CoachId == dto.CoachId);
@@ -304,6 +306,7 @@ public class PrivateSessionService : IPrivateSessionService
                 CreatedByUserId = actionByUserId,
             });
         }
+        AddGuestParticipants(session, dto.GuestParticipants, actionByUserId);
 
         await _db.SaveChangesAsync();
 
@@ -328,6 +331,22 @@ public class PrivateSessionService : IPrivateSessionService
         }
 
         return (athletes, null);
+    }
+
+    private static void AddGuestParticipants(TrainingSession session, IEnumerable<GuestParticipantDto> guests, int actionByUserId)
+    {
+        foreach (var guest in guests)
+        {
+            session.PrivateAthletes.Add(new PrivateSessionAthlete
+            {
+                IsGuest = true,
+                AthleteCodeSnapshot = "ผู้เรียนชั่วคราว",
+                AthleteNameSnapshot = guest.FullName.Trim(),
+                GuestPhone = string.IsNullOrWhiteSpace(guest.Phone) ? null : guest.Phone.Trim(),
+                GuestRemark = string.IsNullOrWhiteSpace(guest.Remark) ? null : guest.Remark.Trim(),
+                CreatedByUserId = actionByUserId,
+            });
+        }
     }
 
     private async Task<List<ConflictDetail>> CheckConflictsAsync(
@@ -380,9 +399,13 @@ public class PrivateSessionService : IPrivateSessionService
         ConflictOverrideReason = session.ConflictOverrideReason,
         Athletes = session.PrivateAthletes.Select(psa => new PrivateSessionAthleteDto
         {
+            PrivateSessionAthleteId = psa.PrivateSessionAthleteId,
             AthleteId = psa.AthleteId,
+            IsGuest = psa.IsGuest,
             AthleteCode = psa.AthleteCodeSnapshot,
             FullName = psa.AthleteNameSnapshot,
+            GuestPhone = psa.GuestPhone,
+            GuestRemark = psa.GuestRemark,
         }).ToList(),
     };
 }

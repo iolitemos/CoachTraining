@@ -1,6 +1,6 @@
-<app-page-header title="รายงานวันเข้าสอนของโค้ช" subtitle="สรุปจำนวนวันที่เข้าสอน แยกฝึกซ้อมประจำและฝึกซ้อมส่วนตัว" />
+<app-page-header title="รายงานวันเข้าสอนของโค้ช" subtitle="เปรียบเทียบแผนการสอนกับวันที่เข้าสอนจริง" />
 
-<div class="mt-4 grid grid-cols-1 items-end gap-3 rounded-xl border border-border bg-surface p-3 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
+<div class="mt-4 grid grid-cols-1 items-end gap-3 rounded-xl border border-border bg-surface p-3 sm:grid-cols-2 xl:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
   <label class="flex min-w-0 flex-col gap-1 text-sm">
     <span class="text-text-secondary">โค้ช</span>
     <select [(ngModel)]="coachId" class="min-h-10 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-text">
@@ -21,15 +21,6 @@
     <app-date-input class="block w-full" [(ngModel)]="endDate" ariaLabel="ถึงวันที่" />
   </label>
 
-  <label class="flex min-w-0 flex-col gap-1 text-sm">
-    <span class="text-text-secondary">ประเภทการฝึกซ้อม</span>
-    <select [(ngModel)]="trainingType" class="min-h-10 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-text">
-      <option value="">ทั้งหมด</option>
-      <option value="Routine">ฝึกซ้อมประจำ</option>
-      <option value="Private">ฝึกซ้อมส่วนตัว</option>
-    </select>
-  </label>
-
   <button
     type="button"
     (click)="applyFilters()"
@@ -39,8 +30,33 @@
   </button>
 </div>
 
+<div class="mt-4 grid grid-cols-2 rounded-xl bg-secondary-100 p-1" role="tablist" aria-label="ประเภทการฝึกซ้อม">
+  <button
+    type="button"
+    role="tab"
+    [attr.aria-selected]="activeTrainingType() === 'Routine'"
+    (click)="selectTrainingType('Routine')"
+    class="min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+    [class.bg-surface]="activeTrainingType() === 'Routine'"
+    [class.text-primary-700]="activeTrainingType() === 'Routine'"
+    [class.shadow-sm]="activeTrainingType() === 'Routine'"
+    [class.text-text-secondary]="activeTrainingType() !== 'Routine'"
+  >ฝึกซ้อมประจำ</button>
+  <button
+    type="button"
+    role="tab"
+    [attr.aria-selected]="activeTrainingType() === 'Private'"
+    (click)="selectTrainingType('Private')"
+    class="min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+    [class.bg-surface]="activeTrainingType() === 'Private'"
+    [class.text-primary-700]="activeTrainingType() === 'Private'"
+    [class.shadow-sm]="activeTrainingType() === 'Private'"
+    [class.text-text-secondary]="activeTrainingType() !== 'Private'"
+  >ฝึกซ้อมส่วนตัว</button>
+</div>
+
 <p class="mt-2 text-xs text-text-secondary">
-  นับวันที่เข้าสอนให้กับโค้ชที่สอนจริง โดยหลายเซสชันในวันเดียวกันจะนับเป็น 1 วัน และกรณีโค้ชตัวแทนจะนับให้โค้ชตัวแทน
+  แผนนับตามโค้ชที่ได้รับมอบหมาย ส่วนผลจริงนับให้โค้ชที่สอนจริง โดยหลายเซสชันในวันเดียวกันนับเป็น 1 วัน
 </p>
 
 <div class="mt-4">
@@ -57,10 +73,9 @@
           <app-empty-state title="ไม่พบข้อมูลวันเข้าสอน" description="ลองปรับตัวกรองแล้วค้นหาอีกครั้ง" />
         } @else {
           <div class="space-y-3 sm:hidden">
-            <div class="grid grid-cols-3 gap-2 rounded-xl bg-primary-50 p-3 text-center">
-              <div><p class="text-xs text-text-secondary">ประจำ</p><p class="mt-1 text-lg font-semibold text-primary-700">{{ r.totalRoutineDays }}</p></div>
-              <div><p class="text-xs text-text-secondary">ส่วนตัว</p><p class="mt-1 text-lg font-semibold text-primary-700">{{ r.totalPrivateDays }}</p></div>
-              <div><p class="text-xs text-text-secondary">รวม</p><p class="mt-1 text-lg font-semibold text-primary-700">{{ r.grandTotalDays }}</p></div>
+            <div class="grid grid-cols-2 gap-2 rounded-xl bg-primary-50 p-3 text-center">
+              <div><p class="text-xs text-text-secondary">ตามแผน</p><p class="mt-1 text-lg font-semibold text-primary-700">{{ r.totalPlannedDays }} วัน</p></div>
+              <div><p class="text-xs text-text-secondary">สอนจริง</p><p class="mt-1 text-lg font-semibold text-success">{{ r.totalActualDays }} วัน</p></div>
             </div>
             @for (item of r.items; track item.coachId) {
               <article class="rounded-xl border border-border bg-surface p-4">
@@ -68,10 +83,9 @@
                   <span class="size-3 shrink-0 rounded-full ring-2 ring-white" [style.background-color]="item.coachColorHex"></span>
                   {{ item.coachNickname || item.coachFullName }}
                 </h2>
-                <dl class="mt-3 grid grid-cols-3 gap-2 text-center">
-                  <div class="rounded-lg bg-secondary-50 p-2"><dt class="text-xs text-text-secondary">ประจำ</dt><dd class="mt-1 font-semibold text-text">{{ item.routineDays }} วัน</dd></div>
-                  <div class="rounded-lg bg-secondary-50 p-2"><dt class="text-xs text-text-secondary">ส่วนตัว</dt><dd class="mt-1 font-semibold text-text">{{ item.privateDays }} วัน</dd></div>
-                  <div class="rounded-lg bg-success-surface p-2"><dt class="text-xs text-text-secondary">รวม</dt><dd class="mt-1 font-semibold text-success">{{ item.totalDays }} วัน</dd></div>
+                <dl class="mt-3 grid grid-cols-2 gap-2 text-center">
+                  <div class="rounded-lg bg-secondary-50 p-2"><dt class="text-xs text-text-secondary">ตามแผน</dt><dd class="mt-1 font-semibold text-text">{{ item.plannedDays }} วัน</dd></div>
+                  <div class="rounded-lg bg-success-surface p-2"><dt class="text-xs text-text-secondary">สอนจริง</dt><dd class="mt-1 font-semibold text-success">{{ item.actualDays }} วัน</dd></div>
                 </dl>
               </article>
             }
@@ -82,9 +96,8 @@
               <thead class="border-b border-border text-text-secondary">
                 <tr>
                   <th class="px-4 py-3 font-medium">โค้ช</th>
-                  <th class="px-4 py-3 text-center font-medium">ฝึกซ้อมประจำ (วัน)</th>
-                  <th class="px-4 py-3 text-center font-medium">ฝึกซ้อมส่วนตัว (วัน)</th>
-                  <th class="px-4 py-3 text-center font-medium">รวมวันเข้าสอน</th>
+                  <th class="px-4 py-3 text-center font-medium">ตามแผน (วัน)</th>
+                  <th class="px-4 py-3 text-center font-medium">สอนจริง (วัน)</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,18 +112,16 @@
                         {{ item.coachNickname || item.coachFullName }}
                       </span>
                     </td>
-                    <td class="px-4 py-3 text-center text-text-secondary">{{ item.routineDays }}</td>
-                    <td class="px-4 py-3 text-center text-text-secondary">{{ item.privateDays }}</td>
-                    <td class="px-4 py-3 text-center font-medium text-text">{{ item.totalDays }}</td>
+                    <td class="px-4 py-3 text-center text-text-secondary">{{ item.plannedDays }}</td>
+                    <td class="px-4 py-3 text-center font-medium text-success">{{ item.actualDays }}</td>
                   </tr>
                 }
               </tbody>
               <tfoot>
                 <tr class="border-t border-border bg-secondary-100/50 font-semibold text-text">
                   <td class="px-4 py-3">รวมทั้งหมด</td>
-                  <td class="px-4 py-3 text-center">{{ r.totalRoutineDays }}</td>
-                  <td class="px-4 py-3 text-center">{{ r.totalPrivateDays }}</td>
-                  <td class="px-4 py-3 text-center">{{ r.grandTotalDays }}</td>
+                  <td class="px-4 py-3 text-center">{{ r.totalPlannedDays }}</td>
+                  <td class="px-4 py-3 text-center">{{ r.totalActualDays }}</td>
                 </tr>
               </tfoot>
             </table>

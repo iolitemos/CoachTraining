@@ -24,7 +24,11 @@ public class PrivateSessionDetailDto
 
 public class PrivateSessionAthleteDto
 {
-    public int AthleteId { get; set; }
+    public int PrivateSessionAthleteId { get; set; }
+    public int? AthleteId { get; set; }
+    public bool IsGuest { get; set; }
     public string AthleteCode { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
+    public string? GuestPhone { get; set; }
+    public string? GuestRemark { get; set; }
 }

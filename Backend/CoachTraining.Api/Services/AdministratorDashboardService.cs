@@ -104,8 +104,8 @@ public class AdministratorDashboardService : IAdministratorDashboardService
         var attendanceRecords = await attendanceQuery
             .Select(a => new
             {
-                a.AthleteId,
-                AthleteName = a.Athlete.Nickname ?? a.Athlete.FullName,
+                AthleteId = a.AthleteId ?? -a.PrivateSessionAthleteId!.Value,
+                AthleteName = a.AthleteId.HasValue ? (a.Athlete!.Nickname ?? a.Athlete.FullName) : a.AthleteNameSnapshot,
                 a.TrainingSession.TrainingType,
                 Date = a.TrainingSession.SessionDate,
             })

@@ -29,10 +29,13 @@
           </p>
         } @else {
           <ul class="divide-y divide-border rounded-lg border border-border">
-            @for (item of athletes(); track item.athleteId) {
+            @for (item of athletes(); track item.privateSessionAthleteId) {
               <li class="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4" [class.bg-warning-surface]="!item.status">
                 <div class="min-w-0 flex-1">
-                  <p class="break-words text-sm font-medium text-text">{{ item.athleteCode }} — {{ item.fullName }}</p>
+                  <p class="break-words text-sm font-medium text-text">
+                    @if (item.isGuest) { <span class="mr-1 rounded bg-secondary-100 px-1.5 py-0.5 text-xs">ผู้เรียนชั่วคราว</span> }
+                    {{ item.isGuest ? item.fullName : item.athleteCode + ' — ' + item.fullName }}
+                  </p>
                   @if (!item.status) {
                     <p class="text-xs text-warning">ยังไม่ได้บันทึกสถานะ</p>
                   } @else if (item.recordedDate) {
@@ -44,7 +47,7 @@
 
                 <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
                   <select
-                    [disabled]="readOnly() || isSaving(item.athleteId)"
+                    [disabled]="readOnly() || isSaving(item.privateSessionAthleteId)"
                     [ngModel]="item.status"
                     (ngModelChange)="updateStatus(item, $event)"
                     class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-auto"
@@ -59,7 +62,7 @@
                   @if (item.status === 'Late') {
                     <input
                       type="time"
-                      [disabled]="readOnly() || isSaving(item.athleteId)"
+                      [disabled]="readOnly() || isSaving(item.privateSessionAthleteId)"
                       [ngModel]="item.arrivalTime"
                       (ngModelChange)="updateArrivalTime(item, $event)"
                       class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-auto"
@@ -70,7 +73,7 @@
                     <input
                       type="text"
                       placeholder="หมายเหตุ"
-                      [disabled]="readOnly() || isSaving(item.athleteId)"
+                      [disabled]="readOnly() || isSaving(item.privateSessionAthleteId)"
                       [ngModel]="item.remark"
                       (ngModelChange)="updateRemark(item, $event)"
                       class="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-2 py-1.5 text-sm text-text disabled:opacity-60 sm:w-40"

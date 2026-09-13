@@ -12,6 +12,8 @@ public class PrivateSessionAthleteConfiguration : IEntityTypeConfiguration<Priva
 
         builder.Property(psa => psa.AthleteCodeSnapshot).HasMaxLength(30).IsRequired();
         builder.Property(psa => psa.AthleteNameSnapshot).HasMaxLength(200).IsRequired();
+        builder.Property(psa => psa.GuestPhone).HasMaxLength(50);
+        builder.Property(psa => psa.GuestRemark).HasMaxLength(500);
 
         // FR-PRIVATE / todo.md 2.6 — prevents duplicate athlete assignment within one session.
         builder.HasIndex(psa => new { psa.TrainingSessionId, psa.AthleteId }).IsUnique();

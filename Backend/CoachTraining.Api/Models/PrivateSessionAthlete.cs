@@ -12,8 +12,12 @@ public class PrivateSessionAthlete
     public int TrainingSessionId { get; set; }
     public TrainingSession TrainingSession { get; set; } = null!;
 
-    public int AthleteId { get; set; }
-    public Athlete Athlete { get; set; } = null!;
+    public int? AthleteId { get; set; }
+    public Athlete? Athlete { get; set; }
+
+    public bool IsGuest { get; set; }
+    public string? GuestPhone { get; set; }
+    public string? GuestRemark { get; set; }
 
     public string AthleteCodeSnapshot { get; set; } = string.Empty;
     public string AthleteNameSnapshot { get; set; } = string.Empty;

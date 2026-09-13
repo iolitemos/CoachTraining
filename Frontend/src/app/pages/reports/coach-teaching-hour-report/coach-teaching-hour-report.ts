@@ -51,7 +51,7 @@ export class CoachTeachingHourReport implements OnInit {
   coachId: number | null = null;
   startDate = currentMonthRange().startDate;
   endDate = currentMonthRange().endDate;
-  trainingType: TrainingType | '' = '';
+  activeTrainingType = signal<TrainingType>('Routine');
 
   constructor(
     private readonly reportService: CoachTeachingHourReportService,
@@ -63,12 +63,12 @@ export class CoachTeachingHourReport implements OnInit {
   ngOnInit(): void {
     const defaults = currentMonthRange();
     const filters = this.filterState.restore<{ coachId: number | null; startDate: string; endDate: string; trainingType: string }>('coach-teaching-report', {
-      coachId: null, startDate: defaults.startDate, endDate: defaults.endDate, trainingType: '',
+      coachId: null, startDate: defaults.startDate, endDate: defaults.endDate, trainingType: 'Routine',
     }, this.route.snapshot.queryParamMap, ['coachId']);
     this.coachId = filters.coachId;
     this.startDate = filters.startDate;
     this.endDate = filters.endDate;
-    this.trainingType = filters.trainingType as TrainingType | '';
+    this.activeTrainingType.set(filters.trainingType === 'Private' ? 'Private' : 'Routine');
     void this.coachService.getActiveOptions().then((options) => this.coachOptions.set(options));
     void this.load();
   }
@@ -81,7 +81,7 @@ export class CoachTeachingHourReport implements OnInit {
           coachId: this.coachId,
           startDate: this.startDate || null,
           endDate: this.endDate || null,
-          trainingType: this.trainingType || null,
+          trainingType: this.activeTrainingType(),
         }),
       );
       this.state.set('ready');
@@ -92,8 +92,14 @@ export class CoachTeachingHourReport implements OnInit {
 
   applyFilters(): void {
     this.filterState.save('coach-teaching-report', {
-      coachId: this.coachId, startDate: this.startDate, endDate: this.endDate, trainingType: this.trainingType,
+      coachId: this.coachId, startDate: this.startDate, endDate: this.endDate, trainingType: this.activeTrainingType(),
     }, this.route);
     void this.load();
+  }
+
+  selectTrainingType(trainingType: TrainingType): void {
+    if (this.activeTrainingType() === trainingType) return;
+    this.activeTrainingType.set(trainingType);
+    this.applyFilters();
   }
 }

@@ -285,6 +285,45 @@
   }
 </section>
 
+<section class="mt-4 rounded-xl border border-border bg-surface p-4" aria-label="แชร์ปฏิทิน">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="font-semibold text-text">แชร์ให้นักกีฬาและผู้ปกครอง</h2>
+      <p class="mt-1 text-sm text-text-secondary">
+        ลิงก์ลับสำหรับดูวันที่ เวลา และชื่อเล่นโค้ชเท่านั้น
+        @if (shareStatus()?.isActive) { · ลิงก์ที่ใช้งานลงท้าย {{ shareStatus()?.tokenHint }} }
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="min-h-10 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" [disabled]="shareProcessing()" (click)="createShareLink()">
+        {{ shareStatus()?.isActive ? 'สร้างลิงก์ใหม่' : 'สร้างลิงก์แชร์' }}
+      </button>
+      @if (shareStatus()?.isActive) {
+        <button type="button" class="min-h-10 rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger disabled:opacity-50" [disabled]="shareProcessing()" (click)="revokeShareLink()">ยกเลิกลิงก์</button>
+      }
+    </div>
+  </div>
+  @if (shareUrl()) {
+    <div class="mt-4 grid gap-4 rounded-xl bg-secondary-50 p-4 sm:grid-cols-[minmax(0,1fr)_12rem] sm:items-center">
+      <div class="min-w-0">
+        <label class="text-sm font-medium text-text" for="routine-share-url">ลิงก์ที่พร้อมแชร์</label>
+        <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+          <input id="routine-share-url" class="min-h-10 min-w-0 flex-1 rounded-lg border border-border bg-white px-3 text-sm" readonly [value]="shareUrl()" />
+          <button type="button" class="min-h-10 rounded-lg border border-primary-600 px-4 py-2 text-sm font-medium text-primary-700" (click)="copyShareLink()">คัดลอกลิงก์</button>
+        </div>
+        <p class="mt-2 text-xs text-text-secondary">QR Code มีข้อมูลลิงก์ลับเดียวกัน โปรดแชร์เฉพาะกับผู้ที่ควรดูปฏิทิน</p>
+      </div>
+      @if (shareQrCode()) {
+        <div class="flex flex-col items-center gap-2">
+          <img class="size-44 rounded-lg border border-border bg-white p-2" [src]="shareQrCode()" alt="QR Code สำหรับเปิดปฏิทินฝึกซ้อมประจำ" />
+          <button type="button" class="min-h-10 w-full rounded-lg bg-primary-700 px-3 py-2 text-sm font-medium text-white" (click)="downloadQrCode()">ดาวน์โหลด QR Code</button>
+        </div>
+      }
+    </div>
+  }
+  @if (shareMessage()) { <p class="mt-2 text-sm text-text-secondary">{{ shareMessage() }}</p> }
+</section>
+
 <app-confirmation-dialog
   [open]="pendingDelete() !== null"
   [danger]="true"

@@ -44,9 +44,12 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
             .Select(a => new
             {
                 a.AthleteId,
+                a.PrivateSessionAthleteId,
+                ParticipantIdentity = a.AthleteId ?? -a.PrivateSessionAthleteId!.Value,
                 a.AthleteCodeSnapshot,
                 a.AthleteNameSnapshot,
-                a.Athlete.Nickname,
+                Nickname = a.AthleteId.HasValue ? a.Athlete!.Nickname : null,
+                GuestPhone = a.PrivateSessionAthlete != null ? a.PrivateSessionAthlete.GuestPhone : null,
                 a.TrainingSessionId,
                 a.TrainingSession.TrainingType,
                 a.TrainingSession.SessionDate,
@@ -57,10 +60,13 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
             .ToListAsync();
 
         var items = records
-            .GroupBy(r => new { r.AthleteId, r.AthleteCodeSnapshot, r.AthleteNameSnapshot, r.Nickname })
+            .GroupBy(r => new { r.ParticipantIdentity, r.AthleteId, r.AthleteCodeSnapshot, r.AthleteNameSnapshot, r.Nickname, r.GuestPhone })
             .Select(g => new AthleteAttendanceReportItemDto
             {
                 AthleteId = g.Key.AthleteId,
+                IsGuest = g.Key.AthleteId is null,
+                ParticipantKey = g.Key.AthleteId is not null ? $"athlete-{g.Key.AthleteId}" : $"guest-{-g.Key.ParticipantIdentity}",
+                GuestPhone = g.Key.GuestPhone,
                 AthleteCode = g.Key.AthleteCodeSnapshot,
                 FullName = g.Key.AthleteNameSnapshot,
                 Nickname = g.Key.Nickname,

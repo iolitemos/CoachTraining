@@ -20,6 +20,10 @@ public class CoachTeachingHourReportItemDto
     public string? CoachNickname { get; set; }
     public string CoachColorHex { get; set; } = string.Empty;
     public int SessionCount { get; set; }
+    public int PlannedSessionCount { get; set; }
+    public int ActualSessionCount { get; set; }
+    public int PlannedDays { get; set; }
+    public int ActualDays { get; set; }
     public int RoutineDays { get; set; }
     public int PrivateDays { get; set; }
     public int TotalDays { get; set; }
@@ -32,4 +36,6 @@ public class CoachTeachingHourReportResponseDto
     public int TotalRoutineDays { get; set; }
     public int TotalPrivateDays { get; set; }
     public int GrandTotalDays { get; set; }
+    public int TotalPlannedDays { get; set; }
+    public int TotalActualDays { get; set; }
 }

@@ -38,10 +38,10 @@ public class RoutineAttendanceService : IRoutineAttendanceService
             .Select(a => new RoutineAttendanceListItemDto
             {
                 AttendanceId = a.AttendanceId,
-                AthleteId = a.AthleteId,
+                AthleteId = a.AthleteId!.Value,
                 AthleteCode = a.AthleteCodeSnapshot,
                 FullName = a.AthleteNameSnapshot,
-                Nickname = a.Athlete.Nickname,
+                Nickname = a.Athlete!.Nickname,
                 Status = a.Status,
                 ArrivalTime = a.ArrivalTime,
                 Remark = a.Remark,
@@ -189,7 +189,7 @@ public class RoutineAttendanceService : IRoutineAttendanceService
     private static RoutineAttendanceListItemDto MapToListItem(Attendance attendance) => new()
     {
         AttendanceId = attendance.AttendanceId,
-        AthleteId = attendance.AthleteId,
+        AthleteId = attendance.AthleteId!.Value,
         AthleteCode = attendance.AthleteCodeSnapshot,
         FullName = attendance.AthleteNameSnapshot,
         Nickname = attendance.Athlete?.Nickname,

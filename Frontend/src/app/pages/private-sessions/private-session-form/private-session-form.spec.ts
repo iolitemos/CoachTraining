@@ -56,7 +56,7 @@ describe('PrivateSessionForm', () => {
     ).toBe('สมหญิง ใจดี');
   });
 
-  it('should require at least one athlete before submit even when the rest of the form is valid', async () => {
+  it('should require at least one participant before submit even when the rest of the form is valid', async () => {
     await initInAddMode();
 
     component.form.setValue({
@@ -70,8 +70,33 @@ describe('PrivateSessionForm', () => {
 
     await component.onSubmit();
 
-    expect(component.errorMessage()).toBe('กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน');
+    expect(component.errorMessage()).toBe('กรุณาเพิ่มผู้เข้าร่วมอย่างน้อยหนึ่งคน');
     expect(component.submitting()).toBe(false);
+  });
+
+  it('should create a session with a temporary participant without an Athlete Master id', async () => {
+    await initInAddMode();
+    component.guestName = 'ผู้เรียนทดลอง';
+    component.guestPhone = '0812345678';
+    component.guestRemark = 'ทดลองเรียน';
+    component.addGuest();
+    component.form.setValue({
+      coachId: 1,
+      sessionDate: '2026-01-10',
+      startTime: '09:00',
+      endTime: '10:00',
+      location: '',
+      remarks: '',
+    });
+
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/private-sessions'));
+    expect(request.request.body.athleteIds).toEqual([]);
+    expect(request.request.body.guestParticipants).toEqual([
+      { fullName: 'ผู้เรียนทดลอง', phone: '0812345678', remark: 'ทดลองเรียน' },
+    ]);
+    request.flush({ message: 'Success', data: {} });
+    await submitPromise;
   });
 
   it('should not add the same athlete twice', async () => {

@@ -1,6 +1,6 @@
 <app-page-header
   [title]="isEditMode() ? 'แก้ไขฝึกซ้อมส่วนตัว' : 'เพิ่มฝึกซ้อมส่วนตัว'"
-  subtitle="กำหนดโค้ช นักกีฬา วันเวลา และสถานที่สำหรับฝึกซ้อมส่วนตัว"
+  subtitle="กำหนดโค้ช ผู้เข้าร่วม วันเวลา และสถานที่สำหรับฝึกซ้อมส่วนตัว"
 >
   <a actions routerLink="/private-sessions" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
 </app-page-header>
@@ -137,7 +137,7 @@
               }
             </div>
           }
-          <p class="mt-2 text-xs text-text-secondary">ระบบจะเพิ่มทั้งหมด {{ selectedOccurrenceCount() }} รายการ โดยใช้โค้ชและนักกีฬาชุดเดียวกัน</p>
+          <p class="mt-2 text-xs text-text-secondary">ระบบจะเพิ่มทั้งหมด {{ selectedOccurrenceCount() }} รายการ โดยใช้โค้ชและผู้เข้าร่วมชุดเดียวกัน</p>
         </fieldset>
       }
 
@@ -163,16 +163,24 @@
 
       <div>
         <span class="mb-1 block text-sm font-medium text-text">
-          นักกีฬา <span class="text-danger">*</span>
+          ผู้เข้าร่วม <span class="text-danger">*</span>
         </span>
 
         @if (selectedAthletes().length > 0) {
           <ul class="mb-2 flex flex-col gap-2">
-            @for (athlete of selectedAthletes(); track athlete.athleteId) {
+            @for (athlete of selectedAthletes(); track participantKey(athlete)) {
               <li class="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                <span class="min-w-0 break-words text-text">{{ athlete.athleteCode }} — {{ athlete.fullName }}</span>
+                <span class="min-w-0 break-words text-text">
+                  @if (athlete.isGuest) {
+                    <span class="mr-1 rounded bg-secondary-100 px-1.5 py-0.5 text-xs">ผู้เรียนชั่วคราว</span>
+                    {{ athlete.fullName }}
+                    @if (athlete.guestPhone) { <span class="text-text-secondary"> · {{ athlete.guestPhone }}</span> }
+                  } @else {
+                    {{ athlete.athleteCode }} — {{ athlete.fullName }}
+                  }
+                </span>
                 @if (!readOnly()) {
-                  <button type="button" class="min-h-10 shrink-0 rounded-lg px-2 text-danger hover:bg-danger-surface" (click)="removeAthlete(athlete.athleteId)">
+                  <button type="button" class="min-h-10 shrink-0 rounded-lg px-2 text-danger hover:bg-danger-surface" (click)="removeParticipant(participantKey(athlete))">
                     นำออก
                   </button>
                 }
@@ -180,10 +188,11 @@
             }
           </ul>
         } @else {
-          <p class="mb-2 text-sm text-text-secondary">ยังไม่ได้เลือกนักกีฬา</p>
+          <p class="mb-2 text-sm text-text-secondary">ยังไม่ได้เพิ่มผู้เข้าร่วม</p>
         }
 
         @if (!readOnly()) {
+          <p class="mb-2 text-xs text-text-secondary">เลือกนักกีฬาในระบบ หรือเพิ่มผู้เรียนชั่วคราวที่มาเรียนเพียงครั้งคราว</p>
           <div class="flex min-w-0 items-center gap-2">
             <input
               type="text"
@@ -229,6 +238,22 @@
               </ul>
             </div>
           }
+
+          <div class="mt-4 rounded-lg border border-border bg-secondary-50 p-3">
+            <p class="text-sm font-medium text-text">เพิ่มผู้เรียนชั่วคราว</p>
+            <p class="mt-0.5 text-xs text-text-secondary">ไม่สร้างข้อมูลในทะเบียนนักกีฬา และระบบจะไม่ตรวจตารางชนข้ามเซสชัน</p>
+            <div class="mt-3 grid gap-2 sm:grid-cols-2">
+              <input type="text" [(ngModel)]="guestName" [ngModelOptions]="{ standalone: true }" maxlength="200" placeholder="ชื่อผู้เรียน *"
+                class="min-h-11 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:outline-none" />
+              <input type="tel" [(ngModel)]="guestPhone" [ngModelOptions]="{ standalone: true }" maxlength="50" placeholder="เบอร์โทรศัพท์ (ถ้ามี)"
+                class="min-h-11 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:outline-none" />
+              <input type="text" [(ngModel)]="guestRemark" [ngModelOptions]="{ standalone: true }" maxlength="500" placeholder="หมายเหตุ เช่น ทดลองเรียน"
+                class="min-h-11 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:outline-none sm:col-span-2" />
+            </div>
+            <button type="button" (click)="addGuest()" class="mt-2 min-h-11 w-full rounded-lg border border-primary-500 px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-50">
+              เพิ่มผู้เรียนชั่วคราว
+            </button>
+          </div>
         }
       </div>
 

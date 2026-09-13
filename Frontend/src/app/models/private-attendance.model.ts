@@ -7,9 +7,12 @@ export type PrivateAttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Excused';
  * (FR-PATT-001), so a null status is how "missing" is identified (requirement.md 9.4).
  */
 export interface PrivateAttendanceRosterItem {
-  athleteId: number;
+  privateSessionAthleteId: number;
+  athleteId: number | null;
+  isGuest: boolean;
   athleteCode: string;
   fullName: string;
+  guestPhone: string | null;
   attendanceId: number | null;
   status: PrivateAttendanceStatus | null;
   arrivalTime: string | null;

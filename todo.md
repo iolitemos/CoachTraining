@@ -745,6 +745,10 @@
 
 ### 5.8 Private Attendance Frontend
 
+- [x] Support temporary Private Training participants without creating Athlete Master records.
+- [x] Record attendance by Private session participant so both registered athletes and guests are supported.
+- [x] Label temporary participants clearly and exclude them from registered-athlete conflict validation.
+
 - [x] Create Private Attendance component.
 - [x] Display all athletes assigned to the Private session.
 - [x] Add Present status option.
@@ -866,6 +870,7 @@
 - [x] Make report layout responsive.
 - [x] Display distinct coach teaching-day totals instead of hourly totals, with same-day sessions counted once.
 - [x] Default teaching-day filters to the current month and show coach nickname/color in report controls and results.
+- [x] Split the coach teaching-day report into Routine and Private tabs and compare planned days with actual teaching days.
 
 ### 5.16 Athlete Attendance Report Frontend
 
@@ -895,6 +900,19 @@
 - [x] Display responsible user and action date/time.
 - [x] Add loading and error states for history data.
 - [x] Make history/timeline responsive.
+
+### 5.18 Public Routine Calendar Sharing
+
+- [x] Add revocable Routine calendar share-link persistence and EF Core migration.
+- [x] Store only a SHA-256 hash of each cryptographically random share token.
+- [x] Add Administrator APIs to inspect, rotate, and revoke the active share link.
+- [x] Add a bounded anonymous API returning only active Routine date, time, Coach nickname, and color.
+- [x] Add a responsive Thai read-only public calendar outside the authenticated application shell.
+- [x] Add Administrator controls to create, copy, rotate, and revoke the secret link.
+- [x] Generate the share QR Code locally in the browser and provide a PNG download action.
+- [x] Mark Competition Match date ranges and show match name, province, and dates on the shared calendar.
+- [x] Add backend tests for token rotation, invalidation, date-range validation, and public projection.
+- [x] Pass backend tests and backend/frontend production builds.
 
 ---
 

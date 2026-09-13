@@ -15,8 +15,12 @@ public class Attendance
     public int TrainingSessionId { get; set; }
     public TrainingSession TrainingSession { get; set; } = null!;
 
-    public int AthleteId { get; set; }
-    public Athlete Athlete { get; set; } = null!;
+    public int? AthleteId { get; set; }
+    public Athlete? Athlete { get; set; }
+
+    /// <summary>Identifies the assigned participant for Private Training, including guests.</summary>
+    public int? PrivateSessionAthleteId { get; set; }
+    public PrivateSessionAthlete? PrivateSessionAthlete { get; set; }
 
     public string AthleteCodeSnapshot { get; set; } = string.Empty;
     public string AthleteNameSnapshot { get; set; } = string.Empty;

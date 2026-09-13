@@ -12,6 +12,9 @@ import { ApiErrorBody } from '../../../models/paged-result.model';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 import { CompetitionMatch } from '../../../models/competition-match.model';
 import { CompetitionMatchService } from '../../../services/competition-match.service';
+import { RoutineCalendarShareStatus } from '../../../models/public-routine-calendar.model';
+import { PublicRoutineCalendarService } from '../../../services/public-routine-calendar.service';
+import QRCode from 'qrcode';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -42,6 +45,11 @@ export class RoutineScheduleCalendar implements OnInit {
   pendingDelete = signal<RoutineScheduleListItem | null>(null);
   deleteProcessing = signal(false);
   actionError = signal<string | null>(null);
+  shareStatus = signal<RoutineCalendarShareStatus | null>(null);
+  shareUrl = signal<string | null>(null);
+  shareQrCode = signal<string | null>(null);
+  shareProcessing = signal(false);
+  shareMessage = signal<string | null>(null);
 
   readonly dayHeaders = DAY_HEADERS;
 
@@ -86,10 +94,61 @@ export class RoutineScheduleCalendar implements OnInit {
   constructor(
     private readonly routineScheduleService: RoutineScheduleService,
     private readonly competitionMatchService: CompetitionMatchService,
+    private readonly publicCalendarService: PublicRoutineCalendarService,
   ) {}
 
   ngOnInit(): void {
     void this.load();
+    void this.loadShareStatus();
+  }
+
+  async loadShareStatus(): Promise<void> {
+    try { this.shareStatus.set(await this.publicCalendarService.getShareStatus()); }
+    catch { this.shareMessage.set('ไม่สามารถโหลดสถานะลิงก์แชร์ได้'); }
+  }
+
+  async createShareLink(): Promise<void> {
+    this.shareProcessing.set(true); this.shareMessage.set(null);
+    try {
+      const result = await this.publicCalendarService.rotateShareLink();
+      const url = `${window.location.origin}/public/routine-calendar/${result.token}`;
+      this.shareUrl.set(url);
+      this.shareQrCode.set(await QRCode.toDataURL(url, {
+        errorCorrectionLevel: 'M',
+        margin: 2,
+        width: 512,
+        color: { dark: '#064e3b', light: '#ffffff' },
+      }));
+      this.shareStatus.set({ isActive: true, tokenHint: result.tokenHint, createdDate: result.createdDate });
+      this.shareMessage.set('สร้างลิงก์ใหม่แล้ว โปรดคัดลอกก่อนออกจากหน้านี้');
+    } catch { this.shareMessage.set('ไม่สามารถสร้างลิงก์แชร์ได้'); }
+    finally { this.shareProcessing.set(false); }
+  }
+
+  async copyShareLink(): Promise<void> {
+    const url = this.shareUrl();
+    if (!url) return;
+    try { await navigator.clipboard.writeText(url); this.shareMessage.set('คัดลอกลิงก์แล้ว'); }
+    catch { this.shareMessage.set('คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกลิงก์แล้วคัดลอก'); }
+  }
+
+  downloadQrCode(): void {
+    const dataUrl = this.shareQrCode();
+    if (!dataUrl) return;
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = 'routine-training-calendar-qr.png';
+    link.click();
+  }
+
+  async revokeShareLink(): Promise<void> {
+    this.shareProcessing.set(true); this.shareMessage.set(null);
+    try {
+      await this.publicCalendarService.revokeShareLink();
+      this.shareStatus.set({ isActive: false, tokenHint: null, createdDate: null });
+      this.shareUrl.set(null); this.shareQrCode.set(null); this.shareMessage.set('ยกเลิกลิงก์แชร์แล้ว');
+    } catch { this.shareMessage.set('ไม่สามารถยกเลิกลิงก์แชร์ได้'); }
+    finally { this.shareProcessing.set(false); }
   }
 
   async load(): Promise<void> {

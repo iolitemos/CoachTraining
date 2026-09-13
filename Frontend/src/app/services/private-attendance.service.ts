@@ -26,11 +26,11 @@ export class PrivateAttendanceService {
 
   async set(
     trainingSessionId: number,
-    athleteId: number,
+    privateSessionAthleteId: number,
     request: PrivateAttendanceSetRequest,
   ): Promise<PrivateAttendanceRoster> {
     const response = await firstValueFrom(
-      this.http.put<ApiSuccessBody<{ rosterComplete: boolean }>>(`${this.baseUrl(trainingSessionId)}/${athleteId}`, request),
+      this.http.put<ApiSuccessBody<{ rosterComplete: boolean }>>(`${this.baseUrl(trainingSessionId)}/participants/${privateSessionAthleteId}`, request),
     );
     // Refetch the full roster: the Set endpoint only returns the changed row
     // plus a completeness flag (PrivateAttendanceActionResult), not the whole list.

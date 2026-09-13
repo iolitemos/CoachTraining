@@ -67,12 +67,18 @@ public class CoachTeachingHourReportServiceTests
         Assert.Equal(1, item.RoutineDays);
         Assert.Equal(1, item.PrivateDays);
         Assert.Equal(1, item.TotalDays);
+        Assert.Equal(1, item.PlannedDays);
+        Assert.Equal(1, item.ActualDays);
         Assert.Equal(3, item.SessionCount);
+        Assert.Equal(3, item.PlannedSessionCount);
+        Assert.Equal(3, item.ActualSessionCount);
         Assert.Equal("Nick C001", item.CoachNickname);
         Assert.Equal("#10B981", item.CoachColorHex);
         Assert.Equal(1, result.TotalRoutineDays);
         Assert.Equal(1, result.TotalPrivateDays);
         Assert.Equal(1, result.GrandTotalDays);
+        Assert.Equal(1, result.TotalPlannedDays);
+        Assert.Equal(1, result.TotalActualDays);
     }
 
     [Fact]
@@ -91,8 +97,12 @@ public class CoachTeachingHourReportServiceTests
         var service = CreateService(db);
         var result = await service.GetReportAsync(new CoachTeachingHourReportFilter());
 
-        Assert.Empty(result.Items);
+        var item = Assert.Single(result.Items);
+        Assert.Equal(2, item.PlannedDays);
+        Assert.Equal(0, item.ActualDays);
         Assert.Equal(0, result.GrandTotalDays);
+        Assert.Equal(2, result.TotalPlannedDays);
+        Assert.Equal(0, result.TotalActualDays);
     }
 
     [Fact]
@@ -110,9 +120,15 @@ public class CoachTeachingHourReportServiceTests
         var service = CreateService(db);
         var result = await service.GetReportAsync(new CoachTeachingHourReportFilter());
 
-        var item = Assert.Single(result.Items);
+        var item = Assert.Single(result.Items, i => i.CoachId == substituteCoach.CoachId);
         Assert.Equal(substituteCoach.CoachId, item.CoachId);
         Assert.Equal(1, item.TotalDays);
+        Assert.Equal(0, item.PlannedDays);
+        Assert.Equal(1, item.ActualDays);
+
+        var assignedItem = Assert.Single(result.Items, i => i.CoachId == assignedCoach.CoachId);
+        Assert.Equal(1, assignedItem.PlannedDays);
+        Assert.Equal(0, assignedItem.ActualDays);
     }
 
     [Fact]

@@ -73,10 +73,10 @@ export class PrivateAttendance implements OnChanges {
       return;
     }
 
-    this.setSaving(item.athleteId, true);
+    this.setSaving(item.privateSessionAthleteId, true);
     this.actionError.set(null);
     try {
-      const roster = await this.privateAttendanceService.set(this.trainingSessionId(), item.athleteId, {
+      const roster = await this.privateAttendanceService.set(this.trainingSessionId(), item.privateSessionAthleteId, {
         status: item.status,
         arrivalTime: item.arrivalTime,
         remark: item.remark,
@@ -86,7 +86,7 @@ export class PrivateAttendance implements OnChanges {
     } catch {
       this.actionError.set('ไม่สามารถบันทึกข้อมูลการเข้าร่วมได้');
     } finally {
-      this.setSaving(item.athleteId, false);
+      this.setSaving(item.privateSessionAthleteId, false);
     }
   }
 

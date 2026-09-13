@@ -16,9 +16,20 @@ export interface PrivateSessionListItem {
 }
 
 export interface PrivateSessionAthlete {
-  athleteId: number;
+  privateSessionAthleteId: number;
+  athleteId: number | null;
+  isGuest: boolean;
   athleteCode: string;
   fullName: string;
+  guestPhone: string | null;
+  guestRemark: string | null;
+  clientKey?: string;
+}
+
+export interface GuestParticipantRequest {
+  fullName: string;
+  phone: string | null;
+  remark: string | null;
 }
 
 export interface PrivateSessionDetail {
@@ -43,6 +54,7 @@ export interface PrivateSessionSaveRequest {
   location: string | null;
   remarks: string | null;
   athleteIds: number[];
+  guestParticipants: GuestParticipantRequest[];
 }
 
 export interface PrivateSessionBatchCreateRequest extends Omit<PrivateSessionSaveRequest, 'sessionDate'> {

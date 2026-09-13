@@ -58,6 +58,9 @@ export class PrivateSessionForm implements OnInit {
   athleteSearchResults = signal<AthleteOption[]>([]);
   athleteSearching = signal(false);
   athleteSearchError = signal<string | null>(null);
+  guestName = '';
+  guestPhone = '';
+  guestRemark = '';
 
   form = this.fb.group({
     coachId: this.fb.control<number | null>(null, Validators.required),
@@ -187,12 +190,33 @@ export class PrivateSessionForm implements OnInit {
     }
     this.selectedAthletes.update((current) => [
       ...current,
-      { athleteId: athlete.athleteId, athleteCode: athlete.athleteCode, fullName: athlete.fullName },
+      { privateSessionAthleteId: 0, athleteId: athlete.athleteId, isGuest: false, athleteCode: athlete.athleteCode, fullName: athlete.fullName, guestPhone: null, guestRemark: null, clientKey: `athlete-${athlete.athleteId}` },
     ]);
   }
 
-  removeAthlete(athleteId: number): void {
-    this.selectedAthletes.update((current) => current.filter((a) => a.athleteId !== athleteId));
+  addGuest(): void {
+    const fullName = this.guestName.trim();
+    if (!fullName) {
+      this.errorMessage.set('กรุณากรอกชื่อผู้เรียนชั่วคราว');
+      return;
+    }
+    this.selectedAthletes.update((current) => [...current, {
+      privateSessionAthleteId: 0, athleteId: null, isGuest: true, athleteCode: 'ผู้เรียนชั่วคราว', fullName,
+      guestPhone: this.guestPhone.trim() || null, guestRemark: this.guestRemark.trim() || null,
+      clientKey: `guest-${Date.now()}-${Math.random()}`,
+    }]);
+    this.guestName = '';
+    this.guestPhone = '';
+    this.guestRemark = '';
+    this.errorMessage.set(null);
+  }
+
+  participantKey(participant: PrivateSessionAthlete): string {
+    return participant.clientKey ?? `saved-${participant.privateSessionAthleteId}`;
+  }
+
+  removeParticipant(key: string): void {
+    this.selectedAthletes.update((current) => current.filter((a) => this.participantKey(a) !== key));
   }
 
   async onSubmit(): Promise<void> {
@@ -203,7 +227,7 @@ export class PrivateSessionForm implements OnInit {
     if (this.form.invalid || this.selectedAthletes().length === 0) {
       this.form.markAllAsTouched();
       if (this.selectedAthletes().length === 0) {
-        this.errorMessage.set('กรุณาเลือกนักกีฬาอย่างน้อยหนึ่งคน');
+        this.errorMessage.set('กรุณาเพิ่มผู้เข้าร่วมอย่างน้อยหนึ่งคน');
       }
       return;
     }
@@ -228,7 +252,8 @@ export class PrivateSessionForm implements OnInit {
       endTime: value.endTime!,
       location: value.location || null,
       remarks: value.remarks || null,
-      athleteIds: this.selectedAthletes().map((a) => a.athleteId),
+      athleteIds: this.selectedAthletes().filter((a) => a.athleteId !== null).map((a) => a.athleteId as number),
+      guestParticipants: this.selectedAthletes().filter((a) => a.isGuest).map((a) => ({ fullName: a.fullName, phone: a.guestPhone, remark: a.guestRemark })),
     };
 
     try {
@@ -245,6 +270,7 @@ export class PrivateSessionForm implements OnInit {
           location: payload.location,
           remarks: payload.remarks,
           athleteIds: payload.athleteIds,
+          guestParticipants: payload.guestParticipants,
         });
       } else {
         await this.privateSessionService.create(payload);

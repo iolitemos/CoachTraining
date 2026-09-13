@@ -24,7 +24,10 @@ public class AthleteAttendanceRecordDto
 /// <summary>One athlete's attendance summary and history for the filtered range.</summary>
 public class AthleteAttendanceReportItemDto
 {
-    public int AthleteId { get; set; }
+    public int? AthleteId { get; set; }
+    public bool IsGuest { get; set; }
+    public string ParticipantKey { get; set; } = string.Empty;
+    public string? GuestPhone { get; set; }
     public string AthleteCode { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string? Nickname { get; set; }

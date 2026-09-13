@@ -11,6 +11,10 @@ import { CoachHome } from './pages/coach-home/coach-home';
 import { CoachSession } from './pages/coach-session/coach-session';
 
 export const routes: Routes = [
+  {
+    path: 'public/routine-calendar/:token',
+    loadComponent: () => import('./pages/public-routine-calendar/public-routine-calendar').then((m) => m.PublicRoutineCalendar),
+  },
   { path: 'login', component: Login },
   {
     path: 'forgot-password',

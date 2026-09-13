@@ -52,7 +52,7 @@
               </div>
               <div class="space-y-1">
                 @for (session of day.sessions.slice(0, 3); track session.trainingSessionId) {
-                  <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="coach-event block rounded-md border-l-3 px-2 py-1 text-xs" [style.--coach-color]="session.coachColorHex" [title]="(session.coachNickname || session.coachFullName) + ' · ' + session.startTime.slice(0, 5) + '–' + session.endTime.slice(0, 5) + ' น. · นักกีฬา ' + session.athleteCount + ' คน'">
+                  <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="coach-event block rounded-md border-l-3 px-2 py-1 text-xs" [style.--coach-color]="session.coachColorHex" [title]="(session.coachNickname || session.coachFullName) + ' · ' + session.startTime.slice(0, 5) + '–' + session.endTime.slice(0, 5) + ' น. · ผู้เข้าร่วม ' + session.athleteCount + ' คน'">
                     <span class="block truncate font-semibold">{{ session.coachNickname || session.coachFullName }}</span>
                     <span class="block truncate text-[11px] opacity-80">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น. · {{ session.athleteCount }} คน</span>
                   </a>
@@ -100,7 +100,7 @@
                 @for (session of day.sessions; track session.trainingSessionId) {
                   <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="coach-event block rounded-lg border border-l-4 p-3" [style.--coach-color]="session.coachColorHex">
                     <div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="truncate font-semibold">{{ session.coachNickname || session.coachFullName }}</p><p class="mt-1 text-sm">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น.</p></div><app-status-badge [status]="session.status" /></div>
-                    <p class="mt-2 text-xs">นักกีฬา {{ session.athleteCount }} คน</p>
+                    <p class="mt-2 text-xs">ผู้เข้าร่วม {{ session.athleteCount }} คน</p>
                   </a>
                 }
               </div>

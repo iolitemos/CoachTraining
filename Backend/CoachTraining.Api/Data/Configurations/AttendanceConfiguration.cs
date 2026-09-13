@@ -30,6 +30,12 @@ public class AttendanceConfiguration : IEntityTypeConfiguration<Attendance>
             .HasForeignKey(a => a.AthleteId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasIndex(a => a.PrivateSessionAthleteId).IsUnique();
+        builder.HasOne(a => a.PrivateSessionAthlete)
+            .WithMany()
+            .HasForeignKey(a => a.PrivateSessionAthleteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne(a => a.RecordedByUser)
             .WithMany()
             .HasForeignKey(a => a.RecordedByUserId)
