@@ -1,22 +1,26 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PublicCompetitionMatch, PublicRoutineCalendarItem } from '../../models/public-routine-calendar.model';
+import { PublicCalendarNote, PublicCompetitionMatch, PublicRoutineCalendarItem } from '../../models/public-routine-calendar.model';
 import { PublicRoutineCalendarService } from '../../services/public-routine-calendar.service';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
+import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
+import { CalendarNoteDialog } from '../../shared/calendar-note-dialog/calendar-note-dialog';
 
 type ViewState = 'loading' | 'ready' | 'error' | 'invalid';
-interface CalendarDay { isoDate: string; dayNumber: number; isCurrentMonth: boolean; items: PublicRoutineCalendarItem[]; competitionMatches: PublicCompetitionMatch[]; }
+interface CalendarDay { isoDate: string; dayNumber: number; isCurrentMonth: boolean; items: PublicRoutineCalendarItem[]; competitionMatches: PublicCompetitionMatch[]; note: PublicCalendarNote | null; }
 const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 @Component({
   selector: 'app-public-routine-calendar',
-  imports: [DisplayDatePipe],
+  imports: [DisplayDatePipe, CoachNamePipe, CalendarNoteDialog],
   templateUrl: './public-routine-calendar.html',
 })
 export class PublicRoutineCalendar implements OnInit {
   state = signal<ViewState>('loading');
   items = signal<PublicRoutineCalendarItem[]>([]);
   competitionMatches = signal<PublicCompetitionMatch[]>([]);
+  notes = signal<PublicCalendarNote[]>([]);
+  noteDialogOpen = signal(false);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
   readonly dayHeaders = DAY_HEADERS;
@@ -34,6 +38,7 @@ export class PublicRoutineCalendar implements OnInit {
         isCurrentMonth: date.getMonth() === month.getMonth(),
         items: this.items().filter(item => item.trainingDate === isoDate),
         competitionMatches: this.competitionMatches().filter(match => match.startDate <= isoDate && isoDate <= match.endDate),
+        note: this.notes().find(note => note.noteDate === isoDate) ?? null,
       };
     });
   });
@@ -55,6 +60,7 @@ export class PublicRoutineCalendar implements OnInit {
       const data = await this.service.getCalendar(this.token, first, last);
       this.items.set(data.schedules);
       this.competitionMatches.set(data.competitionMatches);
+      this.notes.set(data.notes ?? []);
       this.state.set('ready');
     }
     catch (error: unknown) {
@@ -68,6 +74,8 @@ export class PublicRoutineCalendar implements OnInit {
     this.visibleMonth.set(next); this.selectedDate.set(toIsoDate(next)); void this.load();
   }
   selectDay(day: CalendarDay): void { this.selectedDate.set(day.isoDate); }
+  openNote(noteDate: string): void { this.selectedDate.set(noteDate); this.noteDialogOpen.set(true); }
+  selectedNote(): PublicCalendarNote | null { return this.notes().find(note => note.noteDate === this.selectedDate()) ?? null; }
 }
 
 function startOfMonth(date: Date): Date { return new Date(date.getFullYear(), date.getMonth(), 1); }

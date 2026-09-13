@@ -50,10 +50,10 @@ describe('PrivateSessionForm', () => {
   it('formats coach options as nickname followed by full name', () => {
     expect(
       component.coachPickerLabel({ nickname: 'มอส', fullName: 'สมชาย ใจดี' }),
-    ).toBe('มอส - สมชาย ใจดี');
+    ).toBe('โค้ชมอส - สมชาย ใจดี');
     expect(
       component.coachPickerLabel({ nickname: null, fullName: 'สมหญิง ใจดี' }),
-    ).toBe('สมหญิง ใจดี');
+    ).toBe('โค้ชสมหญิง ใจดี');
   });
 
   it('should require at least one participant before submit even when the rest of the form is valid', async () => {

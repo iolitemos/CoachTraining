@@ -26,6 +26,7 @@ import { ApprovalActionDialog } from '../../shared/approval-action-dialog/approv
 import { SessionHistoryTimeline } from '../../shared/session-history-timeline/session-history-timeline';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 import { ConfirmationDialog } from '../../shared/confirmation-dialog/confirmation-dialog';
+import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
 import { ApiErrorBody } from '../../models/paged-result.model';
 import { TrainingLog, TrainingSessionDetail } from '../../models/training-session.model';
 import { SubstituteCoachResponse } from '../../models/substitute-coach.model';
@@ -68,6 +69,7 @@ const NON_EDITABLE_STATUSES = ['Submitted', 'Approved', 'Locked', 'Cancelled', '
     ApprovalActionDialog,
     SessionHistoryTimeline,
     DisplayDatePipe,
+    CoachNamePipe,
     ConfirmationDialog,
     LucidePlay,
     LucideCircleCheckBig,

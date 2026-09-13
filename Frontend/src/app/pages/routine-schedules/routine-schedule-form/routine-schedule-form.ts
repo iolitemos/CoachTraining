@@ -9,10 +9,11 @@ import { CoachOption } from '../../../models/coach.model';
 import { CoachService } from '../../../services/coach.service';
 import { RoutineScheduleService } from '../../../services/routine-schedule.service';
 import { DateInput } from '../../../shared/date-input/date-input';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 @Component({
   selector: 'app-routine-schedule-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, DateInput],
+  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, DateInput, CoachNamePipe],
   templateUrl: './routine-schedule-form.html',
   styleUrl: './routine-schedule-form.css',
 })

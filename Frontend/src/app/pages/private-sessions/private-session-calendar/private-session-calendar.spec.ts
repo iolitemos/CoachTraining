@@ -15,7 +15,11 @@ describe('PrivateSessionCalendar', () => {
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => httpMock.verify());
+  afterEach(() => {
+    httpMock.match((request) => request.url.endsWith('/calendar-notes'))
+      .forEach((request) => request.flush({ message: 'Success', data: [] }));
+    httpMock.verify();
+  });
 
   it('loads the complete visible calendar range', async () => {
     const component = TestBed.createComponent(PrivateSessionCalendar).componentInstance;
@@ -25,6 +29,7 @@ describe('PrivateSessionCalendar', () => {
     expect(request.request.params.get('startDate')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(request.request.params.get('endDate')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     request.flush({ message: 'Success', data: [] });
+    httpMock.expectOne((req) => req.url.endsWith('/calendar-notes')).flush({ message: 'Success', data: [] });
     await loadPromise;
 
     expect(component.state()).toBe('ready');

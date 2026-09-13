@@ -101,7 +101,7 @@
           >
             <option [ngValue]="null">— ไม่เชื่อมโยง —</option>
             @for (coach of coachOptions(); track coach.coachId) {
-              <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName }}</option>
+              <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName | coachName }}</option>
             }
           </select>
         </div>

@@ -16,6 +16,7 @@ import { TrainingSessionService } from '../../../services/training-session.servi
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 import { DateInput } from '../../../shared/date-input/date-input';
 import { FilterStateService } from '../../../services/filter-state.service';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -29,7 +30,7 @@ type ViewState = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-review-list',
-  imports: [FormsModule, SlicePipe, RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe, DateInput],
+  imports: [FormsModule, SlicePipe, RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe, DateInput, CoachNamePipe],
   templateUrl: './review-list.html',
   styleUrl: './review-list.css',
 })

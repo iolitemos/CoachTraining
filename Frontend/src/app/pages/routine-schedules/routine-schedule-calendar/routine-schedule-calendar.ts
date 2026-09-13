@@ -15,6 +15,10 @@ import { CompetitionMatchService } from '../../../services/competition-match.ser
 import { RoutineCalendarShareStatus } from '../../../models/public-routine-calendar.model';
 import { PublicRoutineCalendarService } from '../../../services/public-routine-calendar.service';
 import QRCode from 'qrcode';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
+import { CalendarNote } from '../../../models/calendar-note.model';
+import { CalendarNoteService } from '../../../services/calendar-note.service';
+import { CalendarNoteDialog } from '../../../shared/calendar-note-dialog/calendar-note-dialog';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -26,13 +30,14 @@ interface CalendarDay {
   isToday: boolean;
   schedules: RoutineScheduleListItem[];
   competitionMatches: CompetitionMatch[];
+  note: CalendarNote | null;
 }
 
 const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 @Component({
   selector: 'app-routine-schedule-calendar',
-  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, ConfirmationDialog, DisplayDatePipe],
+  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, ConfirmationDialog, DisplayDatePipe, CoachNamePipe, CalendarNoteDialog],
   templateUrl: './routine-schedule-calendar.html',
   styleUrl: './routine-schedule-calendar.css',
 })
@@ -40,6 +45,9 @@ export class RoutineScheduleCalendar implements OnInit {
   state = signal<ViewState>('loading');
   schedules = signal<RoutineScheduleListItem[]>([]);
   competitionMatches = signal<CompetitionMatch[]>([]);
+  notes = signal<CalendarNote[]>([]);
+  noteDialogOpen = signal(false);
+  noteDialogDateSelectable = signal(false);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
   pendingDelete = signal<RoutineScheduleListItem | null>(null);
@@ -77,6 +85,7 @@ export class RoutineScheduleCalendar implements OnInit {
         competitionMatches: this.competitionMatches().filter((match) =>
           occursDuringCompetition(match, toIsoDate(date)),
         ),
+        note: this.notes().find((note) => note.noteDate === toIsoDate(date)) ?? null,
       };
     });
   });
@@ -95,6 +104,7 @@ export class RoutineScheduleCalendar implements OnInit {
     private readonly routineScheduleService: RoutineScheduleService,
     private readonly competitionMatchService: CompetitionMatchService,
     private readonly publicCalendarService: PublicRoutineCalendarService,
+    private readonly calendarNoteService: CalendarNoteService,
   ) {}
 
   ngOnInit(): void {
@@ -154,12 +164,15 @@ export class RoutineScheduleCalendar implements OnInit {
   async load(): Promise<void> {
     this.state.set('loading');
     try {
-      const [schedules, competitionMatches] = await Promise.all([
+      const days = this.calendarDays();
+      const [schedules, competitionMatches, notes] = await Promise.all([
         this.routineScheduleService.listAll(),
         this.competitionMatchService.listAll(),
+        this.calendarNoteService.list(days[0].isoDate, days[days.length - 1].isoDate),
       ]);
       this.schedules.set(schedules);
       this.competitionMatches.set(competitionMatches);
+      this.notes.set(notes);
       this.state.set('ready');
     } catch {
       this.state.set('error');
@@ -171,12 +184,34 @@ export class RoutineScheduleCalendar implements OnInit {
     const nextMonth = new Date(current.getFullYear(), current.getMonth() + offset, 1);
     this.visibleMonth.set(nextMonth);
     this.selectedDate.set(toIsoDate(nextMonth));
+    void this.loadNotes();
   }
 
   goToCurrentMonth(): void {
     const today = new Date();
     this.visibleMonth.set(startOfMonth(today));
     this.selectedDate.set(toIsoDate(today));
+    void this.loadNotes();
+  }
+
+  openNote(noteDate: string, allowDateSelection = false): void {
+    this.selectedDate.set(noteDate);
+    this.noteDialogDateSelectable.set(allowDateSelection);
+    this.noteDialogOpen.set(true);
+  }
+
+  selectedNote(): CalendarNote | null {
+    return this.notes().find((note) => note.noteDate === this.selectedDate()) ?? null;
+  }
+
+  async noteChanged(): Promise<void> {
+    this.noteDialogOpen.set(false);
+    await this.loadNotes();
+  }
+
+  private async loadNotes(): Promise<void> {
+    const days = this.calendarDays();
+    this.notes.set(await this.calendarNoteService.list(days[0].isoDate, days[days.length - 1].isoDate));
   }
 
   selectDay(day: CalendarDay): void {

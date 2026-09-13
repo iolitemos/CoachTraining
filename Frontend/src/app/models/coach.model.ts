@@ -1,3 +1,5 @@
+import { formatCoachName } from '../shared/coach-name/coach-name.pipe';
+
 /** Coach Management (requirement.md 4.2, FR-COACH-001–004). */
 export interface CoachListItem {
   coachId: number;
@@ -57,5 +59,7 @@ export interface CoachOption {
 /** Compact selector label: "nickname - full name", falling back to full name. */
 export function coachPickerLabel(coach: Pick<CoachOption, 'nickname' | 'fullName'>): string {
   const nickname = coach.nickname?.trim();
-  return nickname ? `${nickname} - ${coach.fullName}` : coach.fullName;
+  return nickname
+    ? `${formatCoachName(nickname)} - ${coach.fullName}`
+    : formatCoachName(coach.fullName);
 }

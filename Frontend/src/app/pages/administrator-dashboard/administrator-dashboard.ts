@@ -16,6 +16,7 @@ import { AdministratorDashboardService } from '../../services/administrator-dash
 import { DateInput } from '../../shared/date-input/date-input';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 import { FilterStateService } from '../../services/filter-state.service';
+import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -36,6 +37,7 @@ type ViewState = 'loading' | 'error' | 'ready';
     LucideUsers,
     DateInput,
     DisplayDatePipe,
+    CoachNamePipe,
   ],
   templateUrl: './administrator-dashboard.html',
   styleUrl: './administrator-dashboard.css',

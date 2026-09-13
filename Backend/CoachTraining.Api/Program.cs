@@ -109,6 +109,7 @@ builder.Services.AddScoped<IEmailSender, MailKitEmailSender>();
 builder.Services.AddScoped<ICoachService, CoachService>();
 builder.Services.AddScoped<IAthleteService, AthleteService>();
 builder.Services.AddScoped<ICompetitionMatchService, CompetitionMatchService>();
+builder.Services.AddScoped<ICalendarNoteService, CalendarNoteService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddSingleton<ISessionStatusService, SessionStatusService>();
 builder.Services.AddScoped<IScheduleConflictService, ScheduleConflictService>();

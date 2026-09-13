@@ -14,6 +14,7 @@ import { RoutineScheduleService } from '../../../services/routine-schedule.servi
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 import { FilterStateService } from '../../../services/filter-state.service';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -31,6 +32,7 @@ type ViewState = 'loading' | 'error' | 'ready';
     LucidePencil,
     LucideTrash2,
     DisplayDatePipe,
+    CoachNamePipe,
   ],
   templateUrl: './routine-schedule-list.html',
   styleUrl: './routine-schedule-list.css',

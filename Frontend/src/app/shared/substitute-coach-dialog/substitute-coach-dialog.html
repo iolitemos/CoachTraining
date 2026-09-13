@@ -29,7 +29,7 @@
           >
             <option [ngValue]="null" disabled>เลือกโค้ชตัวแทน</option>
             @for (coach of eligibleCoaches(); track coach.coachId) {
-              <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName }}</option>
+              <option [ngValue]="coach.coachId">{{ coach.coachCode }} — {{ coach.fullName | coachName }}</option>
             }
           </select>
         </label>

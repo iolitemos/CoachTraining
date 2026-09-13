@@ -11,12 +11,13 @@ import { PrivateSessionListItem } from '../../../models/private-session.model';
 import { PrivateSessionService } from '../../../services/private-session.service';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 import { FilterStateService } from '../../../services/filter-state.service';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
 @Component({
   selector: 'app-private-session-list',
-  imports: [RouterLink, PageHeader, SearchFilterToolbar, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe],
+  imports: [RouterLink, PageHeader, SearchFilterToolbar, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe, CoachNamePipe],
   templateUrl: './private-session-list.html',
   styleUrl: './private-session-list.css',
 })

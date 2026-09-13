@@ -3,6 +3,7 @@
   subtitle="ดูตารางรายเดือนและเลือกวันที่เพื่อสร้างตารางใหม่"
 >
   <div actions class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+    <button type="button" class="hidden min-h-10 items-center justify-center rounded-lg border border-warning/40 bg-warning-surface px-3 py-2 text-sm font-medium text-text md:inline-flex" (click)="openNote(selectedDate(), true)">+ เพิ่ม Note</button>
     <a
       routerLink="/routine-schedules/list"
       class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50 sm:px-4"
@@ -98,7 +99,7 @@
         <div class="grid grid-cols-7">
           @for (day of calendarDays(); track day.isoDate) {
             <div
-              class="group min-h-32 border-r border-b border-border p-2 last:border-r-0"
+              class="group relative min-h-32 border-r border-b border-border p-2 last:border-r-0"
               [class.bg-secondary-50]="!day.isCurrentMonth"
             >
               <div class="mb-2 flex items-center justify-between">
@@ -125,11 +126,16 @@
                   [routerLink]="['/routine-schedules/new']"
                   [queryParams]="{ date: day.isoDate }"
                   class="rounded px-1.5 py-0.5 text-xs font-medium text-primary-600 opacity-0 transition-opacity hover:bg-primary-50 group-hover:opacity-100 focus:opacity-100"
+                  [class.mr-8]="day.note"
                   [attr.aria-label]="'เพิ่มตารางฝึกซ้อมวันที่ ' + day.isoDate"
                 >
                   + เพิ่ม
                 </a>
               </div>
+
+              @if (day.note) {
+                <button type="button" class="absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-full bg-warning text-sm font-bold text-white shadow-sm" title="ดู Note" [attr.aria-label]="'ดู Note วันที่ ' + day.isoDate" (click)="openNote(day.isoDate); $event.stopPropagation()">!</button>
+              }
 
               <div class="space-y-1">
                 @for (schedule of day.schedules.slice(0, 3); track schedule.routineScheduleId) {
@@ -139,16 +145,16 @@
                       class="coach-event block rounded-md border-l-3 px-2 py-1 pr-7 text-xs"
                       [class.opacity-50]="!schedule.isActive"
                       [style.--coach-color]="schedule.coachColorHex"
-                      [title]="schedule.coachNickname || 'ไม่ระบุชื่อเล่น'"
+                      [title]="schedule.coachNickname | coachName:'ไม่ระบุชื่อโค้ช'"
                     >
                       <span class="block truncate font-semibold">{{
-                        schedule.coachNickname || 'ไม่ระบุชื่อเล่น'
+                        schedule.coachNickname | coachName:'ไม่ระบุชื่อโค้ช'
                       }}</span>
                     </a>
                     <button
                       type="button"
                       class="absolute top-1/2 right-1 -translate-y-1/2 rounded px-1 text-xs text-danger opacity-0 hover:bg-white/70 group-hover/event:opacity-100 focus:opacity-100"
-                      [attr.aria-label]="'ลบตารางของ ' + (schedule.coachNickname || 'โค้ช')"
+                      [attr.aria-label]="'ลบตารางของ ' + (schedule.coachNickname | coachName:'โค้ช')"
                       (click)="requestDelete(schedule)"
                     >
                       ×
@@ -201,6 +207,7 @@
               @if (day.competitionMatches.length > 0) {
                 <span class="competition-trophy absolute -top-1.5 -right-1.5 inline-flex size-5 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-[10px] leading-none shadow-sm" role="img" aria-label="มีการแข่งขัน">🏆</span>
               }
+              @if (day.note) { <span class="absolute -bottom-1 -right-1 inline-flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white" aria-label="มี Note">!</span> }
             </button>
           }
         </div>
@@ -211,6 +218,7 @@
               <h3 class="text-sm font-semibold text-text">
                 ตารางวันที่ {{ day.isoDate | displayDate }}
               </h3>
+              <button type="button" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-warning/40 bg-warning-surface px-3 py-2 text-xs font-medium text-text" (click)="openNote(day.isoDate)">{{ day.note ? '! ดู/แก้ไข Note' : '+ เพิ่ม Note' }}</button>
               <a
                 [routerLink]="['/routine-schedules/new']"
                 [queryParams]="{ date: day.isoDate }"
@@ -238,7 +246,7 @@
                       [routerLink]="['/routine-schedules', schedule.routineScheduleId, 'edit']"
                       class="min-w-0 flex-1 rounded-md px-1 py-1"
                     >
-                      <p class="truncate text-sm font-semibold">{{ schedule.coachNickname || 'ไม่ระบุชื่อเล่น' }}</p>
+                      <p class="truncate text-sm font-semibold">{{ schedule.coachNickname | coachName:'ไม่ระบุชื่อโค้ช' }}</p>
                       <p class="mt-0.5 text-xs opacity-75">{{ schedule.startTime.slice(0, 5) }} - {{ schedule.endTime.slice(0, 5) }} น.</p>
                     </a>
                     <a
@@ -269,6 +277,12 @@
                 }
               </div>
             }
+            @if (day.note) {
+              <div class="mt-3 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-text">
+                <p class="mb-1 font-semibold text-warning">! Note</p>
+                <p class="whitespace-pre-wrap">{{ day.note.content }}</p>
+              </div>
+            }
           </div>
         }
       </div>
@@ -284,6 +298,8 @@
     }
   }
 </section>
+
+<app-calendar-note-dialog [open]="noteDialogOpen()" [noteDate]="selectedDate()" [note]="selectedNote()" [editable]="true" [allowDateSelection]="noteDialogDateSelectable()" (closed)="noteDialogOpen.set(false)" (changed)="noteChanged()" />
 
 <section class="mt-4 rounded-xl border border-border bg-surface p-4" aria-label="แชร์ปฏิทิน">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -331,7 +347,7 @@
   title="ยืนยันการลบตารางฝึกซ้อม"
   [message]="
     'ต้องการลบตารางของ ' +
-    (pendingDelete()?.coachNickname || 'โค้ช') +
+    (pendingDelete()?.coachNickname | coachName:'โค้ช') +
     ' ในวันที่ ' +
     ((pendingDelete()?.effectiveStartDate || null) | displayDate) +
     ' ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้'

@@ -64,7 +64,7 @@
               <dt class="text-text-secondary">โค้ชที่มอบหมาย</dt>
               <dd class="mt-1 flex min-w-0 items-center gap-2 font-medium text-text">
                 <span class="size-3 shrink-0 rounded-full" [style.background-color]="s.assignedCoachColorHex"></span>
-                <span class="min-w-0 break-words">{{ s.assignedCoachNickname ? s.assignedCoachNickname + ' - ' : '' }}{{ s.assignedCoachName }}</span>
+                <span class="min-w-0 break-words">{{ (s.assignedCoachNickname ? s.assignedCoachNickname + ' - ' + s.assignedCoachName : s.assignedCoachName) | coachName }}</span>
               </dd>
             </div>
             <div>
@@ -72,7 +72,7 @@
               <dd class="mt-1 flex min-w-0 items-center gap-2 font-medium text-text">
                 @if (s.actualCoachCode) {
                   <span class="size-3 shrink-0 rounded-full" [style.background-color]="s.actualCoachColorHex || '#10B981'"></span>
-                  <span class="min-w-0 break-words">{{ s.actualCoachNickname ? s.actualCoachNickname + ' - ' : '' }}{{ s.actualCoachName }}</span>
+                  <span class="min-w-0 break-words">{{ (s.actualCoachNickname ? s.actualCoachNickname + ' - ' + s.actualCoachName : s.actualCoachName) | coachName }}</span>
                 } @else {
                   <span>-</span>
                 }

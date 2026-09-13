@@ -24,12 +24,16 @@ import {
 } from '../../models/coach-dashboard.model';
 import { CoachDashboardService } from '../../services/coach-dashboard.service';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
+import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
 import { TrainingSessionListItem } from '../../models/training-session.model';
 import { TrainingSessionService } from '../../services/training-session.service';
 import { RoutineScheduleService } from '../../services/routine-schedule.service';
 import { ConfirmationDialog } from '../../shared/confirmation-dialog/confirmation-dialog';
 import { CompetitionMatch } from '../../models/competition-match.model';
 import { CompetitionMatchService } from '../../services/competition-match.service';
+import { CalendarNote } from '../../models/calendar-note.model';
+import { CalendarNoteService } from '../../services/calendar-note.service';
+import { CalendarNoteDialog } from '../../shared/calendar-note-dialog/calendar-note-dialog';
 
 type ViewState = 'loading' | 'error' | 'ready';
 type CoachHomeTab = 'overview' | 'calendar';
@@ -42,6 +46,7 @@ interface CalendarDay {
   isToday: boolean;
   sessions: TrainingSessionListItem[];
   competitionMatches: CompetitionMatch[];
+  note: CalendarNote | null;
 }
 
 /**
@@ -69,7 +74,9 @@ interface CalendarDay {
     LucideHourglass,
     LucideRepeat,
     DisplayDatePipe,
+    CoachNamePipe,
     ConfirmationDialog,
+    CalendarNoteDialog,
   ],
   templateUrl: './coach-home.html',
   styleUrl: './coach-home.css',
@@ -85,6 +92,8 @@ export class CoachHome implements OnInit {
   calendarSessions = signal<TrainingSessionListItem[]>([]);
   calendarColleagues = signal<CoachCalendarColleague[]>([]);
   calendarCompetitionMatches = signal<CompetitionMatch[]>([]);
+  calendarNotes = signal<CalendarNote[]>([]);
+  noteDialogOpen = signal(false);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
   overdueSessionsExpanded = signal(false);
@@ -115,6 +124,7 @@ export class CoachHome implements OnInit {
         competitionMatches: this.calendarCompetitionMatches().filter(
           (match) => match.startDate <= isoDate && isoDate <= match.endDate,
         ),
+        note: this.calendarNotes().find((note) => note.noteDate === isoDate) ?? null,
       };
     });
   });
@@ -142,6 +152,7 @@ export class CoachHome implements OnInit {
     private readonly trainingSessionService: TrainingSessionService,
     private readonly routineScheduleService: RoutineScheduleService,
     private readonly competitionMatchService: CompetitionMatchService,
+    private readonly calendarNoteService: CalendarNoteService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
@@ -166,7 +177,7 @@ export class CoachHome implements OnInit {
     this.calendarState.set('loading');
     const days = this.calendarDays();
     try {
-      const [result, colleagues, competitionMatches] = await Promise.all([
+      const [result, colleagues, competitionMatches, notes] = await Promise.all([
         this.trainingSessionService.list({
           page: 1,
           pageSize: 100,
@@ -181,15 +192,20 @@ export class CoachHome implements OnInit {
           days[days.length - 1].isoDate,
         ),
         this.competitionMatchService.listAll(),
+        this.calendarNoteService.list(days[0].isoDate, days[days.length - 1].isoDate),
       ]);
       this.calendarSessions.set(result.items);
       this.calendarColleagues.set(colleagues);
       this.calendarCompetitionMatches.set(competitionMatches);
+      this.calendarNotes.set(notes);
       this.calendarState.set('ready');
     } catch {
       this.calendarState.set('error');
     }
   }
+
+  openNote(noteDate: string): void { this.selectedDate.set(noteDate); this.noteDialogOpen.set(true); }
+  selectedNote(): CalendarNote | null { return this.calendarNotes().find((note) => note.noteDate === this.selectedDate()) ?? null; }
 
   moveMonth(offset: number): void {
     const current = this.visibleMonth();

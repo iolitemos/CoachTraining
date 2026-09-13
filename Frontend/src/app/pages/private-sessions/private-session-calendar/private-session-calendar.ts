@@ -8,6 +8,10 @@ import { ErrorState } from '../../../shared/error-state/error-state';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { StatusBadge } from '../../../shared/status-badge/status-badge';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
+import { CalendarNote } from '../../../models/calendar-note.model';
+import { CalendarNoteService } from '../../../services/calendar-note.service';
+import { CalendarNoteDialog } from '../../../shared/calendar-note-dialog/calendar-note-dialog';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -18,11 +22,12 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   sessions: PrivateSessionListItem[];
+  note: CalendarNote | null;
 }
 
 @Component({
   selector: 'app-private-session-calendar',
-  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, StatusBadge, DisplayDatePipe],
+  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, StatusBadge, DisplayDatePipe, CoachNamePipe, CalendarNoteDialog],
   templateUrl: './private-session-calendar.html',
   styleUrl: './private-session-calendar.css',
 })
@@ -30,6 +35,9 @@ export class PrivateSessionCalendar implements OnInit {
   readonly dayHeaders = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   state = signal<ViewState>('loading');
   sessions = signal<PrivateSessionListItem[]>([]);
+  notes = signal<CalendarNote[]>([]);
+  noteDialogOpen = signal(false);
+  noteDialogDateSelectable = signal(false);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
 
@@ -51,6 +59,7 @@ export class PrivateSessionCalendar implements OnInit {
         isCurrentMonth: date.getMonth() === month.getMonth(),
         isToday: isoDate === toIsoDate(new Date()),
         sessions: this.sessions().filter((session) => session.sessionDate === isoDate),
+        note: this.notes().find((note) => note.noteDate === isoDate) ?? null,
       };
     });
   });
@@ -62,7 +71,7 @@ export class PrivateSessionCalendar implements OnInit {
       .reduce((total, day) => total + day.sessions.length, 0),
   );
 
-  constructor(private readonly privateSessionService: PrivateSessionService) {}
+  constructor(private readonly privateSessionService: PrivateSessionService, private readonly calendarNoteService: CalendarNoteService) {}
 
   ngOnInit(): void {
     void this.load();
@@ -72,14 +81,21 @@ export class PrivateSessionCalendar implements OnInit {
     this.state.set('loading');
     const days = this.calendarDays();
     try {
-      this.sessions.set(
-        await this.privateSessionService.listCalendar(days[0].isoDate, days[days.length - 1].isoDate),
-      );
+      const [sessions, notes] = await Promise.all([
+        this.privateSessionService.listCalendar(days[0].isoDate, days[days.length - 1].isoDate),
+        this.calendarNoteService.list(days[0].isoDate, days[days.length - 1].isoDate),
+      ]);
+      this.sessions.set(sessions);
+      this.notes.set(notes);
       this.state.set('ready');
     } catch {
       this.state.set('error');
     }
   }
+
+  openNote(noteDate: string, allowDateSelection = false): void { this.selectedDate.set(noteDate); this.noteDialogDateSelectable.set(allowDateSelection); this.noteDialogOpen.set(true); }
+  selectedNote(): CalendarNote | null { return this.notes().find((note) => note.noteDate === this.selectedDate()) ?? null; }
+  async noteChanged(): Promise<void> { this.noteDialogOpen.set(false); await this.load(); }
 
   moveMonth(offset: number): void {
     const current = this.visibleMonth();

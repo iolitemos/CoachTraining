@@ -10,6 +10,7 @@ import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirma
 import { CoachListItem } from '../../../models/coach.model';
 import { CoachService } from '../../../services/coach.service';
 import { FilterStateService } from '../../../services/filter-state.service';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -24,6 +25,7 @@ type ViewState = 'loading' | 'error' | 'ready';
     ErrorState,
     Pagination,
     ConfirmationDialog,
+    CoachNamePipe,
   ],
   templateUrl: './coach-list.html',
   styleUrl: './coach-list.css',

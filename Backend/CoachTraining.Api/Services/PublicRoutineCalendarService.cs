@@ -105,7 +105,13 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
                 match.EndDate))
             .ToListAsync(cancellationToken);
 
-        return new PublicRoutineCalendarDto(schedules, competitionMatches);
+        var notes = await _db.CalendarNotes.AsNoTracking()
+            .Where(note => note.NoteDate >= startDate && note.NoteDate <= endDate)
+            .OrderBy(note => note.NoteDate)
+            .Select(note => new PublicCalendarNoteDto(note.NoteDate, note.Content))
+            .ToListAsync(cancellationToken);
+
+        return new PublicRoutineCalendarDto(schedules, competitionMatches, notes);
     }
 
     private async Task<bool> RevokeActiveLinksAsync(int userId, DateTime now, CancellationToken cancellationToken)

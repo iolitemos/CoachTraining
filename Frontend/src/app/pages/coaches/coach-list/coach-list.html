@@ -37,8 +37,8 @@
               <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                   <p class="text-xs font-medium text-text-secondary">{{ coach.coachCode }}</p>
-                  <h2 class="mt-1 truncate font-semibold text-text">{{ coach.fullName }}</h2>
-                  <p class="mt-0.5 text-sm text-text-secondary">ชื่อเล่น {{ coach.nickname || '-' }}</p>
+                  <h2 class="mt-1 truncate font-semibold text-text">{{ coach.fullName | coachName }}</h2>
+                  <p class="mt-0.5 text-sm text-text-secondary">ชื่อเล่น {{ coach.nickname | coachName }}</p>
                 </div>
                 <span
                   class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium"
@@ -102,8 +102,8 @@
               @for (coach of coaches(); track coach.coachId) {
                 <tr class="border-b border-border last:border-0">
                   <td class="px-4 py-3 font-medium text-text">{{ coach.coachCode }}</td>
-                  <td class="px-4 py-3 text-text">{{ coach.fullName }}</td>
-                  <td class="px-4 py-3 text-text-secondary">{{ coach.nickname || '-' }}</td>
+                  <td class="px-4 py-3 text-text">{{ coach.fullName | coachName }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ coach.nickname | coachName }}</td>
                   <td class="px-4 py-3">
                     <span class="flex items-center gap-2 text-xs text-text-secondary">
                       <span
@@ -169,8 +169,8 @@
   [processing]="statusChangeProcessing()"
   title="ยืนยันการเปลี่ยนสถานะ"
   [message]="
-    (pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งานโค้ช ' : 'ต้องการเปิดใช้งานโค้ช ') +
-    (pendingStatusChange()?.fullName ?? '') +
+    (pendingStatusChange()?.isActive ? 'ต้องการปิดใช้งาน ' : 'ต้องการเปิดใช้งาน ') +
+    ((pendingStatusChange()?.fullName | coachName) ?? '') +
     ' ใช่หรือไม่?'
   "
   (confirmed)="confirmStatusChange()"

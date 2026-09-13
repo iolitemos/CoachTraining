@@ -24,9 +24,12 @@ public record PublicCompetitionMatchDto(
     DateOnly StartDate,
     DateOnly EndDate);
 
+public record PublicCalendarNoteDto(DateOnly NoteDate, string Content);
+
 public record PublicRoutineCalendarDto(
     IReadOnlyList<PublicRoutineCalendarItemDto> Schedules,
-    IReadOnlyList<PublicCompetitionMatchDto> CompetitionMatches);
+    IReadOnlyList<PublicCompetitionMatchDto> CompetitionMatches,
+    IReadOnlyList<PublicCalendarNoteDto> Notes);
 
 public record RoutineCalendarShareStatusDto(
     bool IsActive,

@@ -646,6 +646,15 @@ Requirements:
 - **FR-PUBLIC-CALENDAR-008** Invalid and revoked links shall not return calendar data.
 - **FR-PUBLIC-CALENDAR-009** Administrator shall be able to display and download a QR Code encoding the newly created secret share link without sending the token to an external QR service.
 - **FR-PUBLIC-CALENDAR-010** The public Routine calendar shall mark every date covered by a Competition Match and show its public details for the selected date.
+- **FR-PUBLIC-CALENDAR-011** A public calendar shall show the shared daily Note for dates where one exists, using a visible exclamation-mark indicator that opens the Note in read-only mode.
+
+### 6.22 Shared Calendar Note Requirements
+
+- **FR-CALENDAR-NOTE-001** Administrator shall be able to create, update, and delete one shared Note for a calendar date.
+- **FR-CALENDAR-NOTE-002** A date containing a Note shall display an exclamation-mark indicator on Routine, Private, Coach, and public calendars.
+- **FR-CALENDAR-NOTE-003** Users shall be able to select the indicator or selected-date action to read the Note.
+- **FR-CALENDAR-NOTE-004** Coach, Management / Viewer, and public-calendar visitors shall have read-only access to calendar Notes.
+- **FR-CALENDAR-NOTE-005** Calendar Note content shall be limited to 1,000 characters.
 
 ---
 

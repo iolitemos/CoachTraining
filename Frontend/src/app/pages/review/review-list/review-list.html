@@ -34,7 +34,7 @@
     >
       <option [ngValue]="null">ทั้งหมด</option>
       @for (coach of coachOptions(); track coach.coachId) {
-        <option [ngValue]="coach.coachId">{{ coach.nickname || coach.fullName }}</option>
+        <option [ngValue]="coach.coachId">{{ (coach.nickname || coach.fullName) | coachName }}</option>
       }
     </select>
   </label>
@@ -97,7 +97,7 @@
                   <dt class="text-text-secondary">โค้ชที่มอบหมาย</dt>
                   <dd class="flex min-w-0 items-center gap-2 font-medium text-text">
                     <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="session.assignedCoachColorHex"></span>
-                    <span class="truncate">{{ session.assignedCoachNickname || session.assignedCoachName }}</span>
+                    <span class="truncate">{{ (session.assignedCoachNickname || session.assignedCoachName) | coachName }}</span>
                   </dd>
                 </div>
                 <div class="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2">
@@ -105,7 +105,7 @@
                   <dd class="flex min-w-0 items-center gap-2 text-text">
                     @if (session.actualCoachCode) {
                       <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="session.actualCoachColorHex"></span>
-                      <span class="truncate">{{ session.actualCoachNickname || session.actualCoachName }}</span>
+                      <span class="truncate">{{ (session.actualCoachNickname || session.actualCoachName) | coachName }}</span>
                     } @else {
                       <span class="text-text-secondary">ยังไม่ระบุ</span>
                     }
@@ -148,14 +148,14 @@
                   <td class="px-4 py-3 text-text-secondary">
                     <span class="inline-flex items-center gap-2 whitespace-nowrap">
                       <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="session.assignedCoachColorHex"></span>
-                      {{ session.assignedCoachNickname || session.assignedCoachName }}
+                      {{ (session.assignedCoachNickname || session.assignedCoachName) | coachName }}
                     </span>
                   </td>
                   <td class="px-4 py-3 text-text-secondary">
                     @if (session.actualCoachCode) {
                       <span class="inline-flex items-center gap-2 whitespace-nowrap">
                         <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="session.actualCoachColorHex"></span>
-                        {{ session.actualCoachNickname || session.actualCoachName }}
+                        {{ (session.actualCoachNickname || session.actualCoachName) | coachName }}
                       </span>
                     } @else {
                       -

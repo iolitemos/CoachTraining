@@ -1,0 +1,37 @@
+@if (open()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" role="presentation" (click)="closed.emit()">
+    <section class="w-full max-w-lg rounded-2xl bg-surface p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="calendar-note-title" (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="calendar-note-title" class="text-lg font-semibold text-text">Note ประจำวันที่ {{ (selectedDate || noteDate()) | displayDate }}</h2>
+          <p class="mt-1 text-xs text-text-secondary">ข้อความนี้แสดงในปฏิทินทุกประเภท รวมถึงปฏิทินสาธารณะ</p>
+        </div>
+        <button type="button" class="rounded-lg px-2 py-1 text-xl text-text-secondary hover:bg-secondary-100" aria-label="ปิด" (click)="closed.emit()">×</button>
+      </div>
+
+      @if (editable()) {
+        @if (allowDateSelection()) {
+          <label class="mt-4 block text-sm font-medium text-text">วันที่ <span class="text-danger">*</span>
+            <input type="date" [(ngModel)]="selectedDate" (ngModelChange)="dateChanged()" class="mt-1 min-h-11 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100" />
+          </label>
+        }
+        <textarea [(ngModel)]="content" maxlength="1000" rows="6" class="mt-4 w-full rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100" placeholder="กรอก Note สำหรับวันนี้"></textarea>
+        <div class="mt-1 text-right text-xs text-text-secondary">{{ content.length }}/1,000</div>
+      } @else {
+        <p class="mt-4 whitespace-pre-wrap rounded-xl bg-warning-surface p-4 text-sm text-text">{{ note()?.content }}</p>
+      }
+
+      @if (errorMessage()) { <p class="mt-2 text-sm text-danger">{{ errorMessage() }}</p> }
+
+      <div class="mt-5 flex flex-wrap justify-end gap-2">
+        @if (editable() && activeNote()) {
+          <button type="button" class="min-h-10 rounded-lg border border-danger/30 px-4 py-2 text-sm font-medium text-danger" [disabled]="processing()" (click)="remove()">ลบ Note</button>
+        }
+        <button type="button" class="min-h-10 rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-secondary" [disabled]="processing()" (click)="closed.emit()">ปิด</button>
+        @if (editable()) {
+          <button type="button" class="min-h-10 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" [disabled]="processing()" (click)="save()">{{ processing() ? 'กำลังบันทึก...' : 'บันทึก Note' }}</button>
+        }
+      </div>
+    </section>
+  </div>
+}

@@ -50,7 +50,7 @@
                   </p>
                   <p class="mt-2 flex items-center gap-2 text-sm text-text">
                     <span class="size-2.5 shrink-0 rounded-full" [style.background-color]="schedule.coachColorHex"></span>
-                    <span class="truncate">{{ schedule.coachNickname || 'ไม่ระบุชื่อเล่น' }}</span>
+                    <span class="truncate">{{ schedule.coachNickname | coachName:'ไม่ระบุชื่อโค้ช' }}</span>
                   </p>
                 </div>
                 <div class="flex shrink-0 items-center gap-1">
@@ -97,7 +97,7 @@
                       class="mr-2 inline-block size-2.5 rounded-full"
                       [style.background-color]="schedule.coachColorHex"
                     ></span>
-                    {{ schedule.coachNickname || 'ไม่ระบุชื่อเล่น' }}
+                    {{ schedule.coachNickname | coachName:'ไม่ระบุชื่อโค้ช' }}
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex items-center justify-center gap-2">

@@ -12,6 +12,7 @@ import { CoachService } from '../../../services/coach.service';
 import { CoachTeachingHourReportService } from '../../../services/coach-teaching-hour-report.service';
 import { DateInput } from '../../../shared/date-input/date-input';
 import { FilterStateService } from '../../../services/filter-state.service';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -39,7 +40,7 @@ function currentMonthRange(): { startDate: string; endDate: string } {
  */
 @Component({
   selector: 'app-coach-teaching-hour-report',
-  imports: [FormsModule, PageHeader, LoadingIndicator, EmptyState, ErrorState, DateInput],
+  imports: [FormsModule, PageHeader, LoadingIndicator, EmptyState, ErrorState, DateInput, CoachNamePipe],
   templateUrl: './coach-teaching-hour-report.html',
   styleUrl: './coach-teaching-hour-report.css',
 })

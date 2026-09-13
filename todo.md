@@ -43,6 +43,7 @@
 - [x] Create shared search/filter toolbar following `skill.md` listing rules.
 - [x] Configure a consistent free icon library supported by `skill.md`.
 - [x] Confirm all initial UI labels, buttons, and messages are in Thai.
+- [x] Prefix every displayed coach name with "โค้ช" through a shared formatter without changing stored master or historical names.
 
 ### 1.3 Backend Foundation
 
@@ -157,6 +158,8 @@
 - [x] Preserve all substitution history for audit and reporting.
 
 ### 2.10 Approval and Audit Data
+
+- [x] Add shared Calendar Note persistence with one Note per date, audit fields, soft delete, and the DEV migration.
 
 - [x] Create TrainingApprovalHistory entity linked to TrainingSession.
 - [x] Store submit, approve, reject, request-revision, and unlock actions.
@@ -911,6 +914,7 @@
 - [x] Add Administrator controls to create, copy, rotate, and revoke the secret link.
 - [x] Generate the share QR Code locally in the browser and provide a PNG download action.
 - [x] Mark Competition Match date ranges and show match name, province, and dates on the shared calendar.
+- [x] Add shared daily Calendar Notes with Administrator management, read-only Coach/public visibility, and clickable `!` indicators on Routine, Private, Coach, and public calendars.
 - [x] Add backend tests for token rotation, invalidation, date-range validation, and public projection.
 - [x] Pass backend tests and backend/frontend production builds.
 

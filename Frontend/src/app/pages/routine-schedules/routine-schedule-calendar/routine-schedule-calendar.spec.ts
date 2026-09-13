@@ -24,6 +24,8 @@ describe('RoutineScheduleCalendar', () => {
   afterEach(() => {
     httpMock.match((request) => request.url.endsWith('/public/routine-calendar/share-link'))
       .forEach((request) => request.flush({ message: 'Success', data: { isActive: false, tokenHint: null, createdDate: null } }));
+    httpMock.match((request) => request.url.endsWith('/calendar-notes'))
+      .forEach((request) => request.flush({ message: 'Success', data: [] }));
     httpMock.verify();
   });
 
@@ -55,6 +57,7 @@ describe('RoutineScheduleCalendar', () => {
         },
       });
     flushCompetitionMatches([]);
+    flushCalendarNotes();
     await loadPromise;
 
     expect(
@@ -113,6 +116,7 @@ describe('RoutineScheduleCalendar', () => {
         },
       });
     flushCompetitionMatches([]);
+    flushCalendarNotes();
     await new Promise((resolve) => setTimeout(resolve));
     fixture.detectChanges();
 
@@ -130,6 +134,7 @@ describe('RoutineScheduleCalendar', () => {
       .expectOne((request) => request.url.endsWith('/routine-schedules'))
       .flush({ message: 'Error' }, { status: 500, statusText: 'Server Error' });
     flushCompetitionMatches([]);
+    flushCalendarNotes();
     await loadPromise;
 
     expect(component.state()).toBe('error');
@@ -150,6 +155,7 @@ describe('RoutineScheduleCalendar', () => {
         endDate: '2026-01-07',
       },
     ]);
+    flushCalendarNotes();
     await new Promise((resolve) => setTimeout(resolve));
 
     expect(component.calendarDays().find((day) => day.isoDate === '2026-01-04')?.competitionMatches).toHaveLength(0);
@@ -170,5 +176,10 @@ describe('RoutineScheduleCalendar', () => {
       message: 'Success',
       data: { items, page: 1, pageSize: 100, totalCount: items.length, totalPages: items.length ? 1 : 0 },
     });
+  }
+
+  function flushCalendarNotes(): void {
+    httpMock.expectOne((request) => request.url.endsWith('/calendar-notes'))
+      .flush({ message: 'Success', data: [] });
   }
 });

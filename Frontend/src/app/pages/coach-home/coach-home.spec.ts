@@ -19,7 +19,11 @@ describe('CoachHome calendar', () => {
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => httpMock.verify());
+  afterEach(() => {
+    httpMock.match((request) => request.url.endsWith('/calendar-notes'))
+      .forEach((request) => request.flush({ message: 'Success', data: [] }));
+    httpMock.verify();
+  });
 
   it('loads the visible calendar range through the coach-scoped session API', async () => {
     const loadPromise = component.loadCalendar();
@@ -42,6 +46,7 @@ describe('CoachHome calendar', () => {
       message: 'Success',
       data: { items: [], page: 1, pageSize: 100, totalCount: 0, totalPages: 0 },
     });
+    httpMock.expectOne((r) => r.url.endsWith('/calendar-notes')).flush({ message: 'Success', data: [] });
     await loadPromise;
 
     expect(component.calendarState()).toBe('ready');

@@ -23,8 +23,8 @@
         <div class="grid grid-cols-7">
           @for (day of calendarDays(); track day.isoDate) {
             <button type="button" class="min-h-16 border-r border-t border-border p-1 text-left sm:min-h-24" [class.opacity-40]="!day.isCurrentMonth" [class.bg-primary-50]="day.items.length > 0" [class.bg-amber-50]="day.items.length === 0 && day.competitionMatches.length > 0" [class.ring-2]="selectedDate() === day.isoDate" [class.ring-inset]="selectedDate() === day.isoDate" [class.ring-primary-600]="selectedDate() === day.isoDate" (click)="selectDay(day)">
-              <span class="flex items-center justify-between text-xs"><span>{{ day.dayNumber }}</span>@if (day.competitionMatches.length > 0) { <span title="วันแข่งขัน" aria-label="วันแข่งขัน">🏆</span> }</span>
-              <div class="mt-1 space-y-1">@for (item of day.items; track item.trainingDate + item.startTime + item.coachNickname) { <span class="block truncate rounded px-1 py-0.5 text-[10px] text-white sm:text-xs" [style.background-color]="item.coachColorHex">{{ item.coachNickname }}</span> }</div>
+              <span class="flex items-center justify-between text-xs"><span>{{ day.dayNumber }}</span><span class="flex items-center gap-1">@if (day.note) { <span class="inline-flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white" title="มี Note">!</span> }@if (day.competitionMatches.length > 0) { <span title="วันแข่งขัน" aria-label="วันแข่งขัน">🏆</span> }</span></span>
+              <div class="mt-1 space-y-1">@for (item of day.items; track item.trainingDate + item.startTime + item.coachNickname) { <span class="block truncate rounded px-1 py-0.5 text-[10px] text-white sm:text-xs" [style.background-color]="item.coachColorHex">{{ item.coachNickname | coachName }}</span> }</div>
             </button>
           }
         </div>
@@ -35,8 +35,16 @@
           <div class="mt-3 space-y-2">@for (match of selectedCompetitionMatches(); track match.name + match.startDate) { <article class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900"><p class="font-semibold">🏆 {{ match.name }}</p><p class="mt-1 text-sm">{{ match.province }} · {{ match.startDate | displayDate }}–{{ match.endDate | displayDate }}</p></article> }</div>
         }
         @if (selectedItems().length === 0) { <p class="mt-3 rounded-lg bg-secondary-50 p-4 text-center text-sm text-text-secondary">ไม่มีรอบฝึกซ้อมในวันนี้</p> }
-        @else { <div class="mt-3 grid gap-2 sm:grid-cols-2">@for (item of selectedItems(); track item.startTime + item.coachNickname) { <article class="rounded-lg border border-border border-l-4 p-3" [style.border-left-color]="item.coachColorHex"><p class="font-medium">โค้ช {{ item.coachNickname }}</p><p class="mt-1 text-sm text-text-secondary">{{ item.startTime.slice(0, 5) }}–{{ item.endTime.slice(0, 5) }} น.</p></article> }</div> }
+        @else { <div class="mt-3 grid gap-2 sm:grid-cols-2">@for (item of selectedItems(); track item.startTime + item.coachNickname) { <article class="rounded-lg border border-border border-l-4 p-3" [style.border-left-color]="item.coachColorHex"><p class="font-medium">{{ item.coachNickname | coachName }}</p><p class="mt-1 text-sm text-text-secondary">{{ item.startTime.slice(0, 5) }}–{{ item.endTime.slice(0, 5) }} น.</p></article> }</div> }
+        @if (selectedNote(); as note) {
+          <div class="mt-3 rounded-lg border border-warning/30 bg-warning-surface p-3 text-sm text-text">
+            <p class="mb-1 font-semibold text-warning">! Note</p>
+            <p class="whitespace-pre-wrap">{{ note.content }}</p>
+          </div>
+        }
       </section>
     }
   </div>
 </main>
+
+<app-calendar-note-dialog [open]="noteDialogOpen()" [noteDate]="selectedDate()" [note]="selectedNote()" [editable]="false" (closed)="noteDialogOpen.set(false)" />

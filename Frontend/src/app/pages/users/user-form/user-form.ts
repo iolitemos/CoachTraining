@@ -8,10 +8,11 @@ import { getRoleLabel } from '../../../models/auth.model';
 import { CoachOption, RoleOption } from '../../../models/user.model';
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { UserService } from '../../../services/user.service';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 @Component({
   selector: 'app-user-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator],
+  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, CoachNamePipe],
   templateUrl: './user-form.html',
   styleUrl: './user-form.css',
 })

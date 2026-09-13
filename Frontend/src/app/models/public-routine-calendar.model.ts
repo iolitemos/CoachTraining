@@ -13,9 +13,15 @@ export interface PublicCompetitionMatch {
   endDate: string;
 }
 
+export interface PublicCalendarNote {
+  noteDate: string;
+  content: string;
+}
+
 export interface PublicRoutineCalendarData {
   schedules: PublicRoutineCalendarItem[];
   competitionMatches: PublicCompetitionMatch[];
+  notes: PublicCalendarNote[];
 }
 
 export interface RoutineCalendarShareStatus {

@@ -6,6 +6,7 @@ import { CoachOption } from '../../models/coach.model';
 import { SubstituteCoachResponse } from '../../models/substitute-coach.model';
 import { CoachService } from '../../services/coach.service';
 import { SubstituteCoachService } from '../../services/substitute-coach.service';
+import { CoachNamePipe } from '../coach-name/coach-name.pipe';
 
 /**
  * Substitute Coach dialog (requirement.md 4.4/9.7, FR-SUB-001–005, todo.md 5.10).
@@ -13,7 +14,7 @@ import { SubstituteCoachService } from '../../services/substitute-coach.service'
  */
 @Component({
   selector: 'app-substitute-coach-dialog',
-  imports: [FormsModule],
+  imports: [FormsModule, CoachNamePipe],
   templateUrl: './substitute-coach-dialog.html',
   styleUrl: './substitute-coach-dialog.css',
 })

@@ -29,7 +29,7 @@
                 <app-status-badge [status]="session.status" />
               </div>
               <dl class="mt-3 grid gap-2 border-t border-border pt-3 text-sm">
-                <div class="flex gap-2"><dt class="w-16 shrink-0 text-text-secondary">โค้ช</dt><dd class="min-w-0 break-words text-text">{{ session.coachCode }} — {{ session.coachFullName }}</dd></div>
+                <div class="flex gap-2"><dt class="w-16 shrink-0 text-text-secondary">โค้ช</dt><dd class="min-w-0 break-words text-text">{{ session.coachCode }} — {{ session.coachFullName | coachName }}</dd></div>
                 <div class="flex gap-2"><dt class="w-16 shrink-0 text-text-secondary">ผู้เข้าร่วม</dt><dd class="text-text">{{ session.athleteCount }} คน</dd></div>
                 <div class="flex gap-2"><dt class="w-16 shrink-0 text-text-secondary">สถานที่</dt><dd class="min-w-0 break-words text-text">{{ session.location || 'ไม่ระบุ' }}</dd></div>
               </dl>
@@ -58,7 +58,7 @@
                   <td class="px-4 py-3 text-text-secondary">
                     {{ session.startTime.slice(0, 5) }} - {{ session.endTime.slice(0, 5) }}
                   </td>
-                  <td class="px-4 py-3 text-text-secondary">{{ session.coachCode }} — {{ session.coachFullName }}</td>
+                  <td class="px-4 py-3 text-text-secondary">{{ session.coachCode }} — {{ session.coachFullName | coachName }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ session.location || '-' }}</td>
                   <td class="px-4 py-3 text-text-secondary">{{ session.athleteCount }}</td>
                   <td class="px-4 py-3">

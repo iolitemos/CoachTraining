@@ -15,6 +15,7 @@ import { HistoryService } from '../../services/history.service';
 import { ApprovalService } from '../../services/approval.service';
 import { SubstituteCoachService } from '../../services/substitute-coach.service';
 import { DisplayDateTimePipe } from '../display-date-time/display-date-time.pipe';
+import { formatCoachName } from '../coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -94,7 +95,7 @@ export class SessionHistoryTimeline implements OnChanges {
         ...substitutions.map((s) => ({
           type: 'Substitution' as const,
           title: 'เปลี่ยนโค้ชตัวแทน',
-          detail: `${s.originalCoachCode} — ${s.originalCoachName} → ${s.substituteCoachCode} — ${s.substituteCoachName} (เหตุผล: ${s.reason})`,
+          detail: `${s.originalCoachCode} — ${formatCoachName(s.originalCoachName)} → ${s.substituteCoachCode} — ${formatCoachName(s.substituteCoachName)} (เหตุผล: ${s.reason})`,
           actionByUserId: s.actionByUserId,
           actionDate: s.actionDate,
         })),
