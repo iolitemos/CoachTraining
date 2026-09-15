@@ -46,4 +46,20 @@ describe('PrivateSessionCalendar', () => {
     day.sessions = [];
     expect(component.calendarDayBackground(day, true)).toBe('#e5e7eb');
   });
+
+  it('deletes a session in any status and removes it from the calendar', async () => {
+    const component = TestBed.createComponent(PrivateSessionCalendar).componentInstance;
+    const session = { trainingSessionId: 12, status: 'Scheduled' } as never;
+    component.sessions.set([session]);
+    component.requestDelete(session);
+
+    const deletePromise = component.confirmDelete();
+    const request = httpMock.expectOne((req) => req.url.endsWith('/training-sessions/12'));
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+    await deletePromise;
+
+    expect(component.sessions()).toEqual([]);
+    expect(component.deleteTarget()).toBeNull();
+  });
 });

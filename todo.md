@@ -380,6 +380,7 @@
 - [x] Link rescheduled replacement sessions to original sessions. <!-- OriginalSessionId FK + DTO exposure; set by Rescheduling (4.13) -->
 - [x] Exclude non-completed sessions from completed teaching-hour calculations. <!-- ISessionStatusService.CountsAsCompletedTeaching, for Reports (4.18) to consume -->
 - [x] Keep cancelled and rescheduled-original sessions queryable in history.
+- [x] Allow Administrator to soft-delete sessions in every status and record an audit event.
 
 ### 4.6 Session Status Backend
 
@@ -799,6 +800,8 @@
 - [x] Display Cancelled status clearly after success.
 - [x] Remove invalid operational actions from Cancelled sessions.
 - [x] Add cancellation API loading/error feedback.
+- [x] Add Administrator-only delete action and confirmation for sessions in every status.
+- [x] Add delete action for sessions in every status to the Private Training calendar.
 
 ### 5.12 Rescheduling Frontend
 

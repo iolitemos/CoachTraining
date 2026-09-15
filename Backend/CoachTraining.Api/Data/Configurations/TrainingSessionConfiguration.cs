@@ -56,10 +56,10 @@ public class TrainingSessionConfiguration : IEntityTypeConfiguration<TrainingSes
         builder.HasIndex(s => s.Status);
         builder.HasIndex(s => s.TrainingType);
 
-        // Deliberately no global soft-delete query filter here: Cancelled and
-        // Rescheduled are explicit statuses that must stay visible in normal
-        // history/report queries (requirement.md FR-SESSION-009, FR-CR-003).
-        // IsDeleted is reserved for rare administrative data corrections.
+        // An Administrator may explicitly remove a session from operational views.
+        // The removal is a soft delete so its row and audit trail remain available
+        // for recovery regardless of its business status.
+        builder.HasQueryFilter(s => !s.IsDeleted);
         //
         // EF logs a model-validation warning because AssignedCoach/RoutineSchedule
         // are required relationships to entities that DO have a soft-delete

@@ -67,4 +67,21 @@ public class TrainingSessionsController : ControllerBase
         if (result.Error is not null) return BadRequest(new ApiErrorResponse(result.Error));
         return Ok(new ApiResponse<TrainingSessionDetailDto>(result.Session!, "ดึงสถานะกลับเป็นกำหนดการสำเร็จ"));
     }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = Roles.Administrator)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            var deleted = await _trainingSessionService.DeleteAsync(id, _currentUser.UserId!.Value);
+            if (!deleted) return NotFound(new ApiErrorResponse("ไม่พบเซสชันฝึกซ้อมที่ต้องการ"));
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/training-sessions/{TrainingSessionId} Controller: TrainingSessionsController Function: Delete UserId: {UserId}", id, _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถลบเซสชันฝึกซ้อมได้"));
+        }
+    }
 }

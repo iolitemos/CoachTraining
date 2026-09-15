@@ -2,6 +2,7 @@ using CoachTraining.Api.DTOs.TrainingSessions;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace CoachTraining.Api.Tests.Services;
@@ -171,5 +172,41 @@ public class TrainingSessionServiceTests
         Assert.NotNull(result);
         var resultAthlete = Assert.Single(result!.Athletes);
         Assert.Equal("A001", resultAthlete.AthleteCode);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_SoftDeletesSessionInAnyStatusAndRecordsAudit()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db, "C001");
+        var session = BuildSession(coach, new DateOnly(2026, 1, 5), new TimeOnly(17, 0), new TimeOnly(19, 0), status: SessionStatus.Cancelled);
+        db.TrainingSessions.Add(session);
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).DeleteAsync(session.TrainingSessionId, actionByUserId: 99);
+
+        Assert.True(result);
+        Assert.Null(await CreateService(db).GetByIdAsync(session.TrainingSessionId, true, null));
+        var deleted = await db.TrainingSessions.IgnoreQueryFilters().SingleAsync();
+        Assert.True(deleted.IsDeleted);
+        Assert.Equal(99, deleted.UpdatedByUserId);
+        var audit = Assert.Single(db.AuditLogs);
+        Assert.Equal("Delete", audit.Action);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_SoftDeletesNonCancelledSession()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db, "C001");
+        var session = BuildSession(coach, new DateOnly(2026, 1, 5), new TimeOnly(17, 0), new TimeOnly(19, 0));
+        db.TrainingSessions.Add(session);
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).DeleteAsync(session.TrainingSessionId, actionByUserId: 99);
+
+        Assert.True(result);
+        Assert.True(session.IsDeleted);
+        Assert.Single(db.AuditLogs);
     }
 }

@@ -160,6 +160,16 @@
                 ยกเลิกเซสชัน
               </button>
             }
+            @if (canDelete(s.status)) {
+              <button
+                type="button"
+                (click)="openDeleteConfirmation()"
+                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover"
+              >
+                <svg lucideTrash2 [size]="16"></svg>
+                ลบเซสชัน
+              </button>
+            }
           </div>
         </section>
 
@@ -307,6 +317,17 @@
           [processing]="starting()"
           (confirmed)="confirmStart()"
           (cancelled)="cancelStart()"
+        />
+
+        <app-confirmation-dialog
+          [open]="deleteConfirmationOpen()"
+          title="ยืนยันลบเซสชัน"
+          message="เซสชันนี้จะถูกนำออกจากรายการและรายงาน ไม่ว่าจะอยู่ในสถานะใด แต่ระบบจะเก็บข้อมูลไว้เพื่อการตรวจสอบ"
+          confirmLabel="ลบเซสชัน"
+          [danger]="true"
+          [processing]="deleting()"
+          (confirmed)="deleteSession()"
+          (cancelled)="closeDeleteConfirmation()"
         />
 
         @if (resetDialogOpen()) {

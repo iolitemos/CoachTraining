@@ -158,4 +158,28 @@ public class TrainingSessionService : ITrainingSessionService
         await _db.SaveChangesAsync();
         return (TrainingSessionMapper.ToDetailDto(session), null, false);
     }
+
+    public async Task<bool> DeleteAsync(int trainingSessionId, int actionByUserId)
+    {
+        var session = await _db.TrainingSessions
+            .FirstOrDefaultAsync(s => s.TrainingSessionId == trainingSessionId);
+        if (session is null) return false;
+
+        var actionDate = DateTime.UtcNow;
+        session.IsDeleted = true;
+        session.UpdatedByUserId = actionByUserId;
+        session.UpdatedDate = actionDate;
+        _db.AuditLogs.Add(new AuditLog
+        {
+            EntityName = nameof(TrainingSession),
+            EntityId = trainingSessionId,
+            Action = "Delete",
+            PreviousValue = JsonSerializer.Serialize(new { Status = session.Status.ToString(), IsDeleted = false }),
+            NewValue = JsonSerializer.Serialize(new { Status = session.Status.ToString(), IsDeleted = true }),
+            ActionByUserId = actionByUserId,
+            ActionDate = actionDate,
+        });
+        await _db.SaveChangesAsync();
+        return true;
+    }
 }

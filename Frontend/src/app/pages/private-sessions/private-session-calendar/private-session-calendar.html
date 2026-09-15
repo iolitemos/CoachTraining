@@ -6,6 +6,10 @@
   </div>
 </app-page-header>
 
+@if (actionError()) {
+  <div class="mt-4 rounded-lg border border-danger/30 bg-danger-surface p-3 text-sm text-danger">{{ actionError() }}</div>
+}
+
 <section class="mt-4 overflow-hidden rounded-xl border border-border bg-surface" aria-label="ปฏิทินฝึกซ้อมส่วนตัว">
   <div class="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
@@ -59,10 +63,13 @@
               @if (day.note) { <button type="button" class="absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-full bg-warning text-sm font-bold text-white shadow-sm" title="ดู Note" (click)="openNote(day.isoDate)">!</button> }
               <div class="space-y-1">
                 @for (session of day.sessions.slice(0, 3); track session.trainingSessionId) {
-                  <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="coach-event block rounded-md border-l-3 px-2 py-1 text-xs" [style.--coach-color]="session.coachColorHex" [title]="((session.coachNickname || session.coachFullName) | coachName) + ' · ' + session.startTime.slice(0, 5) + '–' + session.endTime.slice(0, 5) + ' น. · ผู้เข้าร่วม ' + session.athleteCount + ' คน'">
-                    <span class="block truncate font-semibold">{{ (session.coachNickname || session.coachFullName) | coachName }}</span>
-                    <span class="block truncate text-[11px] opacity-80">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น. · {{ session.athleteCount }} คน</span>
-                  </a>
+                  <div class="coach-event flex items-start gap-1 rounded-md border-l-3 px-2 py-1 text-xs" [style.--coach-color]="session.coachColorHex">
+                    <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="min-w-0 flex-1" [title]="((session.coachNickname || session.coachFullName) | coachName) + ' · ' + session.startTime.slice(0, 5) + '–' + session.endTime.slice(0, 5) + ' น. · ผู้เข้าร่วม ' + session.athleteCount + ' คน'">
+                      <span class="block truncate font-semibold">{{ (session.coachNickname || session.coachFullName) | coachName }}</span>
+                      <span class="block truncate text-[11px] opacity-80">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น. · {{ session.athleteCount }} คน</span>
+                    </a>
+                    <button type="button" class="shrink-0 rounded px-1 text-danger hover:bg-danger-surface" title="ลบเซสชัน" [attr.aria-label]="'ลบเซสชันของ ' + session.coachFullName" (click)="requestDelete(session)">ลบ</button>
+                  </div>
                 }
                 @if (day.sessions.length > 3) { <button type="button" class="text-xs font-medium text-primary-600" (click)="selectDay(day)">อีก {{ day.sessions.length - 3 }} รายการ</button> }
               </div>
@@ -108,10 +115,27 @@
             } @else {
               <div class="space-y-2">
                 @for (session of day.sessions; track session.trainingSessionId) {
-                  <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="coach-event block rounded-lg border border-l-4 p-3" [style.--coach-color]="session.coachColorHex">
-                    <div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="truncate font-semibold">{{ (session.coachNickname || session.coachFullName) | coachName }}</p><p class="mt-1 text-sm">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น.</p></div><app-status-badge [status]="session.status" /></div>
-                    <p class="mt-2 text-xs">ผู้เข้าร่วม {{ session.athleteCount }} คน</p>
-                  </a>
+                  <div class="coach-event rounded-lg border border-l-4 p-3" [style.--coach-color]="session.coachColorHex">
+                    <div class="flex items-start justify-between gap-2">
+                      <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="min-w-0 flex-1">
+                        <p class="truncate font-semibold">{{ (session.coachNickname || session.coachFullName) | coachName }}</p>
+                        <p class="mt-1 text-sm">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น.</p>
+                        <p class="mt-1 text-xs">ผู้เข้าร่วม {{ session.athleteCount }} คน</p>
+                      </a>
+                      <div class="flex shrink-0 flex-col items-center gap-2">
+                        <app-status-badge [status]="session.status" />
+                        <button
+                          type="button"
+                          class="inline-flex size-10 items-center justify-center rounded-lg border border-danger/40 text-danger hover:bg-danger-surface"
+                          title="ลบเซสชัน"
+                          [attr.aria-label]="'ลบเซสชันของ ' + session.coachFullName"
+                          (click)="requestDelete(session)"
+                        >
+                          <svg lucideTrash2 [size]="18"></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 }
               </div>
             }
@@ -129,3 +153,14 @@
 </section>
 
 <app-calendar-note-dialog [open]="noteDialogOpen()" [noteDate]="selectedDate()" [note]="selectedNote()" [editable]="true" [allowDateSelection]="noteDialogDateSelectable()" (closed)="noteDialogOpen.set(false)" (changed)="noteChanged()" />
+
+<app-confirmation-dialog
+  [open]="deleteTarget() !== null"
+  title="ยืนยันลบเซสชัน"
+  message="เซสชันนี้จะถูกนำออกจากปฏิทินและรายงาน ไม่ว่าจะอยู่ในสถานะใด แต่ระบบจะเก็บข้อมูลไว้เพื่อการตรวจสอบ"
+  confirmLabel="ลบเซสชัน"
+  [danger]="true"
+  [processing]="deleting()"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

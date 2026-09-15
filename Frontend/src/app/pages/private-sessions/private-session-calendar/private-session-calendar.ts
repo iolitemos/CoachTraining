@@ -1,5 +1,7 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
+import { LucideTrash2 } from '@lucide/angular';
 import { PrivateSessionListItem } from '../../../models/private-session.model';
 import { PrivateSessionService } from '../../../services/private-session.service';
 import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
@@ -12,6 +14,9 @@ import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 import { CalendarNote } from '../../../models/calendar-note.model';
 import { CalendarNoteService } from '../../../services/calendar-note.service';
 import { CalendarNoteDialog } from '../../../shared/calendar-note-dialog/calendar-note-dialog';
+import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
+import { ApiErrorBody } from '../../../models/paged-result.model';
+import { TrainingSessionService } from '../../../services/training-session.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -27,7 +32,7 @@ interface CalendarDay {
 
 @Component({
   selector: 'app-private-session-calendar',
-  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, StatusBadge, DisplayDatePipe, CoachNamePipe, CalendarNoteDialog],
+  imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, StatusBadge, DisplayDatePipe, CoachNamePipe, CalendarNoteDialog, ConfirmationDialog, LucideTrash2],
   templateUrl: './private-session-calendar.html',
   styleUrl: './private-session-calendar.css',
 })
@@ -38,6 +43,9 @@ export class PrivateSessionCalendar implements OnInit {
   notes = signal<CalendarNote[]>([]);
   noteDialogOpen = signal(false);
   noteDialogDateSelectable = signal(false);
+  deleteTarget = signal<PrivateSessionListItem | null>(null);
+  deleting = signal(false);
+  actionError = signal<string | null>(null);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
 
@@ -71,7 +79,11 @@ export class PrivateSessionCalendar implements OnInit {
       .reduce((total, day) => total + day.sessions.length, 0),
   );
 
-  constructor(private readonly privateSessionService: PrivateSessionService, private readonly calendarNoteService: CalendarNoteService) {}
+  constructor(
+    private readonly privateSessionService: PrivateSessionService,
+    private readonly calendarNoteService: CalendarNoteService,
+    private readonly trainingSessionService: TrainingSessionService,
+  ) {}
 
   ngOnInit(): void {
     void this.load();
@@ -96,6 +108,32 @@ export class PrivateSessionCalendar implements OnInit {
   openNote(noteDate: string, allowDateSelection = false): void { this.selectedDate.set(noteDate); this.noteDialogDateSelectable.set(allowDateSelection); this.noteDialogOpen.set(true); }
   selectedNote(): CalendarNote | null { return this.notes().find((note) => note.noteDate === this.selectedDate()) ?? null; }
   async noteChanged(): Promise<void> { this.noteDialogOpen.set(false); await this.load(); }
+
+  requestDelete(session: PrivateSessionListItem): void {
+    this.actionError.set(null);
+    this.deleteTarget.set(session);
+  }
+
+  cancelDelete(): void { this.deleteTarget.set(null); }
+
+  async confirmDelete(): Promise<void> {
+    const target = this.deleteTarget();
+    if (!target) return;
+
+    this.deleting.set(true);
+    this.actionError.set(null);
+    try {
+      await this.trainingSessionService.delete(target.trainingSessionId);
+      this.sessions.update((sessions) => sessions.filter((session) => session.trainingSessionId !== target.trainingSessionId));
+      this.deleteTarget.set(null);
+    } catch (error) {
+      const body = error instanceof HttpErrorResponse ? error.error as ApiErrorBody | undefined : undefined;
+      this.actionError.set(body?.message ?? 'ไม่สามารถลบเซสชันฝึกซ้อมได้');
+      this.deleteTarget.set(null);
+    } finally {
+      this.deleting.set(false);
+    }
+  }
 
   moveMonth(offset: number): void {
     const current = this.visibleMonth();

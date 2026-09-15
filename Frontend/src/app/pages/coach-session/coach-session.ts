@@ -2,7 +2,7 @@ import { SlicePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   LucideCalendarClock,
   LucideCircleCheckBig,
@@ -10,6 +10,7 @@ import {
   LucidePlay,
   LucideRepeat,
   LucideSend,
+  LucideTrash2,
   LucideX,
 } from '@lucide/angular';
 import { PageHeader } from '../../shared/page-header/page-header';
@@ -74,6 +75,7 @@ const NON_EDITABLE_STATUSES = ['Submitted', 'Approved', 'Locked', 'Cancelled', '
     LucidePlay,
     LucideCircleCheckBig,
     LucideSend,
+    LucideTrash2,
     LucideLock,
     LucideRepeat,
     LucideX,
@@ -84,6 +86,7 @@ const NON_EDITABLE_STATUSES = ['Submitted', 'Approved', 'Locked', 'Cancelled', '
 })
 export class CoachSession implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly trainingSessionService = inject(TrainingSessionService);
 
@@ -99,6 +102,8 @@ export class CoachSession implements OnInit {
   resetDialogOpen = signal(false);
   resetReason = '';
   resetting = signal(false);
+  deleteConfirmationOpen = signal(false);
+  deleting = signal(false);
 
   /** FR-PATT-002 — Private Training only; Routine has no completeness concept. */
   privateAttendanceComplete = signal(true);
@@ -173,6 +178,26 @@ export class CoachSession implements OnInit {
   /** FR-CR-001 — cancellable while not yet finalized. */
   canCancel(status: string): boolean {
     return status === 'Scheduled' || status === 'InProgress' || status === 'CoachAbsent';
+  }
+
+  canDelete(_status: string): boolean {
+    return this.isAdministrator;
+  }
+
+  openDeleteConfirmation(): void { this.deleteConfirmationOpen.set(true); }
+  closeDeleteConfirmation(): void { this.deleteConfirmationOpen.set(false); }
+  async deleteSession(): Promise<void> {
+    this.deleting.set(true);
+    this.actionError.set(null);
+    try {
+      await this.trainingSessionService.delete(this.trainingSessionId());
+      await this.router.navigate(['/admin-dashboard']);
+    } catch (error) {
+      this.actionError.set(this.extractErrorMessage(error, 'ไม่สามารถลบเซสชันฝึกซ้อมได้'));
+      this.deleteConfirmationOpen.set(false);
+    } finally {
+      this.deleting.set(false);
+    }
   }
 
   /** FR-CR-004 — rescheduling, like substitution, only applies before the session starts. */

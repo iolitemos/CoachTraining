@@ -79,4 +79,8 @@ export class TrainingSessionService {
     );
     return response.data;
   }
+
+  async delete(trainingSessionId: number): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${trainingSessionId}`));
+  }
 }
