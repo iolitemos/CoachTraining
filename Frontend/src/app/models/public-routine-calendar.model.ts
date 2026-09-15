@@ -4,6 +4,7 @@ export interface PublicRoutineCalendarItem {
   endTime: string;
   coachNickname: string;
   coachColorHex: string;
+  latestUpdate: string;
 }
 
 export interface PublicCompetitionMatch {
@@ -16,6 +17,7 @@ export interface PublicCompetitionMatch {
 export interface PublicCalendarNote {
   noteDate: string;
   content: string;
+  latestUpdate: string;
 }
 
 export interface PublicRoutineCalendarData {

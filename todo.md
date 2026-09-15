@@ -915,6 +915,8 @@
 - [x] Add Administrator APIs to inspect, rotate, and revoke the active share link.
 - [x] Add a bounded anonymous API returning only active Routine date, time, Coach nickname, and color.
 - [x] Add a responsive Thai read-only public calendar outside the authenticated application shell.
+- [x] Display each Routine Training date's latest schedule update date and time in public calendar details.
+- [x] Display the selected public Calendar Note's latest update date and time.
 - [x] Add Administrator controls to create, copy, rotate, and revoke the secret link.
 - [x] Generate the share QR Code locally in the browser and provide a PNG download action.
 - [x] Mark Competition Match date ranges and show match name, province, and dates on the shared calendar.

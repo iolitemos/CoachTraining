@@ -91,7 +91,8 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
                 schedule.StartTime,
                 schedule.EndTime,
                 schedule.Coach.Nickname ?? "โค้ช",
-                schedule.Coach.ColorHex))
+                schedule.Coach.ColorHex,
+                schedule.UpdatedDate ?? schedule.CreatedDate))
             .ToListAsync(cancellationToken);
 
         var competitionMatches = await _db.CompetitionMatches.AsNoTracking()
@@ -108,7 +109,10 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
         var notes = await _db.CalendarNotes.AsNoTracking()
             .Where(note => note.NoteDate >= startDate && note.NoteDate <= endDate)
             .OrderBy(note => note.NoteDate)
-            .Select(note => new PublicCalendarNoteDto(note.NoteDate, note.Content))
+            .Select(note => new PublicCalendarNoteDto(
+                note.NoteDate,
+                note.Content,
+                note.UpdatedDate ?? note.CreatedDate))
             .ToListAsync(cancellationToken);
 
         return new PublicRoutineCalendarDto(schedules, competitionMatches, notes);

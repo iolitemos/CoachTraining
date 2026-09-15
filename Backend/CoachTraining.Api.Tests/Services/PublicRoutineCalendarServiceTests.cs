@@ -30,7 +30,7 @@ public class PublicRoutineCalendarServiceTests
         db.Coaches.Add(coach);
         await db.SaveChangesAsync();
         db.RoutineSchedules.AddRange(
-            new RoutineSchedule { CoachId = coach.CoachId, EffectiveStartDate = new DateOnly(2026, 9, 12), StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(10, 0), IsActive = true },
+            new RoutineSchedule { CoachId = coach.CoachId, EffectiveStartDate = new DateOnly(2026, 9, 12), StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(10, 0), IsActive = true, CreatedDate = new DateTime(2026, 9, 1, 2, 0, 0, DateTimeKind.Utc), UpdatedDate = new DateTime(2026, 9, 10, 4, 30, 0, DateTimeKind.Utc) },
             new RoutineSchedule { CoachId = coach.CoachId, EffectiveStartDate = new DateOnly(2026, 9, 13), StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(10, 0), IsActive = false });
         await db.SaveChangesAsync();
         var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
@@ -42,6 +42,7 @@ public class PublicRoutineCalendarServiceTests
         Assert.Equal("ปิง", item.CoachNickname);
         Assert.Equal("#123456", item.CoachColorHex);
         Assert.Equal(new DateOnly(2026, 9, 12), item.TrainingDate);
+        Assert.Equal(new DateTime(2026, 9, 10, 4, 30, 0, DateTimeKind.Utc), item.LatestUpdate);
     }
 
     [Fact]
@@ -65,6 +66,27 @@ public class PublicRoutineCalendarServiceTests
         Assert.Equal("ชิงแชมป์ประเทศไทย", match.Name);
         Assert.Equal(new DateOnly(2026, 9, 10), match.StartDate);
         Assert.Equal(new DateOnly(2026, 9, 12), match.EndDate);
+    }
+
+    [Fact]
+    public async Task GetCalendarAsync_ReturnsLatestUpdateForCalendarNote()
+    {
+        using var db = TestDbContextFactory.Create();
+        db.CalendarNotes.Add(new CalendarNote
+        {
+            NoteDate = new DateOnly(2026, 9, 12),
+            Content = "เปลี่ยนเวลาฝึกซ้อม",
+            CreatedDate = new DateTime(2026, 9, 1, 2, 0, 0, DateTimeKind.Utc),
+            UpdatedDate = new DateTime(2026, 9, 11, 5, 45, 0, DateTimeKind.Utc),
+        });
+        await db.SaveChangesAsync();
+        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var link = await service.RotateLinkAsync(7);
+
+        var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
+
+        var note = Assert.Single(result!.Notes);
+        Assert.Equal(new DateTime(2026, 9, 11, 5, 45, 0, DateTimeKind.Utc), note.LatestUpdate);
     }
 
     [Fact]

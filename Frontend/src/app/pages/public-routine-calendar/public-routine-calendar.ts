@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { PublicCalendarNote, PublicCompetitionMatch, PublicRoutineCalendarItem } from '../../models/public-routine-calendar.model';
 import { PublicRoutineCalendarService } from '../../services/public-routine-calendar.service';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
+import { DisplayDateTimePipe } from '../../shared/display-date-time/display-date-time.pipe';
 import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
 import { CalendarNoteDialog } from '../../shared/calendar-note-dialog/calendar-note-dialog';
 
@@ -12,7 +13,7 @@ const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.
 
 @Component({
   selector: 'app-public-routine-calendar',
-  imports: [DisplayDatePipe, CoachNamePipe, CalendarNoteDialog],
+  imports: [DisplayDatePipe, DisplayDateTimePipe, CoachNamePipe, CalendarNoteDialog],
   templateUrl: './public-routine-calendar.html',
 })
 export class PublicRoutineCalendar implements OnInit {

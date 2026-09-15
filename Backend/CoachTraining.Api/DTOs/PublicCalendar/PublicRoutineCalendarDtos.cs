@@ -16,7 +16,8 @@ public record PublicRoutineCalendarItemDto(
     TimeOnly StartTime,
     TimeOnly EndTime,
     string CoachNickname,
-    string CoachColorHex);
+    string CoachColorHex,
+    DateTime LatestUpdate);
 
 public record PublicCompetitionMatchDto(
     string Name,
@@ -24,7 +25,7 @@ public record PublicCompetitionMatchDto(
     DateOnly StartDate,
     DateOnly EndDate);
 
-public record PublicCalendarNoteDto(DateOnly NoteDate, string Content);
+public record PublicCalendarNoteDto(DateOnly NoteDate, string Content, DateTime LatestUpdate);
 
 public record PublicRoutineCalendarDto(
     IReadOnlyList<PublicRoutineCalendarItemDto> Schedules,
