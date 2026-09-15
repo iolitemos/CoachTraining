@@ -127,7 +127,7 @@ export class PrivateSessionCalendar implements OnInit {
     if (isSelected) {
       return '#e5e7eb';
     }
-    return day.isToday ? '#2563eb' : null;
+    return null;
   }
 }
 

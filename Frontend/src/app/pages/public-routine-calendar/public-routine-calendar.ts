@@ -7,7 +7,7 @@ import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
 import { CalendarNoteDialog } from '../../shared/calendar-note-dialog/calendar-note-dialog';
 
 type ViewState = 'loading' | 'ready' | 'error' | 'invalid';
-interface CalendarDay { isoDate: string; dayNumber: number; isCurrentMonth: boolean; items: PublicRoutineCalendarItem[]; competitionMatches: PublicCompetitionMatch[]; note: PublicCalendarNote | null; }
+interface CalendarDay { isoDate: string; dayNumber: number; isCurrentMonth: boolean; isToday: boolean; items: PublicRoutineCalendarItem[]; competitionMatches: PublicCompetitionMatch[]; note: PublicCalendarNote | null; }
 const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 @Component({
@@ -36,6 +36,7 @@ export class PublicRoutineCalendar implements OnInit {
         isoDate,
         dayNumber: date.getDate(),
         isCurrentMonth: date.getMonth() === month.getMonth(),
+        isToday: isoDate === toIsoDate(new Date()),
         items: this.items().filter(item => item.trainingDate === isoDate),
         competitionMatches: this.competitionMatches().filter(match => match.startDate <= isoDate && isoDate <= match.endDate),
         note: this.notes().find(note => note.noteDate === isoDate) ?? null,

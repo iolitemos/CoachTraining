@@ -302,11 +302,9 @@
                       <div class="mb-2 flex items-center gap-1">
                         <button
                           type="button"
-                          [attr.aria-label]="'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
+                          [attr.aria-label]="(day.isToday ? 'วันนี้ ' : '') + 'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
                           title="กดค้างเพื่อเพิ่มฝึกซ้อมประจำ"
-                          class="flex size-7 items-center justify-center rounded-full text-xs font-medium hover:bg-primary-100"
-                          [class.bg-primary-600]="day.isToday"
-                          [class.text-white]="day.isToday"
+                          class="flex min-h-11 min-w-11 flex-col items-center justify-center rounded-lg px-1 text-xs font-medium hover:bg-primary-100"
                           [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday"
                           (pointerdown)="startDateLongPress(day)"
                           (pointerup)="cancelDateLongPress()"
@@ -314,7 +312,7 @@
                           (pointercancel)="cancelDateLongPress()"
                           (contextmenu)="$event.preventDefault()"
                           (click)="selectDay(day)"
-                        >{{ day.dayNumber }}</button>
+                        ><span>{{ day.dayNumber }}</span>@if (day.isToday) { <span class="today-label mt-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[9px] leading-none font-semibold text-white shadow-sm">วันนี้</span> }</button>
                         @if (day.competitionMatches.length > 0) {
                           <span class="competition-trophy inline-flex size-6 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-xs leading-none shadow-sm" role="img" [attr.aria-label]="'มีการแข่งขัน ' + day.competitionMatches.length + ' รายการ'" [title]="day.competitionMatches[0].name">🏆</span>
                         }
@@ -365,7 +363,7 @@
                   @for (day of calendarDays(); track day.isoDate) {
                     <button
                       type="button"
-                      [attr.aria-label]="'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
+                      [attr.aria-label]="(day.isToday ? 'วันนี้ ' : '') + 'เลือกวันที่ ' + day.isoDate + ' กดค้างเพื่อเพิ่มฝึกซ้อมประจำ'"
                       class="relative mx-auto flex size-9 items-center justify-center rounded-lg text-xs font-medium min-[360px]:size-10"
                       [class.ring-2]="selectedDate() === day.isoDate"
                       [class.ring-secondary-400]="selectedDate() === day.isoDate && day.sessions.length === 0"
@@ -382,9 +380,10 @@
                       (contextmenu)="$event.preventDefault()"
                       (click)="selectDay(day)"
                     >
-                      {{ day.dayNumber }}
+                      <span [class.-translate-y-1]="day.isToday">{{ day.dayNumber }}</span>
+                      @if (day.isToday) { <span class="today-label absolute bottom-1 text-[7px] leading-none font-semibold text-blue-700">วันนี้</span> }
                       @if (day.sessions.length > 0) {
-                        <span class="absolute bottom-1 flex gap-0.5" aria-hidden="true">
+                        <span class="absolute top-1 left-1 flex gap-0.5" aria-hidden="true">
                           @if (hasTrainingType(day, 'Routine')) {
                             <span class="size-1 rounded-full bg-emerald-600"></span>
                           }

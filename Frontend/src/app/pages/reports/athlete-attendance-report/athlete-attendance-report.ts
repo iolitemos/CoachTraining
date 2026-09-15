@@ -23,6 +23,7 @@ interface AttendanceCalendarDay {
   isoDate: string;
   dayNumber: number;
   inCurrentMonth: boolean;
+  isToday: boolean;
   records: AthleteAttendanceRecord[];
 }
 
@@ -74,6 +75,7 @@ export class AthleteAttendanceReport implements OnInit {
         isoDate,
         dayNumber: date.getDate(),
         inCurrentMonth: date.getMonth() === monthIndex,
+        isToday: isoDate === this.formatLocalDate(new Date()),
         records: athlete?.records.filter((record) => record.sessionDate === isoDate) ?? [],
       };
     });

@@ -228,7 +228,7 @@ export class RoutineScheduleCalendar implements OnInit {
     if (isSelected) {
       return '#e5e7eb';
     }
-    return day.isToday ? '#2563eb' : null;
+    return null;
   }
 
   requestDelete(schedule: RoutineScheduleListItem): void {

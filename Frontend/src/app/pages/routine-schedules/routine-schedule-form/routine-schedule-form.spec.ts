@@ -51,6 +51,15 @@ describe('RoutineScheduleForm', () => {
     expect(component.form.controls.endTime.value).toBe('20:30');
   });
 
+  it('formats coach options as nickname followed by full name', () => {
+    expect(
+      component.coachOptionLabel({ nickname: 'มอส', fullName: 'สมชาย ใจดี' }),
+    ).toBe('มอส - สมชาย ใจดี');
+    expect(
+      component.coachOptionLabel({ nickname: null, fullName: 'สมหญิง ใจดี' }),
+    ).toBe('สมหญิง ใจดี');
+  });
+
   it('should require coach, time, and effective start date before submit', async () => {
     const initPromise = component.ngOnInit();
     httpMock

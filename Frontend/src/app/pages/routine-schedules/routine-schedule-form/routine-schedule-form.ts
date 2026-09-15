@@ -9,11 +9,10 @@ import { CoachOption } from '../../../models/coach.model';
 import { CoachService } from '../../../services/coach.service';
 import { RoutineScheduleService } from '../../../services/routine-schedule.service';
 import { DateInput } from '../../../shared/date-input/date-input';
-import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 @Component({
   selector: 'app-routine-schedule-form',
-  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, DateInput, CoachNamePipe],
+  imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, DateInput],
   templateUrl: './routine-schedule-form.html',
   styleUrl: './routine-schedule-form.css',
 })
@@ -50,6 +49,11 @@ export class RoutineScheduleForm implements OnInit {
     effectiveStartDate: [getTodayIsoDate(), Validators.required],
     remarks: [''],
   });
+
+  coachOptionLabel(coach: Pick<CoachOption, 'nickname' | 'fullName'>): string {
+    const nickname = coach.nickname?.trim();
+    return nickname ? `${nickname} - ${coach.fullName}` : coach.fullName;
+  }
 
   selectedOccurrenceCount(): number {
     if (this.scheduleMode() === 'single') return 1;

@@ -106,17 +106,21 @@
                 <div class="flex items-center gap-1">
                   <button
                     type="button"
-                    class="flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors hover:bg-primary-100 hover:text-primary-700"
+                    class="flex min-h-11 min-w-11 flex-col items-center justify-center rounded-lg px-1 text-xs font-medium transition-colors hover:bg-primary-100 hover:text-primary-700"
                     [class.ring-2]="selectedDate() === day.isoDate"
                     [class.ring-emerald-700]="selectedDate() === day.isoDate && day.schedules.length > 0"
                     [class.ring-secondary-400]="selectedDate() === day.isoDate && day.schedules.length === 0"
                     [class.text-emerald-900]="day.schedules.length > 0"
-                    [class.text-white]="day.isToday && day.schedules.length === 0 && selectedDate() !== day.isoDate"
                     [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday && selectedDate() !== day.isoDate"
                     [style.background-color]="calendarDayBackground(day, selectedDate() === day.isoDate)"
+                    [attr.aria-label]="day.isToday ? 'วันนี้ วันที่ ' + day.dayNumber : 'วันที่ ' + day.dayNumber"
+                    [attr.title]="day.isToday ? 'วันนี้' : null"
                     (click)="selectDay(day)"
                   >
-                    {{ day.dayNumber }}
+                    <span>{{ day.dayNumber }}</span>
+                    @if (day.isToday) {
+                      <span class="today-label mt-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[9px] leading-none font-semibold text-white shadow-sm">วันนี้</span>
+                    }
                   </button>
                   @if (day.competitionMatches.length > 0) {
                     <span class="competition-trophy inline-flex size-6 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-xs leading-none shadow-sm" role="img" [attr.aria-label]="'มีการแข่งขัน ' + day.competitionMatches.length + ' รายการ'" [title]="day.competitionMatches.length + ' รายการแข่งขัน'">🏆</span>
@@ -193,15 +197,19 @@
               [class.ring-emerald-700]="selectedDate() === day.isoDate && day.schedules.length > 0"
               [class.ring-secondary-400]="selectedDate() === day.isoDate && day.schedules.length === 0"
               [class.text-emerald-900]="day.schedules.length > 0"
-              [class.text-white]="day.isToday && day.schedules.length === 0 && selectedDate() !== day.isoDate"
               [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday && selectedDate() !== day.isoDate"
               [style.background-color]="calendarDayBackground(day, selectedDate() === day.isoDate)"
+              [attr.aria-label]="day.isToday ? 'วันนี้ วันที่ ' + day.dayNumber : 'วันที่ ' + day.dayNumber"
+              [attr.title]="day.isToday ? 'วันนี้' : null"
               (click)="selectDay(day)"
             >
-              {{ day.dayNumber }}
+              <span [class.-translate-y-1]="day.isToday">{{ day.dayNumber }}</span>
+              @if (day.isToday) {
+                <span class="today-label absolute bottom-1 text-[7px] leading-none font-semibold text-blue-700">วันนี้</span>
+              }
               @if (day.schedules.length > 0) {
                 <span
-                  class="absolute bottom-1 size-1 rounded-full bg-emerald-700"
+                  class="absolute top-1 left-1 size-1 rounded-full bg-emerald-700"
                 ></span>
               }
               @if (day.competitionMatches.length > 0) {

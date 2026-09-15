@@ -198,8 +198,9 @@
               class="min-h-14 min-w-0 border-b border-r border-border p-1 text-left sm:min-h-20 sm:p-1.5"
               [class.bg-secondary-50]="!day.inCurrentMonth"
             >
-              <span class="text-xs" [class.text-text]="day.inCurrentMonth" [class.text-text-secondary]="!day.inCurrentMonth">
-                {{ day.dayNumber }}
+              <span class="flex flex-col items-start text-xs" [class.text-text]="day.inCurrentMonth" [class.text-text-secondary]="!day.inCurrentMonth">
+                <span>{{ day.dayNumber }}</span>
+                @if (day.isToday) { <span class="today-label mt-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[8px] leading-none font-semibold text-white shadow-sm">วันนี้</span> }
               </span>
               @if (routineCount(day.records); as count) {
                 <div

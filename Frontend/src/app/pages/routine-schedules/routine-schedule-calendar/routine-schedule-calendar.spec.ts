@@ -77,6 +77,23 @@ describe('RoutineScheduleCalendar', () => {
     expect(component.selectedDate()).toBe('2026-02-01');
   });
 
+  it('identifies today independently from the selected date and scheduled state', () => {
+    component.goToCurrentMonth();
+
+    const today = component.calendarDays().find((day) => day.isToday);
+    expect(today).toBeDefined();
+    expect(today?.isoDate).toBe(component.selectedDate());
+
+    component.selectedDate.set(component.calendarDays().find((day) => !day.isToday)!.isoDate);
+    today!.schedules = [{ routineScheduleId: 1 } as never];
+
+    expect(today?.isToday).toBe(true);
+    expect(component.calendarDayBackground(today!)).toBe('#d1fae5');
+
+    today!.schedules = [];
+    expect(component.calendarDayBackground(today!)).toBeNull();
+  });
+
   it('uses Emerald for scheduled days and gray only for an empty selected day', () => {
     const day = component.calendarDays().find((item) => item.isoDate === '2026-01-05')!;
 
