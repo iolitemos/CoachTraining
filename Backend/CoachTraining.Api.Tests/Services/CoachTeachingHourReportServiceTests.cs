@@ -159,4 +159,43 @@ public class CoachTeachingHourReportServiceTests
         Assert.Equal(1, item.RoutineDays);
         Assert.Equal(0, item.PrivateDays);
     }
+
+    [Fact]
+    public async Task GetReportAsync_SummarizesCompetitionAssignmentsWithoutDoubleCountingOverlappingDays()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var firstMatch = new CompetitionMatch
+        {
+            Name = "ชิงแชมป์ภาคเหนือ", Province = "เชียงใหม่",
+            StartDate = new DateOnly(2026, 1, 3), EndDate = new DateOnly(2026, 1, 5),
+        };
+        var secondMatch = new CompetitionMatch
+        {
+            Name = "กีฬาเยาวชน", Province = "ลำพูน",
+            StartDate = new DateOnly(2026, 1, 5), EndDate = new DateOnly(2026, 1, 7),
+        };
+        db.CompetitionMatches.AddRange(firstMatch, secondMatch);
+        await db.SaveChangesAsync();
+        db.CompetitionMatchCoaches.AddRange(
+            new CompetitionMatchCoach { CompetitionMatchId = firstMatch.CompetitionMatchId, CoachId = coach.CoachId, CoachNameSnapshot = coach.FullName, CoachNicknameSnapshot = coach.Nickname },
+            new CompetitionMatchCoach { CompetitionMatchId = secondMatch.CompetitionMatchId, CoachId = coach.CoachId, CoachNameSnapshot = coach.FullName, CoachNicknameSnapshot = coach.Nickname });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetReportAsync(new CoachTeachingHourReportFilter
+        {
+            CoachId = coach.CoachId,
+            StartDate = new DateOnly(2026, 1, 4),
+            EndDate = new DateOnly(2026, 1, 6),
+        });
+
+        var assignment = Assert.Single(result.CompetitionAssignments);
+        Assert.Equal(2, assignment.CompetitionCount);
+        Assert.Equal(3, assignment.AssignedDays);
+        Assert.Equal(2, assignment.Competitions[0].AssignedDays);
+        Assert.Equal(2, assignment.Competitions[1].AssignedDays);
+        Assert.Equal(2, result.TotalCompetitionAssignments);
+        Assert.Equal(3, result.TotalCompetitionDays);
+        Assert.Empty(result.Items);
+    }
 }

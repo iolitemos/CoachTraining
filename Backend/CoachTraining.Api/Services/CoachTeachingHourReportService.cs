@@ -107,6 +107,62 @@ public class CoachTeachingHourReportService : ICoachTeachingHourReportService
             .ThenBy(i => i.CoachCode)
             .ToList();
 
+        var competitionQuery = _db.CompetitionMatchCoaches.AsNoTracking()
+            .Where(assignment =>
+                (filter.CoachId == null || assignment.CoachId == filter.CoachId.Value) &&
+                (filter.StartDate == null || assignment.CompetitionMatch.EndDate >= filter.StartDate.Value) &&
+                (filter.EndDate == null || assignment.CompetitionMatch.StartDate <= filter.EndDate.Value));
+
+        var competitionRows = await competitionQuery
+            .Select(assignment => new
+            {
+                assignment.CoachId,
+                assignment.Coach.CoachCode,
+                CoachFullName = assignment.CoachNameSnapshot,
+                CoachNickname = assignment.CoachNicknameSnapshot,
+                assignment.Coach.ColorHex,
+                assignment.CompetitionMatchId,
+                assignment.CompetitionMatch.Name,
+                assignment.CompetitionMatch.Province,
+                assignment.CompetitionMatch.StartDate,
+                assignment.CompetitionMatch.EndDate,
+            })
+            .ToListAsync();
+
+        var competitionAssignments = competitionRows
+            .GroupBy(row => new { row.CoachId, row.CoachCode, row.CoachFullName, row.CoachNickname, row.ColorHex })
+            .Select(group =>
+            {
+                var details = group.OrderBy(row => row.StartDate).ThenBy(row => row.Name)
+                    .Select(row => new CoachCompetitionDetailDto
+                    {
+                        CompetitionMatchId = row.CompetitionMatchId,
+                        Name = row.Name,
+                        Province = row.Province,
+                        StartDate = row.StartDate,
+                        EndDate = row.EndDate,
+                        AssignedDays = CountDaysInRange(row.StartDate, row.EndDate, filter.StartDate, filter.EndDate),
+                    }).ToList();
+
+                var distinctDays = group.SelectMany(row => DatesInRange(row.StartDate, row.EndDate, filter.StartDate, filter.EndDate))
+                    .Distinct().Count();
+                return new CoachCompetitionAssignmentDto
+                {
+                    CoachId = group.Key.CoachId,
+                    CoachCode = group.Key.CoachCode,
+                    CoachFullName = group.Key.CoachFullName,
+                    CoachNickname = group.Key.CoachNickname,
+                    CoachColorHex = group.Key.ColorHex,
+                    CompetitionCount = details.Count,
+                    AssignedDays = distinctDays,
+                    Competitions = details,
+                };
+            })
+            .OrderByDescending(item => item.AssignedDays)
+            .ThenByDescending(item => item.CompetitionCount)
+            .ThenBy(item => item.CoachCode)
+            .ToList();
+
         return new CoachTeachingHourReportResponseDto
         {
             Items = items,
@@ -115,6 +171,23 @@ public class CoachTeachingHourReportService : ICoachTeachingHourReportService
             GrandTotalDays = items.Sum(i => i.TotalDays),
             TotalPlannedDays = items.Sum(i => i.PlannedDays),
             TotalActualDays = items.Sum(i => i.ActualDays),
+            CompetitionAssignments = competitionAssignments,
+            TotalCompetitionAssignments = competitionAssignments.Sum(item => item.CompetitionCount),
+            TotalCompetitionDays = competitionAssignments.Sum(item => item.AssignedDays),
         };
+    }
+
+    private static int CountDaysInRange(DateOnly startDate, DateOnly endDate, DateOnly? filterStart, DateOnly? filterEnd)
+    {
+        var effectiveStart = filterStart is not null && filterStart.Value > startDate ? filterStart.Value : startDate;
+        var effectiveEnd = filterEnd is not null && filterEnd.Value < endDate ? filterEnd.Value : endDate;
+        return Math.Max(0, effectiveEnd.DayNumber - effectiveStart.DayNumber + 1);
+    }
+
+    private static IEnumerable<DateOnly> DatesInRange(DateOnly startDate, DateOnly endDate, DateOnly? filterStart, DateOnly? filterEnd)
+    {
+        var effectiveStart = filterStart is not null && filterStart.Value > startDate ? filterStart.Value : startDate;
+        var count = CountDaysInRange(startDate, endDate, filterStart, filterEnd);
+        return Enumerable.Range(0, count).Select(offset => effectiveStart.AddDays(offset));
     }
 }

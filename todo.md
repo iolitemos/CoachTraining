@@ -622,6 +622,7 @@
 ### 5.3 Routine Training Frontend
 
 - [x] Mark every Competition Match date range on the Routine Schedule calendar and show match details for the selected date.
+- [x] Mark every Competition Match date range on the Private Training calendar and show match details for the selected date.
 - [x] Mark Competition Match date ranges with a circled trophy on the Coach Home calendar.
 - [x] Create Routine Schedule list page.
 - [x] Limit the Routine Schedule list to training date, time, Coach nickname, and edit/delete icon actions, ordered by training date.
@@ -866,6 +867,7 @@
 
 ### 5.15 Coach Teaching-Hour Report Frontend
 
+- [x] Add a separate Competition-care tab showing assigned matches and distinct assigned days per coach without mixing them into teaching-day totals.
 - [x] Create Coach Teaching-Hour Report page.
 - [x] Add Coach filter.
 - [x] Add date-range filter.

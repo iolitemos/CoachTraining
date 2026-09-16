@@ -25,6 +25,29 @@ export interface CoachTeachingHourReportResponse {
   grandTotalDays: number;
   totalPlannedDays: number;
   totalActualDays: number;
+  competitionAssignments: CoachCompetitionAssignment[];
+  totalCompetitionAssignments: number;
+  totalCompetitionDays: number;
+}
+
+export interface CoachCompetitionAssignment {
+  coachId: number;
+  coachCode: string;
+  coachFullName: string;
+  coachNickname: string | null;
+  coachColorHex: string;
+  competitionCount: number;
+  assignedDays: number;
+  competitions: CoachCompetitionDetail[];
+}
+
+export interface CoachCompetitionDetail {
+  competitionMatchId: number;
+  name: string;
+  province: string;
+  startDate: string;
+  endDate: string;
+  assignedDays: number;
 }
 
 export interface CoachTeachingHourReportFilter {

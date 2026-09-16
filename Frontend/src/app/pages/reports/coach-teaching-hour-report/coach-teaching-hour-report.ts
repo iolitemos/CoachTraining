@@ -13,8 +13,10 @@ import { CoachTeachingHourReportService } from '../../../services/coach-teaching
 import { DateInput } from '../../../shared/date-input/date-input';
 import { FilterStateService } from '../../../services/filter-state.service';
 import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
+import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
+type ReportTab = TrainingType | 'Competition';
 
 function currentMonthRange(): { startDate: string; endDate: string } {
   const today = new Date();
@@ -40,7 +42,7 @@ function currentMonthRange(): { startDate: string; endDate: string } {
  */
 @Component({
   selector: 'app-coach-teaching-hour-report',
-  imports: [FormsModule, PageHeader, LoadingIndicator, EmptyState, ErrorState, DateInput, CoachNamePipe],
+  imports: [FormsModule, PageHeader, LoadingIndicator, EmptyState, ErrorState, DateInput, CoachNamePipe, DisplayDatePipe],
   templateUrl: './coach-teaching-hour-report.html',
   styleUrl: './coach-teaching-hour-report.css',
 })
@@ -52,7 +54,7 @@ export class CoachTeachingHourReport implements OnInit {
   coachId: number | null = null;
   startDate = currentMonthRange().startDate;
   endDate = currentMonthRange().endDate;
-  activeTrainingType = signal<TrainingType>('Routine');
+  activeTrainingType = signal<ReportTab>('Routine');
 
   constructor(
     private readonly reportService: CoachTeachingHourReportService,
@@ -69,7 +71,7 @@ export class CoachTeachingHourReport implements OnInit {
     this.coachId = filters.coachId;
     this.startDate = filters.startDate;
     this.endDate = filters.endDate;
-    this.activeTrainingType.set(filters.trainingType === 'Private' ? 'Private' : 'Routine');
+    this.activeTrainingType.set(filters.trainingType === 'Private' || filters.trainingType === 'Competition' ? filters.trainingType : 'Routine');
     void this.coachService.getActiveOptions().then((options) => this.coachOptions.set(options));
     void this.load();
   }
@@ -77,12 +79,13 @@ export class CoachTeachingHourReport implements OnInit {
   async load(): Promise<void> {
     this.state.set('loading');
     try {
+      const activeTab = this.activeTrainingType();
       this.report.set(
         await this.reportService.get({
           coachId: this.coachId,
           startDate: this.startDate || null,
           endDate: this.endDate || null,
-          trainingType: this.activeTrainingType(),
+          trainingType: activeTab === 'Competition' ? null : activeTab,
         }),
       );
       this.state.set('ready');
@@ -98,7 +101,7 @@ export class CoachTeachingHourReport implements OnInit {
     void this.load();
   }
 
-  selectTrainingType(trainingType: TrainingType): void {
+  selectTrainingType(trainingType: ReportTab): void {
     if (this.activeTrainingType() === trainingType) return;
     this.activeTrainingType.set(trainingType);
     this.applyFilters();

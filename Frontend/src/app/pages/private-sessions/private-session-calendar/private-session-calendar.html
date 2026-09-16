@@ -57,6 +57,9 @@
                   <span>{{ day.dayNumber }}</span>
                   @if (day.isToday) { <span class="today-label mt-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[9px] leading-none font-semibold text-white shadow-sm">วันนี้</span> }
                 </button>
+                @if (day.competitionMatches.length > 0) {
+                  <span class="competition-trophy inline-flex size-6 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-xs leading-none shadow-sm" role="img" [attr.aria-label]="'มีการแข่งขัน ' + day.competitionMatches.length + ' รายการ'" [title]="day.competitionMatches[0].name">🏆</span>
+                }
                 </div>
                 <a routerLink="/private-sessions/new" [queryParams]="{ date: day.isoDate }" class="rounded px-1.5 py-0.5 text-xs font-medium text-primary-600 opacity-0 hover:bg-primary-50 group-hover:opacity-100 focus:opacity-100" [class.mr-8]="day.note">+ เพิ่ม</a>
               </div>
@@ -100,6 +103,7 @@
               <span [class.-translate-y-1]="day.isToday">{{ day.dayNumber }}</span>
               @if (day.isToday) { <span class="today-label absolute bottom-1 text-[7px] leading-none font-semibold text-blue-700">วันนี้</span> }
               @if (day.sessions.length > 0) { <span class="absolute top-1 left-1 size-1 rounded-full bg-blue-700"></span> }
+              @if (day.competitionMatches.length > 0) { <span class="competition-trophy absolute -top-1.5 -right-1.5 inline-flex size-5 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-[10px] leading-none shadow-sm" role="img" aria-label="มีการแข่งขัน">🏆</span> }
               @if (day.note) { <span class="absolute -bottom-1 -right-1 inline-flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white">!</span> }
             </button>
           }
@@ -111,6 +115,13 @@
               <button type="button" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-warning/40 bg-warning-surface px-3 py-2 text-xs font-medium text-text" (click)="openNote(day.isoDate)">{{ day.note ? '! ดู/แก้ไข Note' : '+ เพิ่ม Note' }}</button>
               <a routerLink="/private-sessions/new" [queryParams]="{ date: day.isoDate }" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-3 py-2 text-xs font-medium text-white">+ เพิ่มฝึกซ้อม</a>
             </div>
+            @if (day.competitionMatches.length > 0) {
+              <div class="mb-3 space-y-2">
+                @for (match of day.competitionMatches; track match.competitionMatchId) {
+                  <article class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><p class="font-semibold">🏆 {{ match.name }}</p><p class="mt-1">{{ match.province }} · {{ match.startDate | displayDate }} – {{ match.endDate | displayDate }}</p></article>
+                }
+              </div>
+            }
             @if (day.sessions.length === 0) {
               <p class="rounded-lg bg-secondary-50 px-3 py-4 text-center text-sm text-text-secondary">ไม่มีฝึกซ้อมส่วนตัวในวันนี้</p>
             } @else {
@@ -150,6 +161,18 @@
           </div>
         }
       </div>
+      @if (selectedDay(); as day) {
+        @if (day.competitionMatches.length > 0) {
+          <div class="hidden border-t border-border p-4 md:block">
+            <h3 class="mb-2 text-sm font-semibold text-text">การแข่งขันวันที่ {{ day.isoDate | displayDate }}</h3>
+            <div class="grid gap-2 lg:grid-cols-2">
+              @for (match of day.competitionMatches; track match.competitionMatchId) {
+                <article class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"><p class="font-semibold">🏆 {{ match.name }}</p><p class="mt-1">{{ match.province }} · {{ match.startDate | displayDate }} – {{ match.endDate | displayDate }}</p></article>
+              }
+            </div>
+          </div>
+        }
+      }
     }
   }
 </section>

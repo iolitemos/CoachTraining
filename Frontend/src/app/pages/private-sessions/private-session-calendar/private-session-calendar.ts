@@ -17,6 +17,8 @@ import { CalendarNoteDialog } from '../../../shared/calendar-note-dialog/calenda
 import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
 import { ApiErrorBody } from '../../../models/paged-result.model';
 import { TrainingSessionService } from '../../../services/training-session.service';
+import { CompetitionMatch } from '../../../models/competition-match.model';
+import { CompetitionMatchService } from '../../../services/competition-match.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -27,6 +29,7 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   sessions: PrivateSessionListItem[];
+  competitionMatches: CompetitionMatch[];
   note: CalendarNote | null;
 }
 
@@ -40,6 +43,7 @@ export class PrivateSessionCalendar implements OnInit {
   readonly dayHeaders = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   state = signal<ViewState>('loading');
   sessions = signal<PrivateSessionListItem[]>([]);
+  competitionMatches = signal<CompetitionMatch[]>([]);
   notes = signal<CalendarNote[]>([]);
   noteDialogOpen = signal(false);
   noteDialogDateSelectable = signal(false);
@@ -67,6 +71,7 @@ export class PrivateSessionCalendar implements OnInit {
         isCurrentMonth: date.getMonth() === month.getMonth(),
         isToday: isoDate === toIsoDate(new Date()),
         sessions: this.sessions().filter((session) => session.sessionDate === isoDate),
+        competitionMatches: this.competitionMatches().filter((match) => match.startDate <= isoDate && isoDate <= match.endDate),
         note: this.notes().find((note) => note.noteDate === isoDate) ?? null,
       };
     });
@@ -83,6 +88,7 @@ export class PrivateSessionCalendar implements OnInit {
     private readonly privateSessionService: PrivateSessionService,
     private readonly calendarNoteService: CalendarNoteService,
     private readonly trainingSessionService: TrainingSessionService,
+    private readonly competitionMatchService: CompetitionMatchService,
   ) {}
 
   ngOnInit(): void {
@@ -93,11 +99,13 @@ export class PrivateSessionCalendar implements OnInit {
     this.state.set('loading');
     const days = this.calendarDays();
     try {
-      const [sessions, notes] = await Promise.all([
+      const [sessions, competitionMatches, notes] = await Promise.all([
         this.privateSessionService.listCalendar(days[0].isoDate, days[days.length - 1].isoDate),
+        this.competitionMatchService.listAll(),
         this.calendarNoteService.list(days[0].isoDate, days[days.length - 1].isoDate),
       ]);
       this.sessions.set(sessions);
+      this.competitionMatches.set(competitionMatches);
       this.notes.set(notes);
       this.state.set('ready');
     } catch {

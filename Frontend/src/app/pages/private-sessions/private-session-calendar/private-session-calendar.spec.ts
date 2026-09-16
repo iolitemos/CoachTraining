@@ -29,6 +29,7 @@ describe('PrivateSessionCalendar', () => {
     expect(request.request.params.get('startDate')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(request.request.params.get('endDate')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     request.flush({ message: 'Success', data: [] });
+    flushCompetitionMatches();
     httpMock.expectOne((req) => req.url.endsWith('/calendar-notes')).flush({ message: 'Success', data: [] });
     await loadPromise;
 
@@ -70,6 +71,7 @@ describe('PrivateSessionCalendar', () => {
       }],
     });
     httpMock.expectOne((request) => request.url.endsWith('/calendar-notes')).flush({ message: 'Success', data: [] });
+    flushCompetitionMatches();
     await new Promise((resolve) => setTimeout(resolve, 0));
     fixture.detectChanges();
 
@@ -91,4 +93,40 @@ describe('PrivateSessionCalendar', () => {
     expect(component.sessions()).toEqual([]);
     expect(component.deleteTarget()).toBeNull();
   });
+
+  it('marks every date covered by a competition and shows its details', async () => {
+    const fixture = TestBed.createComponent(PrivateSessionCalendar);
+    const component = fixture.componentInstance;
+    component.visibleMonth.set(new Date(2026, 0, 1));
+    component.selectedDate.set('2026-01-05');
+    component.competitionMatches.set([{
+      competitionMatchId: 7,
+      name: 'กีฬาเยาวชนแห่งชาติ',
+      province: 'เชียงใหม่',
+      startDate: '2026-01-04',
+      endDate: '2026-01-06',
+      coaches: [],
+    }]);
+
+    const coveredDay = component.calendarDays().find((day) => day.isoDate === '2026-01-05')!;
+    const outsideDay = component.calendarDays().find((day) => day.isoDate === '2026-01-07')!;
+    expect(coveredDay.competitionMatches.length).toBe(1);
+    expect(outsideDay.competitionMatches.length).toBe(0);
+
+    fixture.detectChanges();
+    httpMock.expectOne((request) => request.url.endsWith('/private-sessions/calendar')).flush({ message: 'Success', data: [] });
+    flushCompetitionMatches([component.competitionMatches()[0]]);
+    httpMock.expectOne((request) => request.url.endsWith('/calendar-notes')).flush({ message: 'Success', data: [] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('กีฬาเยาวชนแห่งชาติ');
+    expect(fixture.nativeElement.textContent).toContain('เชียงใหม่');
+  });
+
+  function flushCompetitionMatches(items: unknown[] = []): void {
+    httpMock.expectOne((request) => request.url.endsWith('/competition-matches')).flush({
+      message: 'Success',
+      data: { items, page: 1, pageSize: 100, totalCount: items.length, totalPages: 1 },
+    });
+  }
 });

@@ -38,4 +38,29 @@ public class CoachTeachingHourReportResponseDto
     public int GrandTotalDays { get; set; }
     public int TotalPlannedDays { get; set; }
     public int TotalActualDays { get; set; }
+    public List<CoachCompetitionAssignmentDto> CompetitionAssignments { get; set; } = [];
+    public int TotalCompetitionAssignments { get; set; }
+    public int TotalCompetitionDays { get; set; }
+}
+
+public class CoachCompetitionAssignmentDto
+{
+    public int CoachId { get; set; }
+    public string CoachCode { get; set; } = string.Empty;
+    public string CoachFullName { get; set; } = string.Empty;
+    public string? CoachNickname { get; set; }
+    public string CoachColorHex { get; set; } = string.Empty;
+    public int CompetitionCount { get; set; }
+    public int AssignedDays { get; set; }
+    public List<CoachCompetitionDetailDto> Competitions { get; set; } = [];
+}
+
+public class CoachCompetitionDetailDto
+{
+    public int CompetitionMatchId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Province { get; set; } = string.Empty;
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public int AssignedDays { get; set; }
 }
