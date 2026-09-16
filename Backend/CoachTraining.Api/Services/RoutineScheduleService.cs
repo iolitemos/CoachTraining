@@ -118,7 +118,7 @@ public class RoutineScheduleService : IRoutineScheduleService
         }
     }
 
-    public async Task<(CoachRoutineScheduleBatchCreateResult? Result, string? Error, List<string> Conflicts)> CreateOwnBatchAsync(
+    public async Task<(CoachRoutineScheduleBatchCreateResult? Result, string? Error, List<string> Conflicts)> CreateBatchAsync(
         int coachId, CoachRoutineScheduleBatchCreateDto dto, int actionByUserId)
     {
         var coach = await _db.Coaches.FirstOrDefaultAsync(c => c.CoachId == coachId);

@@ -12,6 +12,7 @@ public class PrivateSessionAthleteConfiguration : IEntityTypeConfiguration<Priva
 
         builder.Property(psa => psa.AthleteCodeSnapshot).HasMaxLength(30).IsRequired();
         builder.Property(psa => psa.AthleteNameSnapshot).HasMaxLength(200).IsRequired();
+        builder.Property(psa => psa.AthleteNicknameSnapshot).HasMaxLength(100);
         builder.Property(psa => psa.GuestPhone).HasMaxLength(50);
         builder.Property(psa => psa.GuestRemark).HasMaxLength(500);
 
@@ -32,7 +33,7 @@ public class PrivateSessionAthleteConfiguration : IEntityTypeConfiguration<Priva
             .OnDelete(DeleteBehavior.Restrict);
 
         // See TrainingSessionConfiguration: historical display must read
-        // AthleteCodeSnapshot/AthleteNameSnapshot, not the live Athlete
+        // AthleteCodeSnapshot/AthleteNameSnapshot/AthleteNicknameSnapshot, not the live Athlete
         // navigation, so the expected EF soft-delete-filter warning is safe.
     }
 }

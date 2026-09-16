@@ -60,6 +60,10 @@ export interface CoachRoutineScheduleBatchCreateRequest {
   remarks: string | null;
 }
 
+export interface RoutineScheduleBatchCreateRequest extends CoachRoutineScheduleBatchCreateRequest {
+  coachId: number;
+}
+
 export interface CoachRoutineScheduleBatchCreateResult {
   createdCount: number;
   createdDates: string[];

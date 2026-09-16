@@ -16,6 +16,7 @@
             <article class="rounded-xl border border-border bg-surface p-4 shadow-sm">
               <h2 class="font-semibold text-text">{{ match.name }}</h2>
               <p class="mt-1 text-sm text-text-secondary">{{ match.province }}</p>
+              <p class="mt-2 text-sm text-text-secondary">โค้ชผู้ดูแล: @for (coach of match.coaches; track coach.coachId; let last = $last) { {{ (coach.nickname || coach.fullName) | coachName }}@if (!last) {, } }</p>
               <p class="mt-3 text-sm text-text">{{ match.startDate | displayDate }} – {{ match.endDate | displayDate }}</p>
               <div class="mt-4 grid grid-cols-2 gap-2 border-t border-border pt-3">
                 <a [routerLink]="['/competition-matches', match.competitionMatchId, 'edit']" class="inline-flex min-h-11 items-center justify-center rounded-lg border border-primary-200 text-sm font-medium text-primary-700">แก้ไข</a>
@@ -26,8 +27,8 @@
         </div>
         <div class="hidden overflow-x-auto rounded-xl border border-border bg-surface md:block">
           <table class="w-full min-w-180 text-left text-sm">
-            <thead class="border-b border-border text-text-secondary"><tr><th class="px-4 py-3 font-medium">ชื่อรายการ</th><th class="px-4 py-3 font-medium">จังหวัด</th><th class="px-4 py-3 font-medium">วันที่เริ่มแข่ง</th><th class="px-4 py-3 font-medium">วันที่สิ้นสุดการแข่งขัน</th><th class="px-4 py-3 font-medium">การจัดการ</th></tr></thead>
-            <tbody>@for (match of matches(); track match.competitionMatchId) {<tr class="border-b border-border last:border-0"><td class="px-4 py-3 font-medium text-text">{{ match.name }}</td><td class="px-4 py-3 text-text-secondary">{{ match.province }}</td><td class="px-4 py-3 text-text-secondary">{{ match.startDate | displayDate }}</td><td class="px-4 py-3 text-text-secondary">{{ match.endDate | displayDate }}</td><td class="px-4 py-3"><div class="flex gap-3"><a [routerLink]="['/competition-matches', match.competitionMatchId, 'edit']" class="text-primary-600 hover:underline">แก้ไข</a><button type="button" class="text-danger hover:underline" (click)="requestDelete(match)">ลบ</button></div></td></tr>}</tbody>
+            <thead class="border-b border-border text-text-secondary"><tr><th class="px-4 py-3 font-medium">ชื่อรายการ</th><th class="px-4 py-3 font-medium">จังหวัด</th><th class="px-4 py-3 font-medium">โค้ชผู้ดูแล</th><th class="px-4 py-3 font-medium">วันที่เริ่มแข่ง</th><th class="px-4 py-3 font-medium">วันที่สิ้นสุดการแข่งขัน</th><th class="px-4 py-3 font-medium">การจัดการ</th></tr></thead>
+            <tbody>@for (match of matches(); track match.competitionMatchId) {<tr class="border-b border-border last:border-0"><td class="px-4 py-3 font-medium text-text">{{ match.name }}</td><td class="px-4 py-3 text-text-secondary">{{ match.province }}</td><td class="px-4 py-3 text-text-secondary">@for (coach of match.coaches; track coach.coachId; let last = $last) { {{ (coach.nickname || coach.fullName) | coachName }}@if (!last) {, } }</td><td class="px-4 py-3 text-text-secondary">{{ match.startDate | displayDate }}</td><td class="px-4 py-3 text-text-secondary">{{ match.endDate | displayDate }}</td><td class="px-4 py-3"><div class="flex gap-3"><a [routerLink]="['/competition-matches', match.competitionMatchId, 'edit']" class="text-primary-600 hover:underline">แก้ไข</a><button type="button" class="text-danger hover:underline" (click)="requestDelete(match)">ลบ</button></div></td></tr>}</tbody>
           </table>
         </div>
         <div class="mt-4"><app-pagination [page]="page()" [pageSize]="pageSize()" [totalCount]="totalCount()" (pageChange)="onPageChange($event)" /></div>

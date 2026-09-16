@@ -64,9 +64,10 @@
               <div class="space-y-1">
                 @for (session of day.sessions.slice(0, 3); track session.trainingSessionId) {
                   <div class="coach-event flex items-start gap-1 rounded-md border-l-3 px-2 py-1 text-xs" [style.--coach-color]="session.coachColorHex">
-                    <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="min-w-0 flex-1" [title]="((session.coachNickname || session.coachFullName) | coachName) + ' · ' + session.startTime.slice(0, 5) + '–' + session.endTime.slice(0, 5) + ' น. · ผู้เข้าร่วม ' + session.athleteCount + ' คน'">
+                    <a [routerLink]="['/private-sessions', session.trainingSessionId, 'edit']" class="min-w-0 flex-1" [title]="((session.coachNickname || session.coachFullName) | coachName) + ' · ' + session.startTime.slice(0, 5) + '–' + session.endTime.slice(0, 5) + ' น. · ผู้เข้าร่วม: ' + session.participantNames.join(', ')">
                       <span class="block truncate font-semibold">{{ (session.coachNickname || session.coachFullName) | coachName }}</span>
                       <span class="block truncate text-[11px] opacity-80">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น. · {{ session.athleteCount }} คน</span>
+                      <span class="block truncate text-[11px] opacity-80">{{ session.participantNames.join(', ') }}</span>
                     </a>
                     <button type="button" class="shrink-0 rounded px-1 text-danger hover:bg-danger-surface" title="ลบเซสชัน" [attr.aria-label]="'ลบเซสชันของ ' + session.coachFullName" (click)="requestDelete(session)">ลบ</button>
                   </div>
@@ -121,6 +122,7 @@
                         <p class="truncate font-semibold">{{ (session.coachNickname || session.coachFullName) | coachName }}</p>
                         <p class="mt-1 text-sm">{{ session.startTime.slice(0, 5) }}–{{ session.endTime.slice(0, 5) }} น.</p>
                         <p class="mt-1 text-xs">ผู้เข้าร่วม {{ session.athleteCount }} คน</p>
+                        <p class="mt-1 text-xs text-text-secondary">{{ session.participantNames.join(', ') }}</p>
                       </a>
                       <div class="flex shrink-0 flex-col items-center gap-2">
                         <app-status-badge [status]="session.status" />

@@ -15,4 +15,5 @@ public class PrivateSessionListItemDto
     public string? Location { get; set; }
     public SessionStatus Status { get; set; }
     public int AthleteCount { get; set; }
+    public List<string> ParticipantNames { get; set; } = [];
 }

@@ -21,9 +21,9 @@ public class PrivateSessionServiceTests
         return coach;
     }
 
-    private static async Task<Athlete> SeedAthleteAsync(Data.ApplicationDbContext db, string code = "A001")
+    private static async Task<Athlete> SeedAthleteAsync(Data.ApplicationDbContext db, string code = "A001", string? nickname = null)
     {
-        var athlete = new Athlete { AthleteCode = code, FullName = $"Athlete {code}", IsActive = true };
+        var athlete = new Athlete { AthleteCode = code, FullName = $"Athlete {code}", Nickname = nickname, IsActive = true };
         db.Athletes.Add(athlete);
         await db.SaveChangesAsync();
         return athlete;
@@ -56,6 +56,31 @@ public class PrivateSessionServiceTests
         Assert.Equal(SessionStatus.Scheduled, result.Session!.Status);
         Assert.Single(result.Session.Athletes);
         Assert.Equal(athlete.AthleteCode, result.Session.Athletes[0].AthleteCode);
+    }
+
+    [Fact]
+    public async Task ListByDateRangeAsync_ReturnsRegisteredAndGuestParticipantNames()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var athlete = await SeedAthleteAsync(db, nickname: "Ace");
+        var service = CreateService(db);
+        var sessionDate = new DateOnly(2026, 1, 5);
+        var dto = BuildCreateDto(
+            coach.CoachId,
+            [athlete.AthleteId],
+            sessionDate,
+            new TimeOnly(17, 0),
+            new TimeOnly(18, 0));
+        dto.GuestParticipants = [new GuestParticipantDto { FullName = "Guest Player" }];
+
+        var createResult = await service.CreateAsync(dto, actionByUserId: 1);
+        var items = await service.ListByDateRangeAsync(sessionDate, sessionDate);
+
+        Assert.Null(createResult.Error);
+        var item = Assert.Single(items);
+        Assert.Equal(2, item.AthleteCount);
+        Assert.Equal(["Ace", "Guest Player"], item.ParticipantNames);
     }
 
     [Fact]

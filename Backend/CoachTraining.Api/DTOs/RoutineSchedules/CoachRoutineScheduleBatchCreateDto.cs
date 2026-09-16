@@ -39,6 +39,12 @@ public class CoachRoutineScheduleBatchCreateDto : IValidatableObject
     }
 }
 
+public class RoutineScheduleBatchCreateDto : CoachRoutineScheduleBatchCreateDto
+{
+    [Range(1, int.MaxValue, ErrorMessage = "กรุณาเลือกโค้ช")]
+    public int CoachId { get; set; }
+}
+
 public class CoachRoutineScheduleBatchCreateResult
 {
     public int CreatedCount { get; set; }

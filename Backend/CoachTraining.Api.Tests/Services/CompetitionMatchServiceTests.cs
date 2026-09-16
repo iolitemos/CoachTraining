@@ -1,6 +1,7 @@
 using CoachTraining.Api.DTOs.Common;
 using CoachTraining.Api.DTOs.CompetitionMatches;
 using CoachTraining.Api.Services;
+using CoachTraining.Api.Models;
 using System.ComponentModel.DataAnnotations;
 using Xunit;
 
@@ -27,11 +28,16 @@ public class CompetitionMatchServiceTests
     public async Task CreateUpdateAndDeleteAsync_PersistsExpectedState()
     {
         using var db = TestDbContextFactory.Create();
+        db.Coaches.AddRange(
+            new Coach { CoachId = 1, CoachCode = "C001", FullName = "Coach One", Nickname = "One" },
+            new Coach { CoachId = 2, CoachCode = "C002", FullName = "Coach Two", Nickname = "Two" });
+        await db.SaveChangesAsync();
         var service = new CompetitionMatchService(db);
         var request = new CompetitionMatchRequestDto
         {
             Name = " Thailand Open ", Province = " Bangkok ",
             StartDate = new DateOnly(2026, 10, 1), EndDate = new DateOnly(2026, 10, 3),
+            CoachIds = [1, 2],
         };
 
         var created = await service.CreateAsync(request, 1);
@@ -41,6 +47,7 @@ public class CompetitionMatchServiceTests
 
         Assert.Equal("Thailand Open", created.Name);
         Assert.Equal("Bangkok", created.Province);
+        Assert.Equal(2, created.Coaches.Count);
         Assert.Equal("Thailand Championship", updated!.Name);
         Assert.True(deleted);
         Assert.Null(await service.GetByIdAsync(created.CompetitionMatchId));
@@ -50,10 +57,26 @@ public class CompetitionMatchServiceTests
     public async Task ListAsync_SearchesNameAndProvince()
     {
         using var db = TestDbContextFactory.Create();
+        db.Coaches.Add(new Coach { CoachId = 1, CoachCode = "C001", FullName = "สมชาย ใจดี", Nickname = "ชาย" });
+        await db.SaveChangesAsync();
         var service = new CompetitionMatchService(db);
-        await service.CreateAsync(new CompetitionMatchRequestDto { Name = "รายการภาคเหนือ", Province = "เชียงใหม่", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 1, 1) }, 1);
+        await service.CreateAsync(new CompetitionMatchRequestDto { Name = "รายการภาคเหนือ", Province = "เชียงใหม่", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 1, 1), CoachIds = [1] }, 1);
 
         var result = await service.ListAsync(new PagedRequest { Search = "เชียงใหม่" });
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task ListAsync_SearchesAssignedCoachName()
+    {
+        using var db = TestDbContextFactory.Create();
+        db.Coaches.Add(new Coach { CoachId = 1, CoachCode = "C001", FullName = "สมชาย ใจดี", Nickname = "ชาย" });
+        await db.SaveChangesAsync();
+        var service = new CompetitionMatchService(db);
+        await service.CreateAsync(new CompetitionMatchRequestDto { Name = "รายการภาคเหนือ", Province = "เชียงใหม่", StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 1, 1), CoachIds = [1] }, 1);
+
+        var result = await service.ListAsync(new PagedRequest { Search = "สมชาย" });
 
         Assert.Single(result.Items);
     }

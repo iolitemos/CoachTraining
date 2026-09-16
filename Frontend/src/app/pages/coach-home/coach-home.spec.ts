@@ -58,6 +58,7 @@ describe('CoachHome calendar', () => {
     component.calendarCompetitionMatches.set([
       {
         competitionMatchId: 1,
+        coaches: [],
         name: 'ชิงแชมป์ประเทศไทย',
         province: 'เชียงใหม่',
         startDate: '2026-01-05',

@@ -11,12 +11,13 @@ import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indi
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { Pagination } from '../../../shared/pagination/pagination';
 import { SearchFilterToolbar } from '../../../shared/search-filter-toolbar/search-filter-toolbar';
+import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
 @Component({
   selector: 'app-competition-match-list',
-  imports: [RouterLink, PageHeader, SearchFilterToolbar, LoadingIndicator, EmptyState, ErrorState, Pagination, ConfirmationDialog, DisplayDatePipe],
+  imports: [RouterLink, PageHeader, SearchFilterToolbar, LoadingIndicator, EmptyState, ErrorState, Pagination, ConfirmationDialog, DisplayDatePipe, CoachNamePipe],
   templateUrl: './competition-match-list.html',
 })
 export class CompetitionMatchList implements OnInit {

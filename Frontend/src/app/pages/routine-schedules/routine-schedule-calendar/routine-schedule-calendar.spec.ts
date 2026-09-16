@@ -166,6 +166,7 @@ describe('RoutineScheduleCalendar', () => {
     flushCompetitionMatches([
       {
         competitionMatchId: 7,
+        coaches: [],
         name: 'ชิงแชมป์ประเทศไทย',
         province: 'เชียงใหม่',
         startDate: '2026-01-05',

@@ -21,6 +21,7 @@ public class PrivateSessionAthlete
 
     public string AthleteCodeSnapshot { get; set; } = string.Empty;
     public string AthleteNameSnapshot { get; set; } = string.Empty;
+    public string? AthleteNicknameSnapshot { get; set; }
 
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
     public int? CreatedByUserId { get; set; }

@@ -4,6 +4,13 @@ export interface CompetitionMatch {
   province: string;
   startDate: string;
   endDate: string;
+  coaches: CompetitionMatchCoach[];
 }
 
-export type CompetitionMatchRequest = Omit<CompetitionMatch, 'competitionMatchId'>;
+export interface CompetitionMatchCoach {
+  coachId: number;
+  fullName: string;
+  nickname: string | null;
+}
+
+export type CompetitionMatchRequest = Omit<CompetitionMatch, 'competitionMatchId' | 'coaches'> & { coachIds: number[] };

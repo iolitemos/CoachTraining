@@ -47,6 +47,35 @@ describe('PrivateSessionCalendar', () => {
     expect(component.calendarDayBackground(day, true)).toBe('#e5e7eb');
   });
 
+  it('shows participant names on calendar session entries', async () => {
+    const fixture = TestBed.createComponent(PrivateSessionCalendar);
+    const component = fixture.componentInstance;
+    const sessionDate = component.selectedDate();
+    fixture.detectChanges();
+    httpMock.expectOne((request) => request.url.endsWith('/private-sessions/calendar')).flush({
+      message: 'Success',
+      data: [{
+        trainingSessionId: 1,
+        sessionDate,
+        startTime: '17:00:00',
+        endTime: '18:00:00',
+        coachCode: 'C001',
+        coachFullName: 'Coach One',
+        coachNickname: 'โค้ชหนึ่ง',
+        coachColorHex: '#10B981',
+        location: null,
+        status: 'Scheduled',
+        athleteCount: 2,
+        participantNames: ['Ace', 'Guest Player'],
+      }],
+    });
+    httpMock.expectOne((request) => request.url.endsWith('/calendar-notes')).flush({ message: 'Success', data: [] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Ace, Guest Player');
+  });
+
   it('deletes a session in any status and removes it from the calendar', async () => {
     const component = TestBed.createComponent(PrivateSessionCalendar).componentInstance;
     const session = { trainingSessionId: 12, status: 'Scheduled' } as never;

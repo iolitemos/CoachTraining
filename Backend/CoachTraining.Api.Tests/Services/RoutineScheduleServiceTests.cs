@@ -98,12 +98,12 @@ public class RoutineScheduleServiceTests
     }
 
     [Fact]
-    public async Task CreateOwnBatchAsync_CreatesOnlySelectedWeekdaysWithinRange()
+    public async Task CreateBatchAsync_CreatesOnlySelectedWeekdaysWithinRange()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
 
-        var result = await CreateService(db).CreateOwnBatchAsync(
+        var result = await CreateService(db).CreateBatchAsync(
             coach.CoachId,
             new CoachRoutineScheduleBatchCreateDto
             {

@@ -62,6 +62,7 @@
 
 ### 2.0 Competition Match Management (User-requested scope)
 
+- [x] Allow each Competition Match to assign one or more coaches responsible for athletes, with historical name snapshots and responsive form/list display.
 - [x] Add Competition Match persistence and migration with name, province, start date, end date, audit fields, and soft delete.
 - [x] Add Administrator CRUD API with search, pagination, authorization, and date-range validation.
 - [x] Add responsive Thai Competition Match list/form pages with navigation and UI states.
@@ -635,6 +636,7 @@
 - [x] Add Routine Schedule search/filter/pagination.
 - [x] Add loading, empty, and error states to Routine Schedule list.
 - [x] Create Routine Schedule create form.
+- [x] Allow Administrator to create Routine Training for every date in a range or selected weekdays.
 - [x] Create Routine Schedule edit form.
 - [x] Add confirmed delete actions to the Routine Schedule calendar and list.
 - [x] Add Coach selector using active coaches only.
@@ -657,6 +659,7 @@
 - [x] Create Private Training monthly calendar view with a selected-date mobile agenda.
 - [x] Color Private Session calendar dates blue, use a dark-blue selected border for session dates, and gray for empty selected dates.
 - [x] Display Coach color/nickname, start-end time, and athlete count on Private Training calendar entries.
+- [x] Display registered and temporary participant names on Private Training calendar entries.
 - [x] Allow Administrator to select a calendar date and open the create form with the date prefilled.
 - [x] Add Private Training search/filter/pagination.
 - [x] Add loading, empty, and error states to Private Training list.

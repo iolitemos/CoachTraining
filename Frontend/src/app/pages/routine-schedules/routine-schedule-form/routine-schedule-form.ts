@@ -161,7 +161,7 @@ export class RoutineScheduleForm implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (this.isSelfService() && !this.isEditMode() && this.scheduleMode() === 'range') {
+    if (!this.isEditMode() && this.scheduleMode() === 'range') {
       const startDate = this.form.controls.effectiveStartDate.value!;
       const endDate = this.effectiveEndDate.value!;
       if (!endDate || endDate < startDate || this.effectiveDaysOfWeek().length === 0 || this.selectedOccurrenceCount() === 0) {
@@ -192,24 +192,32 @@ export class RoutineScheduleForm implements OnInit {
     try {
       if (this.isEditMode()) {
         await this.routineScheduleService.update(this.routineScheduleId()!, payload);
-      } else if (this.isSelfService()) {
-        if (this.scheduleMode() === 'range') {
+      } else if (this.scheduleMode() === 'range') {
+        const rangePayload = {
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+          startDate: payload.effectiveStartDate,
+          endDate: this.effectiveEndDate.value!,
+          daysOfWeek: this.effectiveDaysOfWeek(),
+          remarks: payload.remarks,
+        };
+        if (this.isSelfService()) {
           await this.routineScheduleService.createOwnBatch({
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-            startDate: payload.effectiveStartDate,
-            endDate: this.effectiveEndDate.value!,
-            daysOfWeek: this.effectiveDaysOfWeek(),
-            remarks: payload.remarks,
+            ...rangePayload,
           });
         } else {
-          await this.routineScheduleService.createOwn({
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-            effectiveStartDate: payload.effectiveStartDate,
-            remarks: payload.remarks,
+          await this.routineScheduleService.createBatch({
+            coachId: payload.coachId,
+            ...rangePayload,
           });
         }
+      } else if (this.isSelfService()) {
+        await this.routineScheduleService.createOwn({
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+          effectiveStartDate: payload.effectiveStartDate,
+          remarks: payload.remarks,
+        });
       } else {
         await this.routineScheduleService.create(payload);
       }

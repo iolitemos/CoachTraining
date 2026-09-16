@@ -13,6 +13,7 @@ export interface PrivateSessionListItem {
   location: string | null;
   status: TrainingSessionStatus;
   athleteCount: number;
+  participantNames: string[];
 }
 
 export interface PrivateSessionAthlete {

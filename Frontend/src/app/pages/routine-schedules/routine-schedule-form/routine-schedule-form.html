@@ -41,7 +41,7 @@
       </div>
       }
 
-      @if (isSelfService() && !isEditMode()) {
+      @if (!isEditMode()) {
         <fieldset>
           <legend class="mb-2 text-sm font-medium text-text">รูปแบบการเพิ่ม</legend>
           <div class="grid grid-cols-2 gap-2 rounded-xl bg-background p-1">
@@ -93,19 +93,19 @@
 
       <div
         class="grid gap-3 sm:gap-4"
-        [class.grid-cols-1]="!isSelfService() || scheduleMode() !== 'range'"
-        [class.grid-cols-2]="isSelfService() && scheduleMode() === 'range'"
+        [class.grid-cols-1]="scheduleMode() !== 'range'"
+        [class.grid-cols-2]="scheduleMode() === 'range'"
       >
         <div>
           <label for="effectiveStartDate" class="mb-1 block text-sm font-medium text-text">
-            {{ isSelfService() && scheduleMode() === 'range' ? 'วันที่เริ่ม' : 'วันที่ฝึกซ้อม' }} <span class="text-danger">*</span>
+            {{ scheduleMode() === 'range' ? 'วันที่เริ่ม' : 'วันที่ฝึกซ้อม' }} <span class="text-danger">*</span>
           </label>
           <app-date-input class="block w-full" inputId="effectiveStartDate" formControlName="effectiveStartDate" ariaLabel="วันที่ฝึกซ้อม" />
           @if (form.controls.effectiveStartDate.invalid && form.controls.effectiveStartDate.touched) {
             <p class="mt-1 text-xs text-danger">กรุณาเลือกวันที่ฝึกซ้อม</p>
           }
         </div>
-        @if (isSelfService() && scheduleMode() === 'range') {
+        @if (scheduleMode() === 'range') {
           <div>
             <label for="effectiveEndDate" class="mb-1 block text-sm font-medium text-text">
               วันที่สิ้นสุด <span class="text-danger">*</span>
@@ -115,7 +115,7 @@
         }
       </div>
 
-      @if (isSelfService() && !isEditMode() && scheduleMode() === 'range') {
+      @if (!isEditMode() && scheduleMode() === 'range') {
         <fieldset>
           <legend class="mb-2 text-sm font-medium text-text">รูปแบบวันที่ในช่วง <span class="text-danger">*</span></legend>
           <div class="grid grid-cols-2 gap-2">

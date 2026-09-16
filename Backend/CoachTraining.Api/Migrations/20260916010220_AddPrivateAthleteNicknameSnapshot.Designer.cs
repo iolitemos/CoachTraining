@@ -3,6 +3,7 @@ using System;
 using CoachTraining.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CoachTraining.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260916010220_AddPrivateAthleteNicknameSnapshot")]
+    partial class AddPrivateAthleteNicknameSnapshot
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -415,45 +418,6 @@ namespace CoachTraining.Api.Migrations
                     b.HasIndex("StartDate");
 
                     b.ToTable("CompetitionMatches");
-                });
-
-            modelBuilder.Entity("CoachTraining.Api.Models.CompetitionMatchCoach", b =>
-                {
-                    b.Property<int>("CompetitionMatchCoachId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CompetitionMatchCoachId"));
-
-                    b.Property<int>("CoachId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CoachNameSnapshot")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("CoachNicknameSnapshot")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("CompetitionMatchId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("CompetitionMatchCoachId");
-
-                    b.HasIndex("CoachId");
-
-                    b.HasIndex("CompetitionMatchId", "CoachId")
-                        .IsUnique();
-
-                    b.ToTable("CompetitionMatchCoaches");
                 });
 
             modelBuilder.Entity("CoachTraining.Api.Models.ConflictOverrideHistory", b =>
@@ -1111,25 +1075,6 @@ namespace CoachTraining.Api.Migrations
                     b.Navigation("TrainingSession");
                 });
 
-            modelBuilder.Entity("CoachTraining.Api.Models.CompetitionMatchCoach", b =>
-                {
-                    b.HasOne("CoachTraining.Api.Models.Coach", "Coach")
-                        .WithMany()
-                        .HasForeignKey("CoachId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("CoachTraining.Api.Models.CompetitionMatch", "CompetitionMatch")
-                        .WithMany("Coaches")
-                        .HasForeignKey("CompetitionMatchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Coach");
-
-                    b.Navigation("CompetitionMatch");
-                });
-
             modelBuilder.Entity("CoachTraining.Api.Models.ConflictOverrideHistory", b =>
                 {
                     b.HasOne("CoachTraining.Api.Models.User", "ActionByUser")
@@ -1274,11 +1219,6 @@ namespace CoachTraining.Api.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("CoachTraining.Api.Models.CompetitionMatch", b =>
-                {
-                    b.Navigation("Coaches");
                 });
 
             modelBuilder.Entity("CoachTraining.Api.Models.Role", b =>

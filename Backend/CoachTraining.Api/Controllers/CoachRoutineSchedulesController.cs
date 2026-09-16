@@ -81,7 +81,7 @@ public class CoachRoutineSchedulesController : ControllerBase
 
         try
         {
-            var (result, error, conflicts) = await _routineScheduleService.CreateOwnBatchAsync(coachId, dto, userId);
+            var (result, error, conflicts) = await _routineScheduleService.CreateBatchAsync(coachId, dto, userId);
             if (conflicts.Count > 0)
             {
                 return Conflict(new ApiErrorResponse(

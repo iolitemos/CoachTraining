@@ -59,6 +59,12 @@ public class PrivateSessionService : IPrivateSessionService
                 Location = s.Location,
                 Status = s.Status,
                 AthleteCount = s.PrivateAthletes.Count,
+                ParticipantNames = s.PrivateAthletes
+                    .OrderBy(participant => participant.PrivateSessionAthleteId)
+                    .Select(participant => participant.IsGuest
+                        ? participant.AthleteNameSnapshot
+                        : participant.AthleteNicknameSnapshot ?? participant.AthleteNameSnapshot)
+                    .ToList(),
             })
             .ToListAsync();
 
@@ -87,6 +93,12 @@ public class PrivateSessionService : IPrivateSessionService
                 Location = s.Location,
                 Status = s.Status,
                 AthleteCount = s.PrivateAthletes.Count,
+                ParticipantNames = s.PrivateAthletes
+                    .OrderBy(participant => participant.PrivateSessionAthleteId)
+                    .Select(participant => participant.IsGuest
+                        ? participant.AthleteNameSnapshot
+                        : participant.AthleteNicknameSnapshot ?? participant.AthleteNameSnapshot)
+                    .ToList(),
             })
             .ToListAsync();
     }
@@ -166,6 +178,7 @@ public class PrivateSessionService : IPrivateSessionService
                     AthleteId = athlete.AthleteId,
                     AthleteCodeSnapshot = athlete.AthleteCode,
                     AthleteNameSnapshot = athlete.FullName,
+                    AthleteNicknameSnapshot = string.IsNullOrWhiteSpace(athlete.Nickname) ? null : athlete.Nickname.Trim(),
                     CreatedByUserId = actionByUserId,
                 });
             }
@@ -303,6 +316,7 @@ public class PrivateSessionService : IPrivateSessionService
                 AthleteId = athlete.AthleteId,
                 AthleteCodeSnapshot = athlete.AthleteCode,
                 AthleteNameSnapshot = athlete.FullName,
+                AthleteNicknameSnapshot = string.IsNullOrWhiteSpace(athlete.Nickname) ? null : athlete.Nickname.Trim(),
                 CreatedByUserId = actionByUserId,
             });
         }

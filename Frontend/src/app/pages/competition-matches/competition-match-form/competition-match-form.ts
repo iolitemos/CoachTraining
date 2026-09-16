@@ -7,6 +7,8 @@ import { CompetitionMatchService } from '../../../services/competition-match.ser
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { DateInput } from '../../../shared/date-input/date-input';
+import { CoachOption, coachPickerLabel } from '../../../models/coach.model';
+import { CoachService } from '../../../services/coach.service';
 
 @Component({ selector: 'app-competition-match-form', imports: [ReactiveFormsModule, RouterLink, PageHeader, LoadingIndicator, DateInput], templateUrl: './competition-match-form.html' })
 export class CompetitionMatchForm implements OnInit {
@@ -14,11 +16,15 @@ export class CompetitionMatchForm implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(CompetitionMatchService);
+  private readonly coachService = inject(CoachService);
+  readonly coachPickerLabel = coachPickerLabel;
   matchId = signal<number | null>(null);
   isEditMode = signal(false);
   loading = signal(true);
   submitting = signal(false);
   errorMessage = signal<string | null>(null);
+  coachOptions = signal<CoachOption[]>([]);
+  selectedCoachIds = signal<number[]>([]);
   form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(200)]],
     province: ['', [Validators.required, Validators.maxLength(100)]],
@@ -31,9 +37,23 @@ export class CompetitionMatchForm implements OnInit {
     this.isEditMode.set(id !== null);
     if (id) this.matchId.set(Number(id));
     try {
-      if (id) this.form.patchValue(await this.service.getById(Number(id)));
+      const [coachOptions, match] = await Promise.all([
+        this.coachService.getActiveOptions(),
+        id ? this.service.getById(Number(id)) : Promise.resolve(null),
+      ]);
+      this.coachOptions.set(coachOptions);
+      if (match) {
+        this.form.patchValue(match);
+        this.selectedCoachIds.set(match.coaches.map((coach) => coach.coachId));
+      }
     } catch { this.errorMessage.set('ไม่สามารถโหลดข้อมูลได้'); }
     finally { this.loading.set(false); }
+  }
+
+  toggleCoach(coachId: number): void {
+    this.selectedCoachIds.update((ids) => ids.includes(coachId)
+      ? ids.filter((id) => id !== coachId)
+      : [...ids, coachId]);
   }
 
   dateRangeInvalid(): boolean {
@@ -42,10 +62,10 @@ export class CompetitionMatchForm implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (this.form.invalid || this.dateRangeInvalid() || this.submitting()) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid || this.dateRangeInvalid() || this.selectedCoachIds().length === 0 || this.submitting()) { this.form.markAllAsTouched(); return; }
     this.submitting.set(true); this.errorMessage.set(null);
     const value = this.form.getRawValue();
-    const request = { name: value.name!.trim(), province: value.province!.trim(), startDate: value.startDate!, endDate: value.endDate! };
+    const request = { name: value.name!.trim(), province: value.province!.trim(), startDate: value.startDate!, endDate: value.endDate!, coachIds: this.selectedCoachIds() };
     try {
       if (this.isEditMode()) await this.service.update(this.matchId()!, request); else await this.service.create(request);
       await this.router.navigateByUrl('/competition-matches');

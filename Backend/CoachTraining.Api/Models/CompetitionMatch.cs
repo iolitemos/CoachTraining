@@ -10,4 +10,5 @@ public class CompetitionMatch : AuditableEntity
     public string Province { get; set; } = string.Empty;
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
+    public ICollection<CompetitionMatchCoach> Coaches { get; set; } = new List<CompetitionMatchCoach>();
 }

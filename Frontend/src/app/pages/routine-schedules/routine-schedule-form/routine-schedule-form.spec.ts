@@ -228,6 +228,39 @@ describe('RoutineScheduleForm', () => {
     await submitPromise;
   });
 
+  it('should create selected weekdays in a date range for Administrator', async () => {
+    const initPromise = component.ngOnInit();
+    httpMock
+      .expectOne((r) => r.url.endsWith('/coaches/options'))
+      .flush({ message: 'Success', data: [] });
+    await initPromise;
+
+    component.setScheduleMode('range');
+    component.setRangePattern('weekdays');
+    component.form.patchValue({
+      coachId: 7,
+      startTime: '18:00',
+      endTime: '20:00',
+      effectiveStartDate: '2026-09-01',
+    });
+    component.effectiveEndDate.setValue('2026-09-10');
+    component.selectedDaysOfWeek.set([1, 5]);
+
+    const submitPromise = component.onSubmit();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/routine-schedules/batch'));
+    expect(request.request.body).toEqual({
+      coachId: 7,
+      startTime: '18:00',
+      endTime: '20:00',
+      startDate: '2026-09-01',
+      endDate: '2026-09-10',
+      daysOfWeek: [1, 5],
+      remarks: null,
+    });
+    request.flush({ message: 'Success', data: { createdCount: 2, createdDates: ['2026-09-04', '2026-09-07'] } });
+    await submitPromise;
+  });
+
   it('should create every date in a short range without weekday selection', async () => {
     (
       TestBed.inject(ActivatedRoute).snapshot as {

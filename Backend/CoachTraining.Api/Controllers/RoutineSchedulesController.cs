@@ -81,6 +81,33 @@ public class RoutineSchedulesController : ControllerBase
         }
     }
 
+    [HttpPost("batch")]
+    public async Task<IActionResult> CreateBatch([FromBody] RoutineScheduleBatchCreateDto dto)
+    {
+        try
+        {
+            var (result, error, conflicts) = await _routineScheduleService.CreateBatchAsync(
+                dto.CoachId, dto, _currentUser.UserId!.Value);
+            if (conflicts.Count > 0)
+            {
+                return Conflict(ToConflictResponse(error!, conflicts));
+            }
+
+            if (error is not null)
+            {
+                return BadRequest(new ApiErrorResponse(error));
+            }
+
+            return StatusCode(201, new ApiResponse<CoachRoutineScheduleBatchCreateResult>(
+                result!, $"สร้างตารางฝึกซ้อมสำเร็จ {result!.CreatedCount} รายการ"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/routine-schedules/batch Controller: RoutineSchedulesController Function: CreateBatch UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถสร้างตารางฝึกซ้อมได้"));
+        }
+    }
+
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] RoutineScheduleUpdateDto dto)
     {
