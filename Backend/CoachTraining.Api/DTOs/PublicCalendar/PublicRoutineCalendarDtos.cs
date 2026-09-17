@@ -15,6 +15,7 @@ public record PublicRoutineCalendarItemDto(
     DateOnly TrainingDate,
     TimeOnly StartTime,
     TimeOnly EndTime,
+    string CoachCode,
     string CoachNickname,
     string CoachColorHex,
     DateTime LatestUpdate);

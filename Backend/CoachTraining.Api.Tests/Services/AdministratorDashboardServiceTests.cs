@@ -169,4 +169,42 @@ public class AdministratorDashboardServiceTests
         Assert.Equal(1, privateDay.TotalAttendance);
         Assert.Equal("Nick C001", Assert.Single(privateDay.Coaches).CoachNickname);
     }
+
+    [Fact]
+    public async Task GetDashboardAsync_GroupsAttendanceByDisplayedAthleteName()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var firstAthlete = await SeedAthleteAsync(db, "A001");
+        var secondAthlete = await SeedAthleteAsync(db, "A002");
+        firstAthlete.Nickname = "พี่บาส";
+        secondAthlete.Nickname = "พี่บาส";
+
+        var firstSession = BuildSession(coach, new DateOnly(2026, 1, 5), SessionStatus.Completed, TrainingType.Private);
+        var secondSession = BuildSession(coach, new DateOnly(2026, 1, 6), SessionStatus.Completed, TrainingType.Private);
+        db.TrainingSessions.AddRange(firstSession, secondSession);
+        await db.SaveChangesAsync();
+
+        db.Attendances.AddRange(
+            new Attendance { TrainingSessionId = firstSession.TrainingSessionId, AthleteId = firstAthlete.AthleteId, AthleteCodeSnapshot = firstAthlete.AthleteCode, AthleteNameSnapshot = firstAthlete.FullName, Status = AttendanceStatus.Present },
+            new Attendance { TrainingSessionId = secondSession.TrainingSessionId, AthleteId = secondAthlete.AthleteId, AthleteCodeSnapshot = secondAthlete.AthleteCode, AthleteNameSnapshot = secondAthlete.FullName, Status = AttendanceStatus.Late });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetDashboardAsync(
+            new AdministratorDashboardFilterRequest
+            {
+                StartDate = new DateOnly(2026, 1, 1),
+                EndDate = new DateOnly(2026, 1, 31),
+            },
+            new DateTime(2026, 1, 10, 9, 0, 0));
+
+        var athlete = Assert.Single(result.AttendanceSummary.Private.Athletes);
+        Assert.Equal("พี่บาส", athlete.AthleteName);
+        Assert.Equal(2, athlete.AttendanceCount);
+
+        var firstDay = Assert.Single(result.AttendanceSummary.Private.DailySummaries, d => d.Date == new DateOnly(2026, 1, 5));
+        var secondDay = Assert.Single(result.AttendanceSummary.Private.DailySummaries, d => d.Date == new DateOnly(2026, 1, 6));
+        Assert.Equal(athlete.AthleteId, Assert.Single(firstDay.Attendances).AthleteId);
+        Assert.Equal(athlete.AthleteId, Assert.Single(secondDay.Attendances).AthleteId);
+    }
 }

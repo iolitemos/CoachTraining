@@ -2,6 +2,7 @@ export interface PublicRoutineCalendarItem {
   trainingDate: string;
   startTime: string;
   endTime: string;
+  coachCode: string;
   coachNickname: string;
   coachColorHex: string;
   latestUpdate: string;

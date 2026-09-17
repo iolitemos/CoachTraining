@@ -108,12 +108,12 @@
                   } @else {
                     @if (summary.type === 'Routine') {
                       <p class="mt-2 text-[11px] text-text-secondary">
-                        เต็ม {{ maxCoachTeachingDays(summary.data) }} วัน ตามโค้ชที่มีวันสอนมากที่สุดในช่วงที่กรอง
+                        เต็ม {{ teachingDayCount(summary.data) }} วัน ตามจำนวนวันที่มีโค้ชเข้าสอนในช่วงที่กรอง
                       </p>
                     }
                     <ul class="mt-2 divide-y divide-border">
                       @for (athlete of athletesForSummary(summary.data.athletes, summary.type); track athlete.athleteId) {
-                        @if (summary.type === 'Routine' && maxCoachTeachingDays(summary.data); as maxDays) {
+                        @if (summary.type === 'Routine' && teachingDayCount(summary.data); as maxDays) {
                           <li class="flex items-center gap-2 py-2 text-sm first:pt-0 last:pb-0">
                             <span class="w-24 shrink-0 truncate text-text sm:w-28" [title]="athlete.athleteName">{{ athlete.athleteName }}</span>
                             <div

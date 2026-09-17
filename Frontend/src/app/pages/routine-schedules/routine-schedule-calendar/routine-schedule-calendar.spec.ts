@@ -70,6 +70,51 @@ describe('RoutineScheduleCalendar', () => {
     expect(component.state()).toBe('ready');
   });
 
+  it('sorts schedules by coach code and then start time', () => {
+    component.schedules.set([
+      {
+        routineScheduleId: 1,
+        coachId: 1,
+        coachCode: 'C002',
+        coachFullName: 'โค้ชสีแดงรอบเช้า',
+        coachNickname: 'แดงเช้า',
+        coachColorHex: '#EF4444',
+        startTime: '09:00:00',
+        endTime: '10:00:00',
+        effectiveStartDate: '2026-01-05',
+        isActive: true,
+      },
+      {
+        routineScheduleId: 2,
+        coachId: 2,
+        coachCode: 'C001',
+        coachFullName: 'โค้ชสีฟ้า',
+        coachNickname: 'ฟ้า',
+        coachColorHex: '#0EA5E9',
+        startTime: '17:00:00',
+        endTime: '18:00:00',
+        effectiveStartDate: '2026-01-05',
+        isActive: true,
+      },
+      {
+        routineScheduleId: 3,
+        coachId: 3,
+        coachCode: 'C002',
+        coachFullName: 'โค้ชสีแดงรอบบ่าย',
+        coachNickname: 'แดงบ่าย',
+        coachColorHex: '#EF4444',
+        startTime: '13:00:00',
+        endTime: '14:00:00',
+        effectiveStartDate: '2026-01-05',
+        isActive: true,
+      },
+    ]);
+
+    const schedules = component.calendarDays().find((day) => day.isoDate === '2026-01-05')!.schedules;
+
+    expect(schedules.map((schedule) => schedule.routineScheduleId)).toEqual([2, 1, 3]);
+  });
+
   it('should move between months and select the first day', () => {
     component.moveMonth(1);
 

@@ -88,18 +88,8 @@ export class AdministratorDashboard implements OnInit {
     return attendances.find((attendance) => attendance.athleteId === athleteId)?.attendanceCount ?? 0;
   }
 
-  maxCoachTeachingDays(summary: AttendanceByTrainingType): number {
-    const teachingDatesByCoach = new Map<number, Set<string>>();
-
-    for (const day of summary.dailySummaries) {
-      for (const coach of day.coaches) {
-        const teachingDates = teachingDatesByCoach.get(coach.coachId) ?? new Set<string>();
-        teachingDates.add(day.date);
-        teachingDatesByCoach.set(coach.coachId, teachingDates);
-      }
-    }
-
-    return Math.max(0, ...Array.from(teachingDatesByCoach.values(), (dates) => dates.size));
+  teachingDayCount(summary: AttendanceByTrainingType): number {
+    return summary.dailySummaries.filter((day) => day.coaches.length > 0).length;
   }
 
   athletesForSummary(

@@ -85,11 +85,13 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
                 && schedule.EffectiveStartDate >= startDate
                 && schedule.EffectiveStartDate <= endDate)
             .OrderBy(schedule => schedule.EffectiveStartDate)
+            .ThenBy(schedule => schedule.Coach.CoachCode)
             .ThenBy(schedule => schedule.StartTime)
             .Select(schedule => new PublicRoutineCalendarItemDto(
                 schedule.EffectiveStartDate,
                 schedule.StartTime,
                 schedule.EndTime,
+                schedule.Coach.CoachCode,
                 schedule.Coach.Nickname ?? "โค้ช",
                 schedule.Coach.ColorHex,
                 schedule.UpdatedDate ?? schedule.CreatedDate))

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { PageHeader } from '../../../shared/page-header/page-header';
@@ -7,7 +7,7 @@ import { EmptyState } from '../../../shared/empty-state/empty-state';
 import { ErrorState } from '../../../shared/error-state/error-state';
 import { CoachOption } from '../../../models/coach.model';
 import { TrainingType } from '../../../models/training-session.model';
-import { CoachTeachingHourReportResponse } from '../../../models/coach-teaching-hour-report.model';
+import { CoachTeachingHourReportItem, CoachTeachingHourReportResponse } from '../../../models/coach-teaching-hour-report.model';
 import { CoachService } from '../../../services/coach.service';
 import { CoachTeachingHourReportService } from '../../../services/coach-teaching-hour-report.service';
 import { DateInput } from '../../../shared/date-input/date-input';
@@ -17,6 +17,7 @@ import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe'
 
 type ViewState = 'loading' | 'error' | 'ready';
 type ReportTab = TrainingType | 'Competition';
+type TeachingSummaryItem = CoachTeachingHourReportItem & { competitionDays: number; combinedDays: number };
 
 function currentMonthRange(): { startDate: string; endDate: string } {
   const today = new Date();
@@ -55,6 +56,43 @@ export class CoachTeachingHourReport implements OnInit {
   startDate = currentMonthRange().startDate;
   endDate = currentMonthRange().endDate;
   activeTrainingType = signal<ReportTab>('Routine');
+  teachingSummaryItems = computed<TeachingSummaryItem[]>(() => {
+    const report = this.report();
+    if (!report) return [];
+
+    const competitionByCoach = new Map(report.competitionAssignments.map((item) => [item.coachId, item]));
+    const items = report.items.map((item) => {
+      const competitionDays = this.activeTrainingType() === 'Routine'
+        ? (competitionByCoach.get(item.coachId)?.assignedDays ?? 0)
+        : 0;
+      competitionByCoach.delete(item.coachId);
+      return { ...item, competitionDays, combinedDays: item.actualDays + competitionDays };
+    });
+
+    if (this.activeTrainingType() === 'Routine') {
+      for (const competition of competitionByCoach.values()) {
+        items.push({
+          coachId: competition.coachId,
+          coachCode: competition.coachCode,
+          coachFullName: competition.coachFullName,
+          coachNickname: competition.coachNickname,
+          coachColorHex: competition.coachColorHex,
+          sessionCount: 0,
+          plannedSessionCount: 0,
+          actualSessionCount: 0,
+          plannedDays: 0,
+          actualDays: 0,
+          routineDays: 0,
+          privateDays: 0,
+          totalDays: 0,
+          competitionDays: competition.assignedDays,
+          combinedDays: competition.assignedDays,
+        });
+      }
+    }
+
+    return items.sort((a, b) => b.combinedDays - a.combinedDays || a.coachCode.localeCompare(b.coachCode));
+  });
 
   constructor(
     private readonly reportService: CoachTeachingHourReportService,

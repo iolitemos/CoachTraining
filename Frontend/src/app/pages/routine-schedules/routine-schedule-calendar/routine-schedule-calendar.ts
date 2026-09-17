@@ -81,7 +81,11 @@ export class RoutineScheduleCalendar implements OnInit {
         isToday: toIsoDate(date) === toIsoDate(new Date()),
         schedules: this.schedules()
           .filter((schedule) => occursOn(schedule, date))
-          .sort((a, b) => a.startTime.localeCompare(b.startTime)),
+          .sort(
+            (a, b) =>
+              a.coachCode.localeCompare(b.coachCode) ||
+              a.startTime.localeCompare(b.startTime),
+          ),
         competitionMatches: this.competitionMatches().filter((match) =>
           occursDuringCompetition(match, toIsoDate(date)),
         ),

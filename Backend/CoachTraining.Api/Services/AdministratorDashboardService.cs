@@ -120,17 +120,25 @@ public class AdministratorDashboardService : IAdministratorDashboardService
             var recordList = records.ToList();
             var sessionList = sessions.ToList();
             var dayCount = Math.Max(0, endDate.DayNumber - startDate.DayNumber + 1);
+            var athleteGroups = recordList
+                .GroupBy(a => a.AthleteName.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Select(g => new
+                {
+                    AthleteId = g.Min(a => a.AthleteId),
+                    AthleteName = g.Key,
+                    Records = g.ToList(),
+                })
+                .ToList();
 
             return new AttendanceByTrainingTypeDto
             {
                 TotalAttendance = recordList.Count,
-                Athletes = recordList
-                    .GroupBy(a => new { a.AthleteId, a.AthleteName })
+                Athletes = athleteGroups
                     .Select(g => new AthleteAttendanceSummaryItemDto
                     {
-                        AthleteId = g.Key.AthleteId,
-                        AthleteName = g.Key.AthleteName,
-                        AttendanceCount = g.Count(),
+                        AthleteId = g.AthleteId,
+                        AthleteName = g.AthleteName,
+                        AttendanceCount = g.Records.Count,
                     })
                     .OrderBy(a => a.AthleteName)
                     .ToList(),
@@ -140,14 +148,13 @@ public class AdministratorDashboardService : IAdministratorDashboardService
                     {
                         Date = date,
                         TotalAttendance = recordList.Count(a => a.Date == date),
-                        Attendances = recordList
-                            .Where(a => a.Date == date)
-                            .GroupBy(a => a.AthleteId)
+                        Attendances = athleteGroups
                             .Select(g => new DailyAttendanceCellDto
                             {
-                                AthleteId = g.Key,
-                                AttendanceCount = g.Count(),
+                                AthleteId = g.AthleteId,
+                                AttendanceCount = g.Records.Count(a => a.Date == date),
                             })
+                            .Where(a => a.AttendanceCount > 0)
                             .ToList(),
                         Coaches = sessionList
                             .Where(s => s.Date == date)

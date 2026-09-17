@@ -39,10 +39,39 @@ public class PublicRoutineCalendarServiceTests
         var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
 
         var item = Assert.Single(result!.Schedules);
+        Assert.Equal("C001", item.CoachCode);
         Assert.Equal("ปิง", item.CoachNickname);
         Assert.Equal("#123456", item.CoachColorHex);
         Assert.Equal(new DateOnly(2026, 9, 12), item.TrainingDate);
         Assert.Equal(new DateTime(2026, 9, 10, 4, 30, 0, DateTimeKind.Utc), item.LatestUpdate);
+    }
+
+    [Fact]
+    public async Task GetCalendarAsync_SortsSchedulesByCoachCodeAndThenStartTime()
+    {
+        using var db = TestDbContextFactory.Create();
+        var firstCoach = new Coach { CoachCode = "C001", FullName = "Coach 1", Nickname = "หนึ่ง", ColorHex = "#123456", IsActive = true };
+        var secondCoach = new Coach { CoachCode = "C002", FullName = "Coach 2", Nickname = "สอง", ColorHex = "#654321", IsActive = true };
+        db.Coaches.AddRange(firstCoach, secondCoach);
+        await db.SaveChangesAsync();
+
+        var date = new DateOnly(2026, 9, 12);
+        db.RoutineSchedules.AddRange(
+            new RoutineSchedule { CoachId = secondCoach.CoachId, EffectiveStartDate = date, StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(10, 0), IsActive = true },
+            new RoutineSchedule { CoachId = firstCoach.CoachId, EffectiveStartDate = date, StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(18, 0), IsActive = true },
+            new RoutineSchedule { CoachId = secondCoach.CoachId, EffectiveStartDate = date, StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(14, 0), IsActive = true });
+        await db.SaveChangesAsync();
+
+        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var link = await service.RotateLinkAsync(7);
+
+        var result = await service.GetCalendarAsync(link.Token, date, date);
+
+        Assert.Collection(
+            result!.Schedules,
+            item => { Assert.Equal("C001", item.CoachCode); Assert.Equal(new TimeOnly(17, 0), item.StartTime); },
+            item => { Assert.Equal("C002", item.CoachCode); Assert.Equal(new TimeOnly(9, 0), item.StartTime); },
+            item => { Assert.Equal("C002", item.CoachCode); Assert.Equal(new TimeOnly(13, 0), item.StartTime); });
     }
 
     [Fact]

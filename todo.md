@@ -633,6 +633,7 @@
 - [x] Add responsive mobile calendar and selected-date agenda.
 - [x] Add loading, empty, and error states to Routine Schedule calendar.
 - [x] Show only Coach nickname without time in calendar entries and use the configured Coach color.
+- [x] Sort Routine Schedule calendar entries by Coach Code, then by start time when codes match.
 - [x] Color Routine Schedule calendar dates Emerald, use a dark-green selected border for scheduled dates, and gray for empty selected dates.
 - [x] Add Routine Schedule search/filter/pagination.
 - [x] Add loading, empty, and error states to Routine Schedule list.
@@ -863,11 +864,13 @@
 - [x] Default Administrator Dashboard filters to the current calendar month, show coach nicknames/colors split by training type, show participation-only athlete names/totals split by training type, and remove coach teaching hours from this page as requested by the user.
 - [x] Remove the Administrator Dashboard KPI card row as requested by the user.
 - [x] Add date-by-athlete attendance matrix tables with daily totals, period totals, and coach names for Routine and Private Training on the Administrator Dashboard.
-- [ ] Show Routine athlete attendance as progress bars whose maximum is the highest distinct teaching-day count among coaches in the filtered date range. <!-- Implemented; Angular compiler and all frontend tests pass, awaiting successful production build after an esbuild runtime deadlock. -->
+- [x] Group Administrator Dashboard attendance summaries and daily matrices by displayed athlete name, combining attendance totals when names match.
+- [ ] Show Routine athlete attendance as progress bars whose maximum is the number of distinct dates with at least one Coach teaching in the filtered date range. <!-- Implemented; focused frontend test passes, awaiting successful production build after the existing esbuild exit-134 failure. -->
 
 ### 5.15 Coach Teaching-Hour Report Frontend
 
 - [x] Add a separate Competition-care tab showing assigned matches and distinct assigned days per coach without mixing them into teaching-day totals.
+- [x] Add Competition-coach days and combined actual-plus-competition totals to the Routine Training report summary.
 - [x] Create Coach Teaching-Hour Report page.
 - [x] Add Coach filter.
 - [x] Add date-range filter.
@@ -921,6 +924,7 @@
 - [x] Add a bounded anonymous API returning only active Routine date, time, Coach nickname, and color.
 - [x] Add a responsive Thai read-only public calendar outside the authenticated application shell.
 - [x] Display each Routine Training date's latest schedule update date and time in public calendar details.
+- [x] Sort public Routine calendar entries by Coach Code, then by start time when codes match.
 - [x] Display the selected public Calendar Note's latest update date and time.
 - [x] Add Administrator controls to create, copy, rotate, and revoke the secret link.
 - [x] Generate the share QR Code locally in the browser and provide a PNG download action.

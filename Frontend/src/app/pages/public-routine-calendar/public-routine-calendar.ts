@@ -38,13 +38,17 @@ export class PublicRoutineCalendar implements OnInit {
         dayNumber: date.getDate(),
         isCurrentMonth: date.getMonth() === month.getMonth(),
         isToday: isoDate === toIsoDate(new Date()),
-        items: this.items().filter(item => item.trainingDate === isoDate),
+        items: this.items()
+          .filter(item => item.trainingDate === isoDate)
+          .sort(compareRoutineCalendarItems),
         competitionMatches: this.competitionMatches().filter(match => match.startDate <= isoDate && isoDate <= match.endDate),
         note: this.notes().find(note => note.noteDate === isoDate) ?? null,
       };
     });
   });
-  selectedItems = computed(() => this.items().filter(item => item.trainingDate === this.selectedDate()));
+  selectedItems = computed(() => this.items()
+    .filter(item => item.trainingDate === this.selectedDate())
+    .sort(compareRoutineCalendarItems));
   selectedCompetitionMatches = computed(() => this.competitionMatches().filter(match => match.startDate <= this.selectedDate() && this.selectedDate() <= match.endDate));
 
   private readonly token: string;
@@ -84,4 +88,8 @@ function startOfMonth(date: Date): Date { return new Date(date.getFullYear(), da
 function addDays(date: Date, days: number): Date { return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days); }
 function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function compareRoutineCalendarItems(a: PublicRoutineCalendarItem, b: PublicRoutineCalendarItem): number {
+  return a.coachCode.localeCompare(b.coachCode) || a.startTime.localeCompare(b.startTime);
 }
