@@ -165,6 +165,18 @@ public class PublicRoutineCalendarServiceTests
         var summary = Assert.Single(result!.AttendanceSummary);
         Assert.Equal("นักกีฬา", summary.AthleteName);
         Assert.Equal(2, summary.AttendanceCount);
+        Assert.Collection(
+            result.DailyAttendance,
+            day =>
+            {
+                Assert.Equal(sessionDate, day.TrainingDate);
+                Assert.Equal(["นักกีฬา"], day.AthleteNicknames);
+            },
+            day =>
+            {
+                Assert.Equal(sessionDate.AddDays(1), day.TrainingDate);
+                Assert.Equal(["นักกีฬา"], day.AthleteNicknames);
+            });
     }
 
     [Fact]

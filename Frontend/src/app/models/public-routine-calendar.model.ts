@@ -26,11 +26,17 @@ export interface PublicRoutineAttendanceItem {
   attendanceCount: number;
 }
 
+export interface PublicRoutineDailyAttendance {
+  trainingDate: string;
+  athleteNicknames: string[];
+}
+
 export interface PublicRoutineCalendarData {
   schedules: PublicRoutineCalendarItem[];
   competitionMatches: PublicCompetitionMatch[];
   notes: PublicCalendarNote[];
   attendanceSummary: PublicRoutineAttendanceItem[];
+  dailyAttendance: PublicRoutineDailyAttendance[];
 }
 
 export interface RoutineCalendarShareStatus {

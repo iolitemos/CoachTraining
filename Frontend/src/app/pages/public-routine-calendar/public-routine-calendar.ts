@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PublicCalendarNote, PublicCompetitionMatch, PublicRoutineAttendanceItem, PublicRoutineCalendarItem } from '../../models/public-routine-calendar.model';
+import { PublicCalendarNote, PublicCompetitionMatch, PublicRoutineAttendanceItem, PublicRoutineCalendarItem, PublicRoutineDailyAttendance } from '../../models/public-routine-calendar.model';
 import { PublicRoutineCalendarService } from '../../services/public-routine-calendar.service';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 import { DisplayDateTimePipe } from '../../shared/display-date-time/display-date-time.pipe';
@@ -22,6 +22,7 @@ export class PublicRoutineCalendar implements OnInit {
   competitionMatches = signal<PublicCompetitionMatch[]>([]);
   notes = signal<PublicCalendarNote[]>([]);
   attendanceSummary = signal<PublicRoutineAttendanceItem[]>([]);
+  dailyAttendance = signal<PublicRoutineDailyAttendance[]>([]);
   noteDialogOpen = signal(false);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
@@ -53,6 +54,8 @@ export class PublicRoutineCalendar implements OnInit {
   selectedCompetitionMatches = computed(() => this.competitionMatches().filter(match => match.startDate <= this.selectedDate() && this.selectedDate() <= match.endDate));
   teachingDayCount = computed(() => new Set(this.items().map(item => item.trainingDate)).size);
   totalAttendance = computed(() => this.attendanceSummary().reduce((total, athlete) => total + athlete.attendanceCount, 0));
+  selectedAthleteNicknames = computed(() => this.dailyAttendance()
+    .find(attendance => attendance.trainingDate === this.selectedDate())?.athleteNicknames ?? []);
 
   private readonly token: string;
   constructor(route: ActivatedRoute, private readonly service: PublicRoutineCalendarService) {
@@ -71,6 +74,7 @@ export class PublicRoutineCalendar implements OnInit {
       this.competitionMatches.set(data.competitionMatches);
       this.notes.set(data.notes ?? []);
       this.attendanceSummary.set(data.attendanceSummary ?? []);
+      this.dailyAttendance.set(data.dailyAttendance ?? []);
       this.state.set('ready');
     }
     catch (error: unknown) {

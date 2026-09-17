@@ -13,4 +13,16 @@ describe('PublicRoutineCalendar', () => {
 
     expect(component.teachingDayCount()).toBe(2);
   });
+
+  it('returns only athlete nicknames recorded for the selected date', () => {
+    const route = { snapshot: { paramMap: { get: () => 'token' } } };
+    const component = new PublicRoutineCalendar(route as never, null!);
+    component.selectedDate.set('2026-09-02');
+    component.dailyAttendance.set([
+      { trainingDate: '2026-09-01', athleteNicknames: ['หนึ่ง'] },
+      { trainingDate: '2026-09-02', athleteNicknames: ['สอง', 'สาม'] },
+    ]);
+
+    expect(component.selectedAthleteNicknames()).toEqual(['สอง', 'สาม']);
+  });
 });

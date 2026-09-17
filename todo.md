@@ -924,6 +924,7 @@
 - [x] Add a bounded anonymous API returning active Routine date, time, Coach nickname/color, and display-name/count-only Routine attendance summaries.
 - [x] Add a responsive Thai read-only public calendar outside the authenticated application shell.
 - [x] Add the Routine attendance progress summary to the public calendar, using distinct displayed teaching dates as the maximum.
+- [x] Show nickname-only Routine athlete attendance for the selected date in public calendar details.
 - [x] Display each Routine Training date's latest schedule update date and time in public calendar details.
 - [x] Sort public Routine calendar entries by Coach Code, then by start time when codes match.
 - [x] Display the selected public Calendar Note's latest update date and time.

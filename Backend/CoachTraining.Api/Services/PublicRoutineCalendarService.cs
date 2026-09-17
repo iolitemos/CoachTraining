@@ -124,20 +124,34 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
                 && attendance.TrainingSession.SessionDate <= endDate
                 && attendance.TrainingSession.Status != SessionStatus.Rescheduled
                 && (attendance.Status == AttendanceStatus.Present || attendance.Status == AttendanceStatus.Late))
-            .Select(attendance => attendance.AthleteId.HasValue
-                ? attendance.Athlete!.Nickname ?? attendance.Athlete.FullName
-                : attendance.AthleteNameSnapshot)
+            .Select(attendance => new
+            {
+                TrainingDate = attendance.TrainingSession.SessionDate,
+                AthleteNickname = attendance.Athlete != null ? attendance.Athlete.Nickname : null,
+            })
             .ToListAsync(cancellationToken);
 
         var attendanceSummary = attendanceRecords
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .GroupBy(name => name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Where(record => !string.IsNullOrWhiteSpace(record.AthleteNickname))
+            .GroupBy(record => record.AthleteNickname!.Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(group => new PublicRoutineAttendanceItemDto(group.Key, group.Count()))
             .OrderByDescending(item => item.AttendanceCount)
             .ThenBy(item => item.AthleteName)
             .ToList();
 
-        return new PublicRoutineCalendarDto(schedules, competitionMatches, notes, attendanceSummary);
+        var dailyAttendance = attendanceRecords
+            .Where(record => !string.IsNullOrWhiteSpace(record.AthleteNickname))
+            .GroupBy(record => record.TrainingDate)
+            .Select(group => new PublicRoutineDailyAttendanceDto(
+                group.Key,
+                group.Select(record => record.AthleteNickname!.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(name => name)
+                    .ToList()))
+            .OrderBy(item => item.TrainingDate)
+            .ToList();
+
+        return new PublicRoutineCalendarDto(schedules, competitionMatches, notes, attendanceSummary, dailyAttendance);
     }
 
     private async Task<bool> RevokeActiveLinksAsync(int userId, DateTime now, CancellationToken cancellationToken)
