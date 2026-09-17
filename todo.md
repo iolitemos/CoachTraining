@@ -865,7 +865,7 @@
 - [x] Remove the Administrator Dashboard KPI card row as requested by the user.
 - [x] Add date-by-athlete attendance matrix tables with daily totals, period totals, and coach names for Routine and Private Training on the Administrator Dashboard.
 - [x] Group Administrator Dashboard attendance summaries and daily matrices by displayed athlete name, combining attendance totals when names match.
-- [ ] Show Routine athlete attendance as progress bars whose maximum is the number of distinct dates with at least one Coach teaching in the filtered date range. <!-- Implemented; focused frontend test passes, awaiting successful production build after the existing esbuild exit-134 failure. -->
+- [x] Show Routine athlete attendance as progress bars whose maximum is the number of distinct dates with at least one Coach teaching in the filtered date range.
 
 ### 5.15 Coach Teaching-Hour Report Frontend
 
@@ -921,8 +921,9 @@
 - [x] Add revocable Routine calendar share-link persistence and EF Core migration.
 - [x] Store only a SHA-256 hash of each cryptographically random share token.
 - [x] Add Administrator APIs to inspect, rotate, and revoke the active share link.
-- [x] Add a bounded anonymous API returning only active Routine date, time, Coach nickname, and color.
+- [x] Add a bounded anonymous API returning active Routine date, time, Coach nickname/color, and display-name/count-only Routine attendance summaries.
 - [x] Add a responsive Thai read-only public calendar outside the authenticated application shell.
+- [x] Add the Routine attendance progress summary to the public calendar, using distinct displayed teaching dates as the maximum.
 - [x] Display each Routine Training date's latest schedule update date and time in public calendar details.
 - [x] Sort public Routine calendar entries by Coach Code, then by start time when codes match.
 - [x] Display the selected public Calendar Note's latest update date and time.

@@ -21,10 +21,16 @@ export interface PublicCalendarNote {
   latestUpdate: string;
 }
 
+export interface PublicRoutineAttendanceItem {
+  athleteName: string;
+  attendanceCount: number;
+}
+
 export interface PublicRoutineCalendarData {
   schedules: PublicRoutineCalendarItem[];
   competitionMatches: PublicCompetitionMatch[];
   notes: PublicCalendarNote[];
+  attendanceSummary: PublicRoutineAttendanceItem[];
 }
 
 export interface RoutineCalendarShareStatus {

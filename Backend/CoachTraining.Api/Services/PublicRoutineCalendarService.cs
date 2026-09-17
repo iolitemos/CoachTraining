@@ -3,6 +3,7 @@ using System.Text;
 using CoachTraining.Api.Data;
 using CoachTraining.Api.DTOs.PublicCalendar;
 using CoachTraining.Api.Models;
+using CoachTraining.Api.Models.Enums;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -117,7 +118,26 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
                 note.UpdatedDate ?? note.CreatedDate))
             .ToListAsync(cancellationToken);
 
-        return new PublicRoutineCalendarDto(schedules, competitionMatches, notes);
+        var attendanceRecords = await _db.Attendances.AsNoTracking()
+            .Where(attendance => attendance.TrainingSession.TrainingType == TrainingType.Routine
+                && attendance.TrainingSession.SessionDate >= startDate
+                && attendance.TrainingSession.SessionDate <= endDate
+                && attendance.TrainingSession.Status != SessionStatus.Rescheduled
+                && (attendance.Status == AttendanceStatus.Present || attendance.Status == AttendanceStatus.Late))
+            .Select(attendance => attendance.AthleteId.HasValue
+                ? attendance.Athlete!.Nickname ?? attendance.Athlete.FullName
+                : attendance.AthleteNameSnapshot)
+            .ToListAsync(cancellationToken);
+
+        var attendanceSummary = attendanceRecords
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .GroupBy(name => name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(group => new PublicRoutineAttendanceItemDto(group.Key, group.Count()))
+            .OrderByDescending(item => item.AttendanceCount)
+            .ThenBy(item => item.AthleteName)
+            .ToList();
+
+        return new PublicRoutineCalendarDto(schedules, competitionMatches, notes, attendanceSummary);
     }
 
     private async Task<bool> RevokeActiveLinksAsync(int userId, DateTime now, CancellationToken cancellationToken)

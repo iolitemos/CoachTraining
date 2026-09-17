@@ -28,10 +28,13 @@ public record PublicCompetitionMatchDto(
 
 public record PublicCalendarNoteDto(DateOnly NoteDate, string Content, DateTime LatestUpdate);
 
+public record PublicRoutineAttendanceItemDto(string AthleteName, int AttendanceCount);
+
 public record PublicRoutineCalendarDto(
     IReadOnlyList<PublicRoutineCalendarItemDto> Schedules,
     IReadOnlyList<PublicCompetitionMatchDto> CompetitionMatches,
-    IReadOnlyList<PublicCalendarNoteDto> Notes);
+    IReadOnlyList<PublicCalendarNoteDto> Notes,
+    IReadOnlyList<PublicRoutineAttendanceItemDto> AttendanceSummary);
 
 public record RoutineCalendarShareStatusDto(
     bool IsActive,

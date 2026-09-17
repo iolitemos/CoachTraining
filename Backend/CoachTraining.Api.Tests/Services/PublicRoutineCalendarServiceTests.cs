@@ -1,4 +1,5 @@
 using CoachTraining.Api.Models;
+using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -116,6 +117,54 @@ public class PublicRoutineCalendarServiceTests
 
         var note = Assert.Single(result!.Notes);
         Assert.Equal(new DateTime(2026, 9, 11, 5, 45, 0, DateTimeKind.Utc), note.LatestUpdate);
+    }
+
+    [Fact]
+    public async Task GetCalendarAsync_ReturnsRoutineAttendanceSummaryOnlyForPresentAndLateRecords()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = new Coach { CoachCode = "C001", FullName = "Coach", Nickname = "โค้ช", ColorHex = "#123456", IsActive = true };
+        var athlete = new Athlete { AthleteCode = "A001", FullName = "Athlete", Nickname = "นักกีฬา", IsActive = true };
+        db.AddRange(coach, athlete);
+        await db.SaveChangesAsync();
+
+        var sessionDate = new DateOnly(2026, 9, 12);
+        var firstSession = new TrainingSession
+        {
+            TrainingType = TrainingType.Routine,
+            SessionDate = sessionDate,
+            ScheduledStartDateTime = new DateTime(2026, 9, 12, 9, 0, 0),
+            ScheduledEndDateTime = new DateTime(2026, 9, 12, 10, 0, 0),
+            AssignedCoachId = coach.CoachId,
+            AssignedCoachCodeSnapshot = coach.CoachCode,
+            AssignedCoachNameSnapshot = coach.FullName,
+            Status = SessionStatus.Completed,
+        };
+        var secondSession = new TrainingSession
+        {
+            TrainingType = TrainingType.Routine,
+            SessionDate = sessionDate.AddDays(1),
+            ScheduledStartDateTime = new DateTime(2026, 9, 13, 9, 0, 0),
+            ScheduledEndDateTime = new DateTime(2026, 9, 13, 10, 0, 0),
+            AssignedCoachId = coach.CoachId,
+            AssignedCoachCodeSnapshot = coach.CoachCode,
+            AssignedCoachNameSnapshot = coach.FullName,
+            Status = SessionStatus.Completed,
+        };
+        db.TrainingSessions.AddRange(firstSession, secondSession);
+        await db.SaveChangesAsync();
+        db.Attendances.AddRange(
+            new Attendance { TrainingSessionId = firstSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Present },
+            new Attendance { TrainingSessionId = secondSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Late });
+        await db.SaveChangesAsync();
+        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var link = await service.RotateLinkAsync(7);
+
+        var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
+
+        var summary = Assert.Single(result!.AttendanceSummary);
+        Assert.Equal("นักกีฬา", summary.AthleteName);
+        Assert.Equal(2, summary.AttendanceCount);
     }
 
     [Fact]
