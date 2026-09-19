@@ -508,6 +508,9 @@
 - [x] Change approved records to Locked state. <!-- ApproveAsync transitions Submitted -> Approved -> Locked as one action; requirement.md defines no separate Lock action -->
 - [x] Enforce edit restrictions for Locked records. <!-- Already enforced via ISessionStatusService.IsEditableByCoach (Locked excluded) used by Attendance/TrainingLog/CoachTeaching services -->
 - [x] Record every approval workflow action in history. <!-- TrainingApprovalHistory row per Submit/Approve/Reject/RequestRevision/Unlock -->
+- [x] Add Administrator preflight API for Routine daily batch-approval eligibility (`FR-APPROVAL-008`–`011`).
+- [x] Add atomic Administrator batch approval from Scheduled to Locked using scheduled teaching data and per-session approval history.
+- [x] Add automated tests for Routine batch eligibility, atomic validation, finalized teaching data, excluded statuses, and audit history.
 
 ### 4.16 Coach Dashboard Backend
 
@@ -843,6 +846,8 @@
 - [x] Require unlock reason.
 - [x] Refresh displayed status after workflow action.
 - [x] Make review pages responsive.
+- [ ] Group Routine batch candidates by date with eligible-day checkbox selection and attendance coverage. <!-- Implemented and Angular compiler/type checks pass; awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
+- [ ] Add Routine batch preflight confirmation, processing, success, and error feedback. <!-- Implemented and Angular compiler/type checks pass; awaiting successful frontend production build. -->
 
 ### 5.14 Administrator Dashboard Frontend
 
@@ -922,8 +927,10 @@
 ### 5.18 Public Routine Calendar Sharing
 
 - [x] Add revocable Routine calendar share-link persistence and EF Core migration.
-- [x] Store only a SHA-256 hash of each cryptographically random share token.
+- [x] Store a SHA-256 hash for validation and a Data Protection-encrypted token copy for authorized recovery of each cryptographically random share link.
 - [x] Add Administrator APIs to inspect, rotate, and revoke the active share link.
+- [x] Keep the active share link stable while allowing Administrator to disable and re-enable access.
+- [x] Protect an encrypted recoverable token copy so Administrator can copy the same link and QR Code after reloading the page.
 - [x] Add a bounded anonymous API returning active Routine date, time, Coach nickname/color, and display-name/count-only Routine attendance summaries.
 - [x] Add a responsive Thai read-only public calendar outside the authenticated application shell.
 - [x] Add the Routine attendance progress summary to the public calendar, using distinct displayed teaching dates as the maximum.
@@ -931,11 +938,11 @@
 - [x] Display each Routine Training date's latest schedule update date and time in public calendar details.
 - [x] Sort public Routine calendar entries by Coach Code, then by start time when codes match.
 - [x] Display the selected public Calendar Note's latest update date and time.
-- [x] Add Administrator controls to create, copy, rotate, and revoke the secret link.
+- [x] Add Administrator controls to create, copy, emergency-rotate, and temporarily enable/disable the secret link.
 - [x] Generate the share QR Code locally in the browser and provide a PNG download action.
 - [x] Mark Competition Match date ranges and show match name, province, and dates on the shared calendar.
 - [x] Add shared daily Calendar Notes with Administrator management, read-only Coach/public visibility, and clickable `!` indicators on Routine, Private, Coach, and public calendars.
-- [x] Add backend tests for token rotation, invalidation, date-range validation, and public projection.
+- [x] Add backend tests for token rotation, invalidation, enable/disable behavior, stable-link recovery, date-range validation, and public projection.
 - [x] Pass backend tests and backend/frontend production builds.
 
 ---

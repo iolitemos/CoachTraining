@@ -40,9 +40,13 @@ public record PublicRoutineCalendarDto(
     IReadOnlyList<PublicRoutineDailyAttendanceDto> DailyAttendance);
 
 public record RoutineCalendarShareStatusDto(
-    bool IsActive,
+    bool Exists,
+    bool IsEnabled,
+    string? Token,
     string? TokenHint,
     DateTime? CreatedDate);
+
+public record RoutineCalendarShareAccessRequest(bool IsEnabled);
 
 public record RoutineCalendarShareCreatedDto(
     string Token,

@@ -1,5 +1,6 @@
 import { SlicePipe } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, OnInit, signal, ViewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PageHeader } from '../../../shared/page-header/page-header';
@@ -17,6 +18,10 @@ import { DisplayDatePipe } from '../../../shared/display-date/display-date.pipe'
 import { DateInput } from '../../../shared/date-input/date-input';
 import { FilterStateService } from '../../../services/filter-state.service';
 import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
+import { ApprovalService } from '../../../services/approval.service';
+import { RoutineBatchApprovalDay } from '../../../models/approval.model';
+import { ConfirmationDialog } from '../../../shared/confirmation-dialog/confirmation-dialog';
+import { ApiErrorBody } from '../../../models/paged-result.model';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -30,16 +35,26 @@ type ViewState = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-review-list',
-  imports: [FormsModule, SlicePipe, RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe, DateInput, CoachNamePipe],
+  imports: [FormsModule, SlicePipe, RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, Pagination, StatusBadge, DisplayDatePipe, DateInput, CoachNamePipe, ConfirmationDialog],
   templateUrl: './review-list.html',
   styleUrl: './review-list.css',
 })
 export class ReviewList implements OnInit {
+  @ViewChild('batchDayScroller') private batchDayScroller?: ElementRef<HTMLElement>;
+
   state = signal<ViewState>('loading');
   sessions = signal<TrainingSessionListItem[]>([]);
   page = signal(1);
   pageSize = signal(20);
   totalCount = signal(0);
+  batchDays = signal<RoutineBatchApprovalDay[]>([]);
+  selectedBatchDates = signal<Set<string>>(new Set());
+  batchLoading = signal(false);
+  batchProcessing = signal(false);
+  batchDialogOpen = signal(false);
+  batchError = signal<string | null>(null);
+  batchSuccess = signal<string | null>(null);
+  selectedBatchDays = computed(() => this.batchDays().filter((day) => this.selectedBatchDates().has(day.sessionDate)));
 
   coachOptions = signal<CoachOption[]>([]);
 
@@ -54,6 +69,7 @@ export class ReviewList implements OnInit {
     private readonly coachService: CoachService,
     private readonly filterState: FilterStateService,
     private readonly route: ActivatedRoute,
+    private readonly approvalService: ApprovalService,
   ) {}
 
   ngOnInit(): void {
@@ -85,6 +101,7 @@ export class ReviewList implements OnInit {
       this.sessions.set(result.items);
       this.totalCount.set(result.totalCount);
       this.state.set('ready');
+      await this.loadBatchDays();
     } catch {
       this.state.set('error');
     }
@@ -111,6 +128,80 @@ export class ReviewList implements OnInit {
 
   trainingTypeLabel(type: TrainingType): string {
     return type === 'Routine' ? 'ฝึกซ้อมประจำ' : 'ฝึกซ้อมส่วนตัว';
+  }
+
+  showBatchPanel(): boolean {
+    return (!this.trainingType || this.trainingType === 'Routine') && (!this.status || this.status === 'Scheduled');
+  }
+
+  isBatchDateSelected(date: string): boolean {
+    return this.selectedBatchDates().has(date);
+  }
+
+  toggleBatchDate(day: RoutineBatchApprovalDay): void {
+    if (!day.isEligible || this.batchProcessing()) return;
+    const selected = new Set(this.selectedBatchDates());
+    selected.has(day.sessionDate) ? selected.delete(day.sessionDate) : selected.add(day.sessionDate);
+    this.selectedBatchDates.set(selected);
+    this.batchError.set(null);
+    this.batchSuccess.set(null);
+  }
+
+  openBatchConfirmation(): void {
+    if (this.selectedBatchDays().length > 0) this.batchDialogOpen.set(true);
+  }
+
+  scrollBatchDays(direction: 'previous' | 'next'): void {
+    this.batchDayScroller?.nativeElement.scrollBy({
+      left: direction === 'next' ? 328 : -328,
+      behavior: 'smooth',
+    });
+  }
+
+  batchConfirmationMessage(): string {
+    const days = this.selectedBatchDays();
+    const sessions = days.reduce((sum, day) => sum + day.scheduledSessionCount, 0);
+    const withAttendance = days.reduce((sum, day) => sum + day.sessionsWithAttendanceCount, 0);
+    const withoutAttendance = days.reduce((sum, day) => sum + day.sessionsWithoutAttendanceCount, 0);
+    return `เลือก ${days.length} วัน รวม ${sessions} รายการ • มีข้อมูลนักกีฬา ${withAttendance} รายการ • ไม่มีข้อมูลนักกีฬา ${withoutAttendance} รายการ ระบบจะใช้โค้ชและเวลาตามกำหนด แล้วอนุมัติและล็อกทั้งหมด`;
+  }
+
+  async confirmBatchApproval(): Promise<void> {
+    this.batchProcessing.set(true);
+    this.batchError.set(null);
+    this.batchSuccess.set(null);
+    try {
+      const result = await this.approvalService.batchApproveRoutine([...this.selectedBatchDates()]);
+      this.batchDialogOpen.set(false);
+      this.selectedBatchDates.set(new Set());
+      this.batchSuccess.set(`อนุมัติสำเร็จ ${result.approvedSessionCount} รายการ จาก ${result.approvedDateCount} วัน`);
+      await this.load();
+    } catch (error) {
+      const body = error instanceof HttpErrorResponse ? error.error as ApiErrorBody | undefined : undefined;
+      this.batchError.set(body?.message ?? 'ไม่สามารถอนุมัติรายการแบบกลุ่มได้');
+      this.batchDialogOpen.set(false);
+    } finally {
+      this.batchProcessing.set(false);
+    }
+  }
+
+  private async loadBatchDays(): Promise<void> {
+    this.selectedBatchDates.set(new Set());
+    this.batchError.set(null);
+    if (!this.showBatchPanel() || !this.dateFrom || !this.dateTo) {
+      this.batchDays.set([]);
+      return;
+    }
+
+    this.batchLoading.set(true);
+    try {
+      this.batchDays.set(await this.approvalService.getRoutineBatchDays(this.dateFrom, this.dateTo));
+    } catch {
+      this.batchDays.set([]);
+      this.batchError.set('ไม่สามารถโหลดข้อมูลสำหรับอนุมัติแบบกลุ่มได้');
+    } finally {
+      this.batchLoading.set(false);
+    }
   }
 }
 

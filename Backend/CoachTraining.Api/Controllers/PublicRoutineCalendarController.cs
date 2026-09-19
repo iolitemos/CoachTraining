@@ -52,6 +52,27 @@ public class PublicRoutineCalendarController : ControllerBase
         }
     }
 
+    [HttpPatch("share-link/access")]
+    [Authorize(Roles = Roles.Administrator)]
+    public async Task<IActionResult> SetShareLinkAccess(
+        [FromBody] RoutineCalendarShareAccessRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _service.SetAccessAsync(request.IsEnabled, _currentUser.UserId!.Value, cancellationToken);
+            return result is null
+                ? NotFound(new ApiErrorResponse("ยังไม่มีลิงก์แชร์ปฏิทิน"))
+                : Ok(new ApiResponse<RoutineCalendarShareStatusDto>(result,
+                    request.IsEnabled ? "เปิดการเข้าถึงปฏิทินแล้ว" : "ปิดการเข้าถึงปฏิทินชั่วคราวแล้ว"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/public/routine-calendar/share-link/access Controller: PublicRoutineCalendarController Function: SetShareLinkAccess UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถเปลี่ยนการเข้าถึงได้"));
+        }
+    }
+
     [HttpDelete("share-link")]
     [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> RevokeShareLink(CancellationToken cancellationToken)

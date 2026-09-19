@@ -33,6 +33,16 @@ export class PublicRoutineCalendarService {
     await firstValueFrom(this.http.delete<void>(`${this.baseUrl}/share-link`));
   }
 
+  async setShareAccess(isEnabled: boolean): Promise<RoutineCalendarShareStatus> {
+    const response = await firstValueFrom(
+      this.http.patch<ApiSuccessBody<RoutineCalendarShareStatus>>(
+        `${this.baseUrl}/share-link/access`,
+        { isEnabled },
+      ),
+    );
+    return response.data;
+  }
+
   async getCalendar(token: string, startDate: string, endDate: string): Promise<PublicRoutineCalendarData> {
     const params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
     const response = await firstValueFrom(

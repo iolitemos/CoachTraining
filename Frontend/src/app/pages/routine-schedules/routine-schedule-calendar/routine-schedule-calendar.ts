@@ -117,11 +117,12 @@ export class RoutineScheduleCalendar implements OnInit {
   }
 
   async loadShareStatus(): Promise<void> {
-    try { this.shareStatus.set(await this.publicCalendarService.getShareStatus()); }
+    try { await this.applyShareStatus(await this.publicCalendarService.getShareStatus()); }
     catch { this.shareMessage.set('ไม่สามารถโหลดสถานะลิงก์แชร์ได้'); }
   }
 
   async createShareLink(): Promise<void> {
+    if (this.shareStatus()?.exists && !window.confirm('เปลี่ยนลิงก์ฉุกเฉินหรือไม่? ลิงก์และ QR Code เดิมจะใช้งานไม่ได้ทันที')) return;
     this.shareProcessing.set(true); this.shareMessage.set(null);
     try {
       const result = await this.publicCalendarService.rotateShareLink();
@@ -133,8 +134,8 @@ export class RoutineScheduleCalendar implements OnInit {
         width: 512,
         color: { dark: '#064e3b', light: '#ffffff' },
       }));
-      this.shareStatus.set({ isActive: true, tokenHint: result.tokenHint, createdDate: result.createdDate });
-      this.shareMessage.set('สร้างลิงก์ใหม่แล้ว โปรดคัดลอกก่อนออกจากหน้านี้');
+      this.shareStatus.set({ exists: true, isEnabled: true, token: result.token, tokenHint: result.tokenHint, createdDate: result.createdDate });
+      this.shareMessage.set('สร้างลิงก์ถาวรแล้ว ลิงก์นี้จะคงเดิมจนกว่าจะสั่งเปลี่ยนลิงก์ฉุกเฉิน');
     } catch { this.shareMessage.set('ไม่สามารถสร้างลิงก์แชร์ได้'); }
     finally { this.shareProcessing.set(false); }
   }
@@ -159,10 +160,37 @@ export class RoutineScheduleCalendar implements OnInit {
     this.shareProcessing.set(true); this.shareMessage.set(null);
     try {
       await this.publicCalendarService.revokeShareLink();
-      this.shareStatus.set({ isActive: false, tokenHint: null, createdDate: null });
+      this.shareStatus.set({ exists: false, isEnabled: false, token: null, tokenHint: null, createdDate: null });
       this.shareUrl.set(null); this.shareQrCode.set(null); this.shareMessage.set('ยกเลิกลิงก์แชร์แล้ว');
     } catch { this.shareMessage.set('ไม่สามารถยกเลิกลิงก์แชร์ได้'); }
     finally { this.shareProcessing.set(false); }
+  }
+
+  async setShareAccess(isEnabled: boolean): Promise<void> {
+    this.shareProcessing.set(true); this.shareMessage.set(null);
+    try {
+      await this.applyShareStatus(await this.publicCalendarService.setShareAccess(isEnabled));
+      this.shareMessage.set(isEnabled ? 'เปิดการเข้าถึงปฏิทินแล้ว' : 'ปิดการเข้าถึงปฏิทินชั่วคราวแล้ว ลิงก์เดิมยังคงอยู่');
+    } catch { this.shareMessage.set('ไม่สามารถเปลี่ยนสถานะการเข้าถึงได้'); }
+    finally { this.shareProcessing.set(false); }
+  }
+
+  private async applyShareStatus(status: RoutineCalendarShareStatus): Promise<void> {
+    this.shareStatus.set(status);
+    if (!status.token) {
+      this.shareUrl.set(null);
+      this.shareQrCode.set(null);
+      return;
+    }
+
+    const url = `${window.location.origin}/public/routine-calendar/${status.token}`;
+    this.shareUrl.set(url);
+    this.shareQrCode.set(await QRCode.toDataURL(url, {
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      width: 512,
+      color: { dark: '#064e3b', light: '#ffffff' },
+    }));
   }
 
   async load(): Promise<void> {

@@ -8,6 +8,8 @@ public class RoutineCalendarShareLink : AuditableEntity
     public int RoutineCalendarShareLinkId { get; set; }
     public string TokenHash { get; set; } = string.Empty;
     public string TokenHint { get; set; } = string.Empty;
+    public string? ProtectedToken { get; set; }
+    public bool IsEnabled { get; set; } = true;
     public DateTime? RevokedAtUtc { get; set; }
     public int? RevokedByUserId { get; set; }
 }

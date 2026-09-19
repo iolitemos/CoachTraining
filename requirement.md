@@ -367,6 +367,16 @@ Purpose:
 8. If a locked record requires correction, an authorized Administrator may unlock it.
 9. The system records the approval, rejection, revision, and unlock history.
 
+For Routine Training, an Administrator may instead finalize scheduled records in a daily batch:
+
+1. The Administrator selects one or more eligible training dates.
+2. A date is eligible only when it is not in the future, contains at least one Scheduled Routine Training session, and at least one of those sessions has recorded athlete attendance.
+3. The system shows the number of Scheduled Routine sessions, sessions with attendance, and sessions without attendance before confirmation.
+4. On confirmation, all Scheduled Routine sessions on every selected date are finalized atomically. Other session statuses are not changed.
+5. For each finalized session, the assigned coach and scheduled start/end are recorded as the actual coach and actual start/end.
+6. Every finalized session becomes Locked and receives its own traceable approval-history entry identifying the daily batch action.
+7. Routine athletes who were not selected remain unrecorded and shall not be treated as absent.
+
 ### 5.9 Password Change and Reset Flow
 
 1. A signed-in account owner may change only the password of the owner's own account.
@@ -548,6 +558,10 @@ Requirements:
 - **FR-APPROVAL-005** Authorized Administrator shall be able to unlock a Locked record when correction is necessary.
 - **FR-APPROVAL-006** Unlocking a record shall require a reason.
 - **FR-APPROVAL-007** Approval, rejection, revision, and unlock actions shall remain visible in history.
+- **FR-APPROVAL-008** Administrator shall be able to select eligible Routine Training dates and approve all Scheduled Routine sessions on those dates as one atomic batch.
+- **FR-APPROVAL-009** A Routine Training date shall be batch-eligible only when it is not in the future, contains at least one Scheduled Routine Training session, and at least one of those sessions has recorded athlete attendance.
+- **FR-APPROVAL-010** Routine batch approval shall use the assigned coach and scheduled start/end as the finalized actual teaching information, change each included session directly from Scheduled to Locked, and record a separate approval-history entry for each session.
+- **FR-APPROVAL-011** Routine batch approval shall not change sessions in any status other than Scheduled and shall not infer absence for unselected athletes.
 
 ### 6.16 Coach Dashboard Requirements
 
@@ -636,15 +650,16 @@ Requirements:
 
 ### 6.21 Public Routine Calendar Sharing Requirements
 
-- **FR-PUBLIC-CALENDAR-001** Administrator shall be able to create a secret share link for a read-only Routine Training calendar.
-- **FR-PUBLIC-CALENDAR-002** Creating a new share link shall immediately revoke every previously active Routine calendar share link.
-- **FR-PUBLIC-CALENDAR-003** Administrator shall be able to revoke the active share link immediately.
-- **FR-PUBLIC-CALENDAR-004** The system shall store only a secure hash of the secret token and shall reveal the raw token only when a new link is created.
+- **FR-PUBLIC-CALENDAR-001** Administrator shall be able to create one persistent secret share link for a read-only Routine Training calendar.
+- **FR-PUBLIC-CALENDAR-002** Administrator shall be able to temporarily disable and later re-enable access without changing the share link or QR Code.
+- **FR-PUBLIC-CALENDAR-003** A disabled link shall not return calendar data. Re-enabling access shall make the same link usable again.
+- **FR-PUBLIC-CALENDAR-004** The system shall store a secure hash for token validation and may store a protected encrypted copy solely so an authorized Administrator can copy the same link or download its QR Code again.
+- **FR-PUBLIC-CALENDAR-004A** Administrator shall be able to rotate the link for emergency revocation. Rotation shall permanently revoke every previous link and require redistribution of the new link and QR Code.
 - **FR-PUBLIC-CALENDAR-005** A valid link shall expose only active Routine Training date, scheduled start/end time, Coach nickname, public calendar color, and published Competition Match name, province, and date range.
 - **FR-PUBLIC-CALENDAR-006** The public calendar shall not expose Coach/Athlete identifiers, Coach full name or code, attendance, internal remarks, management actions, or links to authenticated records.
 - **FR-PUBLIC-CALENDAR-007** Public calendar date-range queries shall be limited to a maximum of 63 inclusive days.
-- **FR-PUBLIC-CALENDAR-008** Invalid and revoked links shall not return calendar data.
-- **FR-PUBLIC-CALENDAR-009** Administrator shall be able to display and download a QR Code encoding the newly created secret share link without sending the token to an external QR service.
+- **FR-PUBLIC-CALENDAR-008** Invalid, disabled, and revoked links shall not return calendar data.
+- **FR-PUBLIC-CALENDAR-009** Administrator shall be able to display, copy, and download a QR Code for the persistent secret share link at any time without sending the token to an external QR service.
 - **FR-PUBLIC-CALENDAR-010** The public Routine calendar shall mark every date covered by a Competition Match and show its public details for the selected date.
 - **FR-PUBLIC-CALENDAR-011** A public calendar shall show the shared daily Note for dates where one exists, using a visible exclamation-mark indicator that opens the Note in read-only mode.
 
@@ -824,6 +839,8 @@ The review screen shall clearly show:
 - Session status
 - Submission history
 - Available approval actions
+- Routine Training records grouped by training date for daily batch selection
+- Daily batch eligibility, attendance coverage, and a confirmation summary before approval
 
 ### 9.8 Reports
 

@@ -59,6 +59,48 @@ public class TrainingApprovalsController : ControllerBase
         }
     }
 
+    [HttpGet("routine-batch-days")]
+    [Authorize(Roles = Roles.Administrator)]
+    public async Task<IActionResult> GetRoutineBatchDays([FromQuery] DateOnly dateFrom, [FromQuery] DateOnly dateTo)
+    {
+        try
+        {
+            if (dateTo < dateFrom || dateTo.DayNumber - dateFrom.DayNumber > 62)
+            {
+                return BadRequest(new ApiErrorResponse("ช่วงวันที่ต้องไม่เกิน 63 วัน"));
+            }
+
+            var days = await _approvalService.GetRoutineBatchDaysAsync(dateFrom, dateTo);
+            return Ok(new ApiResponse<IReadOnlyList<RoutineBatchApprovalDayDto>>(days));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/training-sessions/routine-batch-days Controller: TrainingApprovalsController Function: GetRoutineBatchDays UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถโหลดข้อมูลอนุมัติแบบกลุ่มได้"));
+        }
+    }
+
+    [HttpPost("routine-batch-approve")]
+    [Authorize(Roles = Roles.Administrator)]
+    public async Task<IActionResult> BatchApproveRoutine([FromBody] RoutineBatchApprovalRequest request)
+    {
+        try
+        {
+            var result = await _approvalService.BatchApproveRoutineAsync(request, _currentUser.UserId!.Value);
+            if (result.Error is not null)
+            {
+                return BadRequest(new ApiErrorResponse(result.Error));
+            }
+
+            return Ok(new ApiResponse<RoutineBatchApprovalResultDto>(result.Data!, "อนุมัติและล็อกรายการฝึกซ้อมประจำสำเร็จ"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/training-sessions/routine-batch-approve Controller: TrainingApprovalsController Function: BatchApproveRoutine UserId: {UserId}", _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถอนุมัติรายการแบบกลุ่มได้"));
+        }
+    }
+
     [HttpPost("{id:int}/reject")]
     [Authorize(Roles = Roles.Administrator)]
     public async Task<IActionResult> Reject(int id, [FromBody] ApprovalReasonRequest request)

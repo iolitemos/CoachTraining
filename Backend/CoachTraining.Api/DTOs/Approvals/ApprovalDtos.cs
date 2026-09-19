@@ -47,3 +47,35 @@ public class TrainingApprovalActionResponseDto
     public TrainingSessionDetailDto Session { get; set; } = null!;
     public TrainingApprovalHistoryDto History { get; set; } = null!;
 }
+
+public class RoutineBatchApprovalDayDto
+{
+    public DateOnly SessionDate { get; set; }
+    public int ScheduledSessionCount { get; set; }
+    public int SessionsWithAttendanceCount { get; set; }
+    public int SessionsWithoutAttendanceCount => ScheduledSessionCount - SessionsWithAttendanceCount;
+    public int AttendanceRecordCount { get; set; }
+    public bool IsEligible { get; set; }
+    public string? IneligibleReason { get; set; }
+}
+
+public class RoutineBatchApprovalRequest
+{
+    [Required(ErrorMessage = "กรุณาเลือกวันที่อย่างน้อย 1 วัน")]
+    [MinLength(1, ErrorMessage = "กรุณาเลือกวันที่อย่างน้อย 1 วัน")]
+    [MaxLength(31, ErrorMessage = "เลือกอนุมัติพร้อมกันได้ไม่เกิน 31 วัน")]
+    public List<DateOnly> SessionDates { get; set; } = [];
+}
+
+public class RoutineBatchApprovalResultDto
+{
+    public int ApprovedSessionCount { get; set; }
+    public int ApprovedDateCount { get; set; }
+    public List<DateOnly> SessionDates { get; set; } = [];
+}
+
+public class RoutineBatchApprovalResult
+{
+    public RoutineBatchApprovalResultDto? Data { get; set; }
+    public string? Error { get; set; }
+}

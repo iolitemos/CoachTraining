@@ -18,6 +18,22 @@ export interface TrainingApprovalActionResponse {
   history: TrainingApprovalHistory;
 }
 
+export interface RoutineBatchApprovalDay {
+  sessionDate: string;
+  scheduledSessionCount: number;
+  sessionsWithAttendanceCount: number;
+  sessionsWithoutAttendanceCount: number;
+  attendanceRecordCount: number;
+  isEligible: boolean;
+  ineligibleReason: string | null;
+}
+
+export interface RoutineBatchApprovalResult {
+  approvedSessionCount: number;
+  approvedDateCount: number;
+  sessionDates: string[];
+}
+
 const APPROVAL_ACTION_LABELS_TH: Record<ApprovalActionType, string> = {
   Submit: 'ส่งตรวจ',
   Approve: 'อนุมัติ',

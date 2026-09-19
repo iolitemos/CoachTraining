@@ -314,16 +314,16 @@
     <div>
       <h2 class="font-semibold text-text">แชร์ให้นักกีฬาและผู้ปกครอง</h2>
       <p class="mt-1 text-sm text-text-secondary">
-        ลิงก์ลับสำหรับดูวันที่ เวลา และชื่อเล่นโค้ชเท่านั้น
-        @if (shareStatus()?.isActive) { · ลิงก์ที่ใช้งานลงท้าย {{ shareStatus()?.tokenHint }} }
+        ลิงก์ถาวรสำหรับดูปฏิทินแบบอ่านอย่างเดียว เปิดหรือปิดการเข้าถึงได้โดยไม่เปลี่ยนลิงก์
+        @if (shareStatus()?.exists) { · ลิงก์ลงท้าย {{ shareStatus()?.tokenHint }} }
       </p>
     </div>
     <div class="flex flex-wrap gap-2">
-      <button type="button" class="min-h-10 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" [disabled]="shareProcessing()" (click)="createShareLink()">
-        {{ shareStatus()?.isActive ? 'สร้างลิงก์ใหม่' : 'สร้างลิงก์แชร์' }}
+      <button type="button" class="min-h-10 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50" [disabled]="shareProcessing()" (click)="shareStatus()?.exists ? setShareAccess(!shareStatus()!.isEnabled) : createShareLink()">
+        {{ !shareStatus()?.exists ? 'สร้างลิงก์แชร์' : (shareStatus()?.isEnabled ? 'ปิดการเข้าถึงชั่วคราว' : 'เปิดการเข้าถึง') }}
       </button>
-      @if (shareStatus()?.isActive) {
-        <button type="button" class="min-h-10 rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger disabled:opacity-50" [disabled]="shareProcessing()" (click)="revokeShareLink()">ยกเลิกลิงก์</button>
+      @if (shareStatus()?.exists) {
+        <button type="button" class="min-h-10 rounded-lg border border-danger px-4 py-2 text-sm font-medium text-danger disabled:opacity-50" [disabled]="shareProcessing()" (click)="createShareLink()">เปลี่ยนลิงก์ฉุกเฉิน</button>
       }
     </div>
   </div>
@@ -335,7 +335,7 @@
           <input id="routine-share-url" class="min-h-10 min-w-0 flex-1 rounded-lg border border-border bg-white px-3 text-sm" readonly [value]="shareUrl()" />
           <button type="button" class="min-h-10 rounded-lg border border-primary-600 px-4 py-2 text-sm font-medium text-primary-700" (click)="copyShareLink()">คัดลอกลิงก์</button>
         </div>
-        <p class="mt-2 text-xs text-text-secondary">QR Code มีข้อมูลลิงก์ลับเดียวกัน โปรดแชร์เฉพาะกับผู้ที่ควรดูปฏิทิน</p>
+        <p class="mt-2 text-xs text-text-secondary">QR Code นี้ใช้ลิงก์เดิมเสมอ การปิดการเข้าถึงจะไม่ทำให้ลิงก์หรือ QR เปลี่ยน</p>
       </div>
       @if (shareQrCode()) {
         <div class="flex flex-col items-center gap-2">

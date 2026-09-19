@@ -7,6 +7,7 @@
       [(ngModel)]="status"
       class="min-h-10 w-full min-w-0 rounded-lg border border-border bg-surface px-3 py-2 text-text"
     >
+      <option value="Scheduled">กำหนดการ</option>
       <option value="Submitted">ส่งตรวจแล้ว</option>
       <option value="Approved">อนุมัติแล้ว</option>
       <option value="Locked">ล็อกแล้ว</option>
@@ -57,6 +58,83 @@
     ค้นหา
   </button>
 </div>
+
+@if (showBatchPanel()) {
+  <section class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4" aria-labelledby="routine-batch-title">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h2 id="routine-batch-title" class="font-semibold text-text">อนุมัติฝึกซ้อมประจำแบบรายวัน</h2>
+        <p class="mt-1 text-sm text-text-secondary">เลือกวันที่ที่มีข้อมูลนักกีฬาอย่างน้อย 1 รายการ ระบบจะอนุมัติรายการสถานะกำหนดการทั้งหมดของวันนั้น</p>
+      </div>
+      <div class="flex shrink-0 items-center gap-2">
+        @if (!batchLoading() && batchDays().length > 0) {
+          <div class="hidden items-center gap-1 md:flex" aria-label="เลื่อนรายการวันที่">
+            <button
+              type="button"
+              class="flex size-10 items-center justify-center rounded-lg border border-border bg-white text-xl font-semibold text-text transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              aria-label="เลื่อนไปวันที่ก่อนหน้า"
+              title="เลื่อนไปทางซ้าย"
+              (click)="scrollBatchDays('previous')"
+            >‹</button>
+            <button
+              type="button"
+              class="flex size-10 items-center justify-center rounded-lg border border-border bg-white text-xl font-semibold text-text transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              aria-label="เลื่อนไปวันที่ถัดไป"
+              title="เลื่อนไปทางขวา"
+              (click)="scrollBatchDays('next')"
+            >›</button>
+          </div>
+        }
+        <button
+          type="button"
+          class="min-h-10 flex-1 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+          [disabled]="selectedBatchDays().length === 0 || batchProcessing()"
+          (click)="openBatchConfirmation()"
+        >ตรวจสอบและอนุมัติ ({{ selectedBatchDays().length }} วัน)</button>
+      </div>
+    </div>
+
+    @if (batchSuccess()) {
+      <p class="mt-3 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-700" role="status">{{ batchSuccess() }}</p>
+    }
+    @if (batchError()) {
+      <p class="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{{ batchError() }}</p>
+    }
+
+    @if (batchLoading()) {
+      <div class="mt-3"><app-loading-indicator label="กำลังตรวจสอบวันที่..." /></div>
+    } @else if (batchDays().length === 0) {
+      <p class="mt-3 text-sm text-text-secondary">ไม่พบรายการฝึกซ้อมประจำสถานะกำหนดการในช่วงวันที่นี้</p>
+    } @else {
+      <div
+        #batchDayScroller
+        class="mt-3 flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain pb-2"
+        aria-label="วันที่สำหรับอนุมัติแบบกลุ่ม เลื่อนซ้ายหรือขวาเพื่อดูวันอื่น"
+      >
+        @for (day of batchDays(); track day.sessionDate) {
+          <label
+            class="flex w-[18rem] shrink-0 snap-start gap-3 rounded-xl border bg-white p-3 transition-colors sm:w-[20rem]"
+            [class.cursor-pointer]="day.isEligible"
+            [class.border-emerald-400]="isBatchDateSelected(day.sessionDate)"
+            [class.ring-2]="isBatchDateSelected(day.sessionDate)"
+            [class.ring-emerald-100]="isBatchDateSelected(day.sessionDate)"
+            [class.border-border]="!isBatchDateSelected(day.sessionDate)"
+            [class.opacity-60]="!day.isEligible"
+          >
+            <input type="checkbox" class="mt-1 size-4 accent-emerald-600" [checked]="isBatchDateSelected(day.sessionDate)" [disabled]="!day.isEligible || batchProcessing()" (change)="toggleBatchDate(day)" />
+            <span class="min-w-0 flex-1">
+              <span class="font-semibold text-text">{{ day.sessionDate | displayDate }}</span>
+              <span class="mt-1 block text-sm text-text-secondary">กำหนดการ {{ day.scheduledSessionCount }} • มีนักกีฬา {{ day.sessionsWithAttendanceCount }} • ไม่มีนักกีฬา {{ day.sessionsWithoutAttendanceCount }}</span>
+              <span class="mt-1 block text-xs" [class.text-emerald-700]="day.isEligible" [class.text-amber-700]="!day.isEligible">
+                {{ day.isEligible ? 'พร้อมอนุมัติ • บันทึกนักกีฬา ' + day.attendanceRecordCount + ' รายการ' : day.ineligibleReason }}
+              </span>
+            </span>
+          </label>
+        }
+      </div>
+    }
+  </section>
+}
 
 <div class="mt-4">
   @switch (state()) {
@@ -182,3 +260,13 @@
     }
   }
 </div>
+
+<app-confirmation-dialog
+  [open]="batchDialogOpen()"
+  title="ยืนยันการอนุมัติฝึกซ้อมประจำ"
+  [message]="batchConfirmationMessage()"
+  confirmLabel="อนุมัติและล็อกทั้งหมด"
+  [processing]="batchProcessing()"
+  (confirmed)="confirmBatchApproval()"
+  (cancelled)="batchDialogOpen.set(false)"
+/>

@@ -1,6 +1,7 @@
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CoachTraining.Api.Tests.Services;
@@ -11,7 +12,7 @@ public class PublicRoutineCalendarServiceTests
     public async Task RotateLinkAsync_InvalidatesPreviousLink()
     {
         using var db = TestDbContextFactory.Create();
-        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var service = CreateService(db);
 
         var first = await service.RotateLinkAsync(7);
         var second = await service.RotateLinkAsync(7);
@@ -34,7 +35,7 @@ public class PublicRoutineCalendarServiceTests
             new RoutineSchedule { CoachId = coach.CoachId, EffectiveStartDate = new DateOnly(2026, 9, 12), StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(10, 0), IsActive = true, CreatedDate = new DateTime(2026, 9, 1, 2, 0, 0, DateTimeKind.Utc), UpdatedDate = new DateTime(2026, 9, 10, 4, 30, 0, DateTimeKind.Utc) },
             new RoutineSchedule { CoachId = coach.CoachId, EffectiveStartDate = new DateOnly(2026, 9, 13), StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(10, 0), IsActive = false });
         await db.SaveChangesAsync();
-        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var service = CreateService(db);
         var link = await service.RotateLinkAsync(7);
 
         var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
@@ -63,7 +64,7 @@ public class PublicRoutineCalendarServiceTests
             new RoutineSchedule { CoachId = secondCoach.CoachId, EffectiveStartDate = date, StartTime = new TimeOnly(13, 0), EndTime = new TimeOnly(14, 0), IsActive = true });
         await db.SaveChangesAsync();
 
-        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var service = CreateService(db);
         var link = await service.RotateLinkAsync(7);
 
         var result = await service.GetCalendarAsync(link.Token, date, date);
@@ -87,7 +88,7 @@ public class PublicRoutineCalendarServiceTests
             EndDate = new DateOnly(2026, 9, 12),
         });
         await db.SaveChangesAsync();
-        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var service = CreateService(db);
         var link = await service.RotateLinkAsync(7);
 
         var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 11), new DateOnly(2026, 9, 30));
@@ -110,7 +111,7 @@ public class PublicRoutineCalendarServiceTests
             UpdatedDate = new DateTime(2026, 9, 11, 5, 45, 0, DateTimeKind.Utc),
         });
         await db.SaveChangesAsync();
-        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var service = CreateService(db);
         var link = await service.RotateLinkAsync(7);
 
         var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
@@ -157,7 +158,7 @@ public class PublicRoutineCalendarServiceTests
             new Attendance { TrainingSessionId = firstSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Present },
             new Attendance { TrainingSessionId = secondSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Late });
         await db.SaveChangesAsync();
-        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var service = CreateService(db);
         var link = await service.RotateLinkAsync(7);
 
         var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
@@ -183,11 +184,51 @@ public class PublicRoutineCalendarServiceTests
     public async Task GetCalendarAsync_RejectsRangeLongerThanSixtyThreeDays()
     {
         using var db = TestDbContextFactory.Create();
-        var service = new PublicRoutineCalendarService(db, NullLogger<PublicRoutineCalendarService>.Instance);
+        var service = CreateService(db);
         var link = await service.RotateLinkAsync(7);
 
         var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 1, 1), new DateOnly(2026, 4, 1));
 
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task SetAccessAsync_DisablesAndReEnablesTheSameLink()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+        var created = await service.RotateLinkAsync(7);
+
+        var disabled = await service.SetAccessAsync(false, 7);
+
+        Assert.NotNull(disabled);
+        Assert.False(disabled.IsEnabled);
+        Assert.Equal(created.Token, disabled.Token);
+        Assert.Null(await service.GetCalendarAsync(created.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30)));
+
+        var enabled = await service.SetAccessAsync(true, 7);
+
+        Assert.NotNull(enabled);
+        Assert.True(enabled.IsEnabled);
+        Assert.Equal(created.Token, enabled.Token);
+        Assert.NotNull(await service.GetCalendarAsync(created.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30)));
+        Assert.Single(db.RoutineCalendarShareLinks);
+    }
+
+    [Fact]
+    public async Task GetStatusAsync_ReturnsTheExistingProtectedToken()
+    {
+        using var db = TestDbContextFactory.Create();
+        var service = CreateService(db);
+        var created = await service.RotateLinkAsync(7);
+
+        var status = await service.GetStatusAsync();
+
+        Assert.True(status.Exists);
+        Assert.True(status.IsEnabled);
+        Assert.Equal(created.Token, status.Token);
+    }
+
+    private static PublicRoutineCalendarService CreateService(CoachTraining.Api.Data.ApplicationDbContext db) =>
+        new(db, NullLogger<PublicRoutineCalendarService>.Instance, new EphemeralDataProtectionProvider());
 }

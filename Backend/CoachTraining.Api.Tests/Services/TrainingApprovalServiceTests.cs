@@ -33,9 +33,10 @@ public class TrainingApprovalServiceTests
         Data.ApplicationDbContext db,
         Coach assignedCoach,
         SessionStatus status = SessionStatus.Completed,
-        TrainingType trainingType = TrainingType.Routine)
+        TrainingType trainingType = TrainingType.Routine,
+        DateOnly? sessionDate = null)
     {
-        var date = new DateOnly(2026, 1, 5);
+        var date = sessionDate ?? new DateOnly(2026, 1, 5);
         var session = new TrainingSession
         {
             TrainingType = trainingType,
@@ -269,5 +270,122 @@ public class TrainingApprovalServiceTests
         var result = await service.SubmitAsync(999, isPrivilegedRole: true, currentCoachId: null, actionByUserId: 1);
 
         Assert.True(result.NotFound);
+    }
+
+    [Fact]
+    public async Task GetRoutineBatchDaysAsync_RequiresAttendanceAndRejectsFutureDate()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var athlete = await SeedAthleteAsync(db);
+        var eligibleDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
+        var eligible = await SeedSessionAsync(db, coach, SessionStatus.Scheduled, sessionDate: eligibleDate);
+        await SeedSessionAsync(db, coach, SessionStatus.Scheduled, sessionDate: eligibleDate);
+        var futureDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+        var future = await SeedSessionAsync(db, coach, SessionStatus.Scheduled, sessionDate: futureDate);
+        db.Attendances.AddRange(
+            new Attendance
+            {
+                TrainingSessionId = eligible.TrainingSessionId,
+                AthleteId = athlete.AthleteId,
+                AthleteCodeSnapshot = athlete.AthleteCode,
+                AthleteNameSnapshot = athlete.FullName,
+                Status = AttendanceStatus.Present,
+            },
+            new Attendance
+            {
+                TrainingSessionId = future.TrainingSessionId,
+                AthleteId = athlete.AthleteId,
+                AthleteCodeSnapshot = athlete.AthleteCode,
+                AthleteNameSnapshot = athlete.FullName,
+                Status = AttendanceStatus.Present,
+            });
+        await db.SaveChangesAsync();
+
+        var days = await CreateService(db).GetRoutineBatchDaysAsync(eligibleDate, futureDate);
+
+        var eligibleDay = Assert.Single(days, day => day.SessionDate == eligibleDate);
+        Assert.True(eligibleDay.IsEligible);
+        Assert.Equal(2, eligibleDay.ScheduledSessionCount);
+        Assert.Equal(1, eligibleDay.SessionsWithAttendanceCount);
+        Assert.Equal(1, eligibleDay.SessionsWithoutAttendanceCount);
+        var futureDay = Assert.Single(days, day => day.SessionDate == futureDate);
+        Assert.False(futureDay.IsEligible);
+        Assert.Equal("ยังไม่สามารถอนุมัติวันที่ในอนาคตได้", futureDay.IneligibleReason);
+    }
+
+    [Fact]
+    public async Task BatchApproveRoutineAsync_FinalizesAllScheduledSessionsAndRecordsHistory()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var athlete = await SeedAthleteAsync(db);
+        var date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1);
+        var first = await SeedSessionAsync(db, coach, SessionStatus.Scheduled, sessionDate: date);
+        var second = await SeedSessionAsync(db, coach, SessionStatus.Scheduled, sessionDate: date);
+        var alreadyCompleted = await SeedSessionAsync(db, coach, SessionStatus.Completed, sessionDate: date);
+        db.Attendances.Add(new Attendance
+        {
+            TrainingSessionId = first.TrainingSessionId,
+            AthleteId = athlete.AthleteId,
+            AthleteCodeSnapshot = athlete.AthleteCode,
+            AthleteNameSnapshot = athlete.FullName,
+            Status = AttendanceStatus.Present,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).BatchApproveRoutineAsync(
+            new RoutineBatchApprovalRequest { SessionDates = [date] }, actionByUserId: 9);
+
+        Assert.Null(result.Error);
+        Assert.Equal(2, result.Data!.ApprovedSessionCount);
+        await db.Entry(first).ReloadAsync();
+        await db.Entry(second).ReloadAsync();
+        await db.Entry(alreadyCompleted).ReloadAsync();
+        Assert.All(new[] { first, second }, session =>
+        {
+            Assert.Equal(SessionStatus.Locked, session.Status);
+            Assert.Equal(session.AssignedCoachId, session.ActualCoachId);
+            Assert.Equal(session.ScheduledStartDateTime, session.ActualStartDateTime);
+            Assert.Equal(session.ScheduledEndDateTime, session.ActualEndDateTime);
+        });
+        Assert.Equal(SessionStatus.Completed, alreadyCompleted.Status);
+        var histories = await db.TrainingApprovalHistories.OrderBy(history => history.TrainingSessionId).ToListAsync();
+        Assert.Equal(2, histories.Count);
+        Assert.All(histories, history =>
+        {
+            Assert.Equal(ApprovalActionType.Approve, history.ActionType);
+            Assert.Equal("อนุมัติแบบกลุ่มรายวันจากกำหนดการ", history.Reason);
+            Assert.Equal(9, history.ActionByUserId);
+        });
+    }
+
+    [Fact]
+    public async Task BatchApproveRoutineAsync_WhenAnySelectedDateIsIneligible_ChangesNothing()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var athlete = await SeedAthleteAsync(db);
+        var firstDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-2);
+        var invalidDate = firstDate.AddDays(1);
+        var eligibleSession = await SeedSessionAsync(db, coach, SessionStatus.Scheduled, sessionDate: firstDate);
+        var invalidSession = await SeedSessionAsync(db, coach, SessionStatus.Scheduled, sessionDate: invalidDate);
+        db.Attendances.Add(new Attendance
+        {
+            TrainingSessionId = eligibleSession.TrainingSessionId,
+            AthleteId = athlete.AthleteId,
+            AthleteCodeSnapshot = athlete.AthleteCode,
+            AthleteNameSnapshot = athlete.FullName,
+            Status = AttendanceStatus.Present,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).BatchApproveRoutineAsync(
+            new RoutineBatchApprovalRequest { SessionDates = [firstDate, invalidDate] }, actionByUserId: 9);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal(SessionStatus.Scheduled, (await db.TrainingSessions.FindAsync(eligibleSession.TrainingSessionId))!.Status);
+        Assert.Equal(SessionStatus.Scheduled, (await db.TrainingSessions.FindAsync(invalidSession.TrainingSessionId))!.Status);
+        Assert.Empty(db.TrainingApprovalHistories);
     }
 }

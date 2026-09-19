@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiSuccessBody } from '../models/paged-result.model';
-import { TrainingApprovalActionResponse, TrainingApprovalHistory } from '../models/approval.model';
+import { RoutineBatchApprovalDay, RoutineBatchApprovalResult, TrainingApprovalActionResponse, TrainingApprovalHistory } from '../models/approval.model';
 
 /**
  * Submit/Approve/Reject/RequestRevision/Unlock workflow (requirement.md 6.15,
@@ -21,6 +21,24 @@ export class ApprovalService {
     const response = await firstValueFrom(
       this.http.post<ApiSuccessBody<TrainingApprovalActionResponse>>(`${this.baseUrl(trainingSessionId)}/approve`, {
         reason,
+      }),
+    );
+    return response.data;
+  }
+
+  async getRoutineBatchDays(dateFrom: string, dateTo: string): Promise<RoutineBatchApprovalDay[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiSuccessBody<RoutineBatchApprovalDay[]>>(`${environment.apiBaseUrl}/training-sessions/routine-batch-days`, {
+        params: { dateFrom, dateTo },
+      }),
+    );
+    return response.data;
+  }
+
+  async batchApproveRoutine(sessionDates: string[]): Promise<RoutineBatchApprovalResult> {
+    const response = await firstValueFrom(
+      this.http.post<ApiSuccessBody<RoutineBatchApprovalResult>>(`${environment.apiBaseUrl}/training-sessions/routine-batch-approve`, {
+        sessionDates,
       }),
     );
     return response.data;

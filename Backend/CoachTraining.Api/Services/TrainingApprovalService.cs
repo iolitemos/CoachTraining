@@ -10,6 +10,7 @@ namespace CoachTraining.Api.Services;
 /// <summary>Submit/Approve/Reject/RequestRevision/Unlock workflow (requirement.md 6.15, todo.md 4.15).</summary>
 public class TrainingApprovalService : ITrainingApprovalService
 {
+    private const string RoutineBatchApprovalReason = "อนุมัติแบบกลุ่มรายวันจากกำหนดการ";
     private readonly ApplicationDbContext _db;
     private readonly ISessionStatusService _sessionStatusService;
     private readonly ILogger<TrainingApprovalService> _logger;
@@ -116,6 +117,113 @@ public class TrainingApprovalService : ITrainingApprovalService
 
     public Task<ApprovalActionResult> RequestRevisionAsync(int trainingSessionId, ApprovalReasonRequest request, int actionByUserId) =>
         ReturnToCompletedAsync(trainingSessionId, ApprovalActionType.RequestRevision, request, actionByUserId, "ไม่สามารถขอแก้ไขเซสชันในสถานะปัจจุบัน");
+
+    public async Task<IReadOnlyList<RoutineBatchApprovalDayDto>> GetRoutineBatchDaysAsync(DateOnly dateFrom, DateOnly dateTo)
+    {
+        if (dateTo < dateFrom || dateTo.DayNumber - dateFrom.DayNumber > 62)
+        {
+            return [];
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var days = await _db.TrainingSessions
+            .Where(s => s.TrainingType == TrainingType.Routine
+                && s.Status == SessionStatus.Scheduled
+                && s.SessionDate >= dateFrom
+                && s.SessionDate <= dateTo)
+            .GroupBy(s => s.SessionDate)
+            .Select(group => new RoutineBatchApprovalDayDto
+            {
+                SessionDate = group.Key,
+                ScheduledSessionCount = group.Count(),
+                SessionsWithAttendanceCount = group.Count(s => s.Attendances.Any()),
+                AttendanceRecordCount = group.SelectMany(s => s.Attendances).Count(),
+            })
+            .OrderByDescending(day => day.SessionDate)
+            .ToListAsync();
+
+        foreach (var day in days)
+        {
+            day.IsEligible = day.SessionDate <= today && day.SessionsWithAttendanceCount > 0;
+            day.IneligibleReason = day.SessionDate > today
+                ? "ยังไม่สามารถอนุมัติวันที่ในอนาคตได้"
+                : day.SessionsWithAttendanceCount == 0
+                    ? "ยังไม่มีข้อมูลนักกีฬาในวันนี้"
+                    : null;
+        }
+
+        return days;
+    }
+
+    public async Task<RoutineBatchApprovalResult> BatchApproveRoutineAsync(RoutineBatchApprovalRequest request, int actionByUserId)
+    {
+        try
+        {
+            var dates = request.SessionDates.Distinct().Order().ToList();
+            if (dates.Count == 0 || dates.Count > 31)
+            {
+                return new RoutineBatchApprovalResult { Error = "กรุณาเลือกวันที่ 1 ถึง 31 วัน" };
+            }
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (dates.Any(date => date > today))
+            {
+                return new RoutineBatchApprovalResult { Error = "ไม่สามารถอนุมัติรายการฝึกซ้อมในอนาคตได้" };
+            }
+
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            var sessions = await _db.TrainingSessions
+                .Include(s => s.AssignedCoach)
+                .Include(s => s.Attendances)
+                .Where(s => s.TrainingType == TrainingType.Routine
+                    && s.Status == SessionStatus.Scheduled
+                    && dates.Contains(s.SessionDate))
+                .ToListAsync();
+
+            var invalidDate = dates.FirstOrDefault(date =>
+                !sessions.Any(s => s.SessionDate == date)
+                || !sessions.Any(s => s.SessionDate == date && s.Attendances.Count > 0));
+            if (invalidDate != default)
+            {
+                return new RoutineBatchApprovalResult
+                {
+                    Error = $"วันที่ {invalidDate:dd/MM/yyyy} ไม่มีรายการกำหนดการหรือยังไม่มีข้อมูลนักกีฬา",
+                };
+            }
+
+            var actionDate = DateTime.UtcNow;
+            foreach (var session in sessions)
+            {
+                session.ActualCoachId = session.AssignedCoachId;
+                session.ActualCoachCodeSnapshot = session.AssignedCoachCodeSnapshot;
+                session.ActualCoachNameSnapshot = session.AssignedCoachNameSnapshot;
+                session.ActualStartDateTime = session.ScheduledStartDateTime;
+                session.ActualEndDateTime = session.ScheduledEndDateTime;
+                session.Status = SessionStatus.Locked;
+                session.UpdatedByUserId = actionByUserId;
+                session.UpdatedDate = actionDate;
+                AddHistory(session.TrainingSessionId, ApprovalActionType.Approve, RoutineBatchApprovalReason, actionByUserId);
+            }
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return new RoutineBatchApprovalResult
+            {
+                Data = new RoutineBatchApprovalResultDto
+                {
+                    ApprovedSessionCount = sessions.Count,
+                    ApprovedDateCount = dates.Count,
+                    SessionDates = dates,
+                },
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to batch approve Routine sessions. Controller: TrainingApprovalsController Service: TrainingApprovalService Function: BatchApproveRoutineAsync ActionByUserId: {ActionByUserId}", actionByUserId);
+            throw;
+        }
+    }
 
     public async Task<ApprovalActionResult> UnlockAsync(int trainingSessionId, ApprovalReasonRequest request, int actionByUserId)
     {

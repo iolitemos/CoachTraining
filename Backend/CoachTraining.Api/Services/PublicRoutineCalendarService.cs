@@ -5,6 +5,7 @@ using CoachTraining.Api.DTOs.PublicCalendar;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoachTraining.Api.Services;
@@ -14,11 +15,16 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
     private const int MaximumDateRangeDays = 62;
     private readonly ApplicationDbContext _db;
     private readonly ILogger<PublicRoutineCalendarService> _logger;
+    private readonly IDataProtector _tokenProtector;
 
-    public PublicRoutineCalendarService(ApplicationDbContext db, ILogger<PublicRoutineCalendarService> logger)
+    public PublicRoutineCalendarService(
+        ApplicationDbContext db,
+        ILogger<PublicRoutineCalendarService> logger,
+        IDataProtectionProvider dataProtectionProvider)
     {
         _db = db;
         _logger = logger;
+        _tokenProtector = dataProtectionProvider.CreateProtector("RoutineCalendarShareLink.Token.v1");
     }
 
     public async Task<RoutineCalendarShareStatusDto> GetStatusAsync(CancellationToken cancellationToken = default)
@@ -27,7 +33,7 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
             .Where(item => item.RevokedAtUtc == null)
             .OrderByDescending(item => item.CreatedDate)
             .FirstOrDefaultAsync(cancellationToken);
-        return new(link is not null, link?.TokenHint, link?.CreatedDate);
+        return ToStatus(link);
     }
 
     public async Task<RoutineCalendarShareCreatedDto> RotateLinkAsync(int userId, CancellationToken cancellationToken = default)
@@ -41,6 +47,8 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
             {
                 TokenHash = HashToken(rawToken),
                 TokenHint = rawToken[^6..],
+                ProtectedToken = _tokenProtector.Protect(rawToken),
+                IsEnabled = true,
                 CreatedDate = now,
                 CreatedByUserId = userId,
             };
@@ -51,6 +59,30 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Service: PublicRoutineCalendarService Function: RotateLinkAsync UserId: {UserId}", userId);
+            throw;
+        }
+    }
+
+    public async Task<RoutineCalendarShareStatusDto?> SetAccessAsync(
+        bool isEnabled, int userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var link = await _db.RoutineCalendarShareLinks
+                .Where(item => item.RevokedAtUtc == null)
+                .OrderByDescending(item => item.CreatedDate)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (link is null) return null;
+
+            link.IsEnabled = isEnabled;
+            link.UpdatedDate = DateTime.UtcNow;
+            link.UpdatedByUserId = userId;
+            await _db.SaveChangesAsync(cancellationToken);
+            return ToStatus(link);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Service: PublicRoutineCalendarService Function: SetAccessAsync UserId: {UserId}", userId);
             throw;
         }
     }
@@ -78,7 +110,7 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
 
         var tokenHash = HashToken(token);
         var valid = await _db.RoutineCalendarShareLinks.AsNoTracking()
-            .AnyAsync(item => item.TokenHash == tokenHash && item.RevokedAtUtc == null, cancellationToken);
+            .AnyAsync(item => item.TokenHash == tokenHash && item.RevokedAtUtc == null && item.IsEnabled, cancellationToken);
         if (!valid) return null;
 
         var schedules = await _db.RoutineSchedules.AsNoTracking()
@@ -171,4 +203,19 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
 
     private static string HashToken(string rawToken) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
+
+    private RoutineCalendarShareStatusDto ToStatus(RoutineCalendarShareLink? link)
+    {
+        string? token = null;
+        if (!string.IsNullOrWhiteSpace(link?.ProtectedToken))
+        {
+            try { token = _tokenProtector.Unprotect(link.ProtectedToken); }
+            catch (CryptographicException ex)
+            {
+                _logger.LogWarning(ex, "Unable to decrypt Routine calendar share token LinkId: {LinkId}", link.RoutineCalendarShareLinkId);
+            }
+        }
+
+        return new(link is not null, link?.IsEnabled ?? false, token, link?.TokenHint, link?.CreatedDate);
+    }
 }

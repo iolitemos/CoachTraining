@@ -26,4 +26,8 @@ public interface ITrainingApprovalService
 
     /// <summary>FR-APPROVAL-005/006 — authorized Administrator unlocks a Locked record for correction.</summary>
     Task<ApprovalActionResult> UnlockAsync(int trainingSessionId, ApprovalReasonRequest request, int actionByUserId);
+
+    Task<IReadOnlyList<RoutineBatchApprovalDayDto>> GetRoutineBatchDaysAsync(DateOnly dateFrom, DateOnly dateTo);
+
+    Task<RoutineBatchApprovalResult> BatchApproveRoutineAsync(RoutineBatchApprovalRequest request, int actionByUserId);
 }

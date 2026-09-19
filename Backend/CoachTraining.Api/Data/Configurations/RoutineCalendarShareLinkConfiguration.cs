@@ -11,6 +11,7 @@ public class RoutineCalendarShareLinkConfiguration : IEntityTypeConfiguration<Ro
         builder.HasKey(link => link.RoutineCalendarShareLinkId);
         builder.Property(link => link.TokenHash).HasMaxLength(64).IsRequired();
         builder.Property(link => link.TokenHint).HasMaxLength(8).IsRequired();
+        builder.Property(link => link.ProtectedToken).HasMaxLength(2000);
         builder.HasIndex(link => link.TokenHash).IsUnique();
         builder.HasIndex(link => new { link.RevokedAtUtc, link.IsDeleted });
         builder.HasQueryFilter(link => !link.IsDeleted);

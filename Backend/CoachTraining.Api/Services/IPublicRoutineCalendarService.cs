@@ -6,6 +6,7 @@ public interface IPublicRoutineCalendarService
 {
     Task<RoutineCalendarShareStatusDto> GetStatusAsync(CancellationToken cancellationToken = default);
     Task<RoutineCalendarShareCreatedDto> RotateLinkAsync(int userId, CancellationToken cancellationToken = default);
+    Task<RoutineCalendarShareStatusDto?> SetAccessAsync(bool isEnabled, int userId, CancellationToken cancellationToken = default);
     Task<bool> RevokeLinkAsync(int userId, CancellationToken cancellationToken = default);
     Task<PublicRoutineCalendarDto?> GetCalendarAsync(
         string token,

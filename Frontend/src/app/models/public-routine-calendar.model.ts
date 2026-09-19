@@ -40,7 +40,9 @@ export interface PublicRoutineCalendarData {
 }
 
 export interface RoutineCalendarShareStatus {
-  isActive: boolean;
+  exists: boolean;
+  isEnabled: boolean;
+  token: string | null;
   tokenHint: string | null;
   createdDate: string | null;
 }
