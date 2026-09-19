@@ -214,6 +214,7 @@
 - [x] Add backend role-based authorization policies.
 - [x] Return `401` for authentication failures.
 - [x] Return `403` for permission failures.
+- [x] Configure login JWT lifetime to one week (10,080 minutes).
 
 ### 3.2 User and Role Management Backend
 
@@ -405,6 +406,8 @@
 - [x] Associate actual teaching record with actual coach.
 - [x] Validate required session information before completion/submission. <!-- start-before-complete ordering enforced by CoachTeachingService; Private attendance completeness enforced by TrainingApprovalService.SubmitAsync (4.15) -->
 - [x] Preserve scheduled values when actual values are recorded.
+- [x] Default actual start time to the session's scheduled start time when Coach starts a session.
+- [x] Default actual end time to the session's scheduled end time when Coach completes a session.
 
 ### 4.8 Routine Attendance Backend
 

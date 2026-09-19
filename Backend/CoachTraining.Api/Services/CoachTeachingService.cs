@@ -70,7 +70,7 @@ public class CoachTeachingService : ICoachTeachingService
             }
 
             // FR-TEACH-004 — scheduled values are never touched here.
-            session.ActualStartDateTime = request.ActualStartDateTime ?? DateTime.Now;
+            session.ActualStartDateTime = request.ActualStartDateTime ?? session.ScheduledStartDateTime;
             session.Status = SessionStatus.InProgress;
             session.UpdatedByUserId = actionByUserId;
             session.UpdatedDate = DateTime.UtcNow;
@@ -111,7 +111,7 @@ public class CoachTeachingService : ICoachTeachingService
                 return new TeachingActionResult { Error = $"ต้องเริ่มฝึกซ้อมก่อนจึงจะบันทึกการเสร็จสิ้นได้ (สถานะปัจจุบัน: {session.Status})" };
             }
 
-            var actualEnd = request.ActualEndDateTime ?? DateTime.Now;
+            var actualEnd = request.ActualEndDateTime ?? session.ScheduledEndDateTime;
 
             // FR-SESSION-007 / "reject negative or invalid actual duration". ActualStartDateTime
             // is always set at this point — Completed is only reachable from InProgress.

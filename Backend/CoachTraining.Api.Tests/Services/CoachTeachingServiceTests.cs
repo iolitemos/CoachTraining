@@ -131,6 +131,7 @@ public class CoachTeachingServiceTests
         Assert.Null(result.Error);
         Assert.NotNull(result.Session);
         Assert.Equal(coach.CoachId, result.Session!.ActualCoachId);
+        Assert.Equal(session.ScheduledStartDateTime, result.Session.ActualStartDateTime);
     }
 
     [Fact]
@@ -183,6 +184,30 @@ public class CoachTeachingServiceTests
         Assert.Equal(SessionStatus.Completed, result.Session!.Status);
         Assert.Equal(105, result.Session.ActualDurationMinutes);
         Assert.Equal(session.ScheduledEndDateTime, result.Session.ScheduledEndDateTime);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_WithoutActualEnd_UsesScheduledEndTime()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var session = await SeedSessionAsync(db, coach, SessionStatus.InProgress);
+        session.ActualStartDateTime = session.ScheduledStartDateTime;
+        session.ActualCoachId = coach.CoachId;
+        session.ActualCoachCodeSnapshot = coach.CoachCode;
+        session.ActualCoachNameSnapshot = coach.FullName;
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var result = await service.CompleteAsync(
+            session.TrainingSessionId,
+            new TeachingEndRequest(),
+            isPrivilegedRole: false, currentCoachId: coach.CoachId, actionByUserId: 1);
+
+        Assert.Null(result.Error);
+        Assert.NotNull(result.Session);
+        Assert.Equal(session.ScheduledEndDateTime, result.Session!.ActualEndDateTime);
+        Assert.Equal(120, result.Session.ActualDurationMinutes);
     }
 
     [Fact]
