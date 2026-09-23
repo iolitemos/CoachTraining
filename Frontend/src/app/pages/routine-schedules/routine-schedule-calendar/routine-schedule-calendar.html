@@ -4,6 +4,14 @@
 >
   <div actions class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
     <button type="button" class="hidden min-h-10 items-center justify-center rounded-lg border border-warning/40 bg-warning-surface px-3 py-2 text-sm font-medium text-text md:inline-flex" (click)="openNote(selectedDate(), true)">+ เพิ่ม Note</button>
+    <button
+      type="button"
+      class="inline-flex min-h-10 items-center justify-center rounded-lg border border-primary-600 bg-surface px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+      [disabled]="state() !== 'ready' || exportingImage()"
+      (click)="exportCalendarImage()"
+    >
+      {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกเป็นรูป' }}
+    </button>
     <a
       routerLink="/routine-schedules/list"
       class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50 sm:px-4"
@@ -19,6 +27,10 @@
     </a>
   </div>
 </app-page-header>
+
+@if (exportMessage()) {
+  <div class="mt-4 rounded-lg border border-border bg-surface p-3 text-sm text-text-secondary" role="status">{{ exportMessage() }}</div>
+}
 
 <section
   class="mt-4 overflow-hidden rounded-xl border border-border bg-surface"
@@ -41,7 +53,24 @@
       }
     </div>
 
-    <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 sm:flex" aria-label="เปลี่ยนเดือน">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+      <label class="block sm:min-w-52">
+        <span class="mb-1 block text-xs font-medium text-text-secondary">แสดงตารางของโค้ช</span>
+        <select
+          class="min-h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          [value]="selectedCoachId() ?? ''"
+          (change)="onCoachFilterChange($any($event.target).value)"
+        >
+          <option value="">โค้ชทั้งหมด</option>
+          @for (coach of coachOptions(); track coach.coachId) {
+            <option [value]="coach.coachId">
+              {{ (coach.coachNickname || coach.coachFullName) | coachName }}
+            </option>
+          }
+        </select>
+      </label>
+
+      <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 sm:flex" aria-label="เปลี่ยนเดือน">
       <button
         type="button"
         aria-label="เดือนก่อนหน้า"
@@ -65,6 +94,7 @@
       >
         ›
       </button>
+      </div>
     </div>
   </div>
 

@@ -633,6 +633,8 @@
 - [x] Create Routine Schedule list page.
 - [x] Limit the Routine Schedule list to training date, time, Coach nickname, and edit/delete icon actions, ordered by training date.
 - [x] Create Routine Schedule monthly calendar view.
+- [x] Add a Coach filter to the Routine Schedule calendar and apply it to calendar entries, mobile agenda, and monthly occurrence totals.
+- [x] Allow Administrator to export the visible filtered Routine Training month as a large-text shareable PNG calendar without management actions.
 - [x] Display each Routine Schedule only on its selected calendar date.
 - [x] Allow Administrator to select a calendar date and open the create form with date/day prefilled.
 - [x] Add previous month, next month, and current month navigation.
@@ -665,6 +667,8 @@
 
 - [x] Create Private Training list page.
 - [x] Create Private Training monthly calendar view with a selected-date mobile agenda.
+- [x] Add mutually exclusive Coach and participant filters to the Private Training calendar, resetting the other filter to All when one is selected, and apply the active filter to calendar entries, mobile agenda, and monthly session totals.
+- [x] Allow Administrator to export the visible filtered Private Training month as a shareable PNG calendar without management actions.
 - [x] Color Private Session calendar dates blue, use a dark-blue selected border for session dates, and gray for empty selected dates.
 - [x] Display Coach color/nickname, start-end time, and athlete count on Private Training calendar entries.
 - [x] Display registered and temporary participant names on Private Training calendar entries.

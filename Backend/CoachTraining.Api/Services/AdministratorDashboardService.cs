@@ -3,6 +3,8 @@ using CoachTraining.Api.DTOs.Dashboards;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
 
 namespace CoachTraining.Api.Services;
 
@@ -121,11 +123,11 @@ public class AdministratorDashboardService : IAdministratorDashboardService
             var sessionList = sessions.ToList();
             var dayCount = Math.Max(0, endDate.DayNumber - startDate.DayNumber + 1);
             var athleteGroups = recordList
-                .GroupBy(a => a.AthleteName.Trim(), StringComparer.OrdinalIgnoreCase)
+                .GroupBy(a => NormalizeAthleteNameKey(a.AthleteName), StringComparer.Ordinal)
                 .Select(g => new
                 {
                     AthleteId = g.Min(a => a.AthleteId),
-                    AthleteName = g.Key,
+                    AthleteName = NormalizeAthleteNameForDisplay(g.First().AthleteName),
                     Records = g.ToList(),
                 })
                 .ToList();
@@ -205,6 +207,36 @@ public class AdministratorDashboardService : IAdministratorDashboardService
             CoachesTeachingToday = coachesTeachingTodayDto,
             AttendanceSummary = attendanceSummary,
         };
+    }
+
+    private static string NormalizeAthleteNameKey(string name)
+    {
+        var normalized = name.Normalize(NormalizationForm.FormKC);
+        var key = new StringBuilder(normalized.Length);
+
+        foreach (var character in normalized)
+        {
+            var category = CharUnicodeInfo.GetUnicodeCategory(character);
+            if (!char.IsWhiteSpace(character) && category is not UnicodeCategory.Format and not UnicodeCategory.Control)
+            {
+                key.Append(char.ToUpperInvariant(character));
+            }
+        }
+
+        return key.ToString();
+    }
+
+    private static string NormalizeAthleteNameForDisplay(string name)
+    {
+        var normalized = name.Normalize(NormalizationForm.FormKC);
+        var visibleCharacters = normalized.Where(character =>
+        {
+            var category = CharUnicodeInfo.GetUnicodeCategory(character);
+            return category is not UnicodeCategory.Format and not UnicodeCategory.Control;
+        });
+
+        return string.Join(' ', new string(visibleCharacters.ToArray())
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     }
 
     private static IQueryable<TrainingSession> ApplyCommonFilters(IQueryable<TrainingSession> query, AdministratorDashboardFilterRequest filter)

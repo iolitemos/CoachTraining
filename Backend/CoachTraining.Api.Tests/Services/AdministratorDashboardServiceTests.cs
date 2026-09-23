@@ -207,4 +207,37 @@ public class AdministratorDashboardServiceTests
         Assert.Equal(athlete.AthleteId, Assert.Single(firstDay.Attendances).AthleteId);
         Assert.Equal(athlete.AthleteId, Assert.Single(secondDay.Attendances).AthleteId);
     }
+
+    [Fact]
+    public async Task GetDashboardAsync_GroupsVisuallyIdenticalNamesWithHiddenUnicodeCharacters()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var firstAthlete = await SeedAthleteAsync(db, "A001");
+        var secondAthlete = await SeedAthleteAsync(db, "A002");
+        firstAthlete.Nickname = "พี่ม SCGC";
+        secondAthlete.Nickname = "พี่ม\u200B\u00A0ＳＣＧＣ";
+
+        var firstSession = BuildSession(coach, new DateOnly(2026, 9, 5), SessionStatus.Completed, TrainingType.Private);
+        var secondSession = BuildSession(coach, new DateOnly(2026, 9, 6), SessionStatus.Completed, TrainingType.Private);
+        db.TrainingSessions.AddRange(firstSession, secondSession);
+        await db.SaveChangesAsync();
+
+        db.Attendances.AddRange(
+            new Attendance { TrainingSessionId = firstSession.TrainingSessionId, AthleteId = firstAthlete.AthleteId, AthleteCodeSnapshot = firstAthlete.AthleteCode, AthleteNameSnapshot = firstAthlete.FullName, Status = AttendanceStatus.Present },
+            new Attendance { TrainingSessionId = secondSession.TrainingSessionId, AthleteId = secondAthlete.AthleteId, AthleteCodeSnapshot = secondAthlete.AthleteCode, AthleteNameSnapshot = secondAthlete.FullName, Status = AttendanceStatus.Present });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetDashboardAsync(
+            new AdministratorDashboardFilterRequest
+            {
+                StartDate = new DateOnly(2026, 9, 1),
+                EndDate = new DateOnly(2026, 9, 30),
+            },
+            new DateTime(2026, 9, 10, 9, 0, 0));
+
+        var athlete = Assert.Single(result.AttendanceSummary.Private.Athletes);
+        Assert.Equal("พี่ม SCGC", athlete.AthleteName);
+        Assert.Equal(2, athlete.AttendanceCount);
+    }
 }

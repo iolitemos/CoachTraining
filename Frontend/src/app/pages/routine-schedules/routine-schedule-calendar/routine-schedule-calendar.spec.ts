@@ -115,6 +115,48 @@ describe('RoutineScheduleCalendar', () => {
     expect(schedules.map((schedule) => schedule.routineScheduleId)).toEqual([2, 1, 3]);
   });
 
+  it('filters calendar schedules and occurrence count by coach', () => {
+    component.schedules.set([
+      {
+        routineScheduleId: 1,
+        coachId: 2,
+        coachCode: 'C002',
+        coachFullName: 'โค้ชสอง',
+        coachNickname: 'สอง',
+        coachColorHex: '#EF4444',
+        startTime: '09:00:00',
+        endTime: '10:00:00',
+        effectiveStartDate: '2026-01-05',
+        isActive: true,
+      },
+      {
+        routineScheduleId: 2,
+        coachId: 1,
+        coachCode: 'C001',
+        coachFullName: 'โค้ชหนึ่ง',
+        coachNickname: 'หนึ่ง',
+        coachColorHex: '#0EA5E9',
+        startTime: '13:00:00',
+        endTime: '14:00:00',
+        effectiveStartDate: '2026-01-06',
+        isActive: true,
+      },
+    ]);
+
+    expect(component.coachOptions().map((coach) => coach.coachId)).toEqual([1, 2]);
+
+    component.onCoachFilterChange('2');
+
+    expect(component.selectedCoachId()).toBe(2);
+    expect(component.currentMonthOccurrenceCount()).toBe(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-05')?.schedules).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-06')?.schedules).toHaveLength(0);
+
+    component.onCoachFilterChange('');
+    expect(component.selectedCoachId()).toBeNull();
+    expect(component.currentMonthOccurrenceCount()).toBe(2);
+  });
+
   it('should move between months and select the first day', () => {
     component.moveMonth(1);
 

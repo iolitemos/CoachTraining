@@ -1,6 +1,14 @@
 <app-page-header title="ปฏิทินฝึกซ้อมส่วนตัว" subtitle="ดูเซสชันรายเดือนและเลือกวันที่เพื่อเพิ่มรายการใหม่">
   <div actions class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
     <button type="button" class="hidden min-h-10 items-center justify-center rounded-lg border border-warning/40 bg-warning-surface px-3 py-2 text-sm font-medium text-text md:inline-flex" (click)="openNote(selectedDate(), true)">+ เพิ่ม Note</button>
+    <button
+      type="button"
+      class="inline-flex min-h-10 items-center justify-center rounded-lg border border-primary-600 bg-surface px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+      [disabled]="state() !== 'ready' || exportingImage()"
+      (click)="exportCalendarImage()"
+    >
+      {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกเป็นรูป' }}
+    </button>
     <a routerLink="/private-sessions/list" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-text-secondary hover:bg-secondary-50 sm:px-4">ดูแบบรายการ</a>
     <a routerLink="/private-sessions/new" [queryParams]="{ date: selectedDate() }" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 sm:px-4">เพิ่มฝึกซ้อม</a>
   </div>
@@ -8,6 +16,9 @@
 
 @if (actionError()) {
   <div class="mt-4 rounded-lg border border-danger/30 bg-danger-surface p-3 text-sm text-danger">{{ actionError() }}</div>
+}
+@if (exportMessage()) {
+  <div class="mt-4 rounded-lg border border-border bg-surface p-3 text-sm text-text-secondary" role="status">{{ exportMessage() }}</div>
 }
 
 <section class="mt-4 overflow-hidden rounded-xl border border-border bg-surface" aria-label="ปฏิทินฝึกซ้อมส่วนตัว">
@@ -18,10 +29,38 @@
         <p class="mt-0.5 text-xs text-text-secondary">{{ currentMonthSessionCount() }} เซสชันในเดือนนี้</p>
       }
     </div>
-    <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 sm:flex" aria-label="เปลี่ยนเดือน">
-      <button type="button" aria-label="เดือนก่อนหน้า" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(-1)">‹</button>
-      <button type="button" class="min-h-10 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-secondary-50" (click)="goToCurrentMonth()">เดือนปัจจุบัน</button>
-      <button type="button" aria-label="เดือนถัดไป" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(1)">›</button>
+    <div class="grid gap-2 sm:grid-cols-2 lg:flex lg:items-end">
+      <label class="block sm:min-w-48">
+        <span class="mb-1 block text-xs font-medium text-text-secondary">แสดงตามโค้ช</span>
+        <select
+          class="min-h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          [value]="selectedCoachCode()"
+          (change)="onCoachFilterChange($any($event.target).value)"
+        >
+          <option value="">โค้ชทั้งหมด</option>
+          @for (coach of coachOptions(); track coach.coachCode) {
+            <option [value]="coach.coachCode">{{ coach.coachName | coachName }}</option>
+          }
+        </select>
+      </label>
+      <label class="block sm:min-w-48">
+        <span class="mb-1 block text-xs font-medium text-text-secondary">แสดงตามผู้เข้าร่วม</span>
+        <select
+          class="min-h-10 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          [value]="selectedParticipantName()"
+          (change)="onParticipantFilterChange($any($event.target).value)"
+        >
+          <option value="">ผู้เข้าร่วมทั้งหมด</option>
+          @for (participantName of participantOptions(); track participantName) {
+            <option [value]="participantName">{{ participantName }}</option>
+          }
+        </select>
+      </label>
+      <div class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 sm:col-span-2 lg:flex" aria-label="เปลี่ยนเดือน">
+        <button type="button" aria-label="เดือนก่อนหน้า" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(-1)">‹</button>
+        <button type="button" class="min-h-10 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-secondary hover:bg-secondary-50" (click)="goToCurrentMonth()">เดือนปัจจุบัน</button>
+        <button type="button" aria-label="เดือนถัดไป" class="min-h-10 rounded-lg border border-border px-3 py-2 text-text-secondary hover:bg-secondary-50" (click)="moveMonth(1)">›</button>
+      </div>
     </div>
   </div>
 

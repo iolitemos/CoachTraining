@@ -10,7 +10,7 @@ import { ErrorState } from '../../../shared/error-state/error-state';
 import { LoadingIndicator } from '../../../shared/loading-indicator/loading-indicator';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { StatusBadge } from '../../../shared/status-badge/status-badge';
-import { CoachNamePipe } from '../../../shared/coach-name/coach-name.pipe';
+import { CoachNamePipe, formatCoachName } from '../../../shared/coach-name/coach-name.pipe';
 import { CalendarNote } from '../../../models/calendar-note.model';
 import { CalendarNoteService } from '../../../services/calendar-note.service';
 import { CalendarNoteDialog } from '../../../shared/calendar-note-dialog/calendar-note-dialog';
@@ -33,6 +33,11 @@ interface CalendarDay {
   note: CalendarNote | null;
 }
 
+interface CoachFilterOption {
+  coachCode: string;
+  coachName: string;
+}
+
 @Component({
   selector: 'app-private-session-calendar',
   imports: [RouterLink, PageHeader, LoadingIndicator, EmptyState, ErrorState, StatusBadge, DisplayDatePipe, CoachNamePipe, CalendarNoteDialog, ConfirmationDialog, LucideTrash2],
@@ -52,6 +57,39 @@ export class PrivateSessionCalendar implements OnInit {
   actionError = signal<string | null>(null);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
+  selectedCoachCode = signal('');
+  selectedParticipantName = signal('');
+  exportingImage = signal(false);
+  exportMessage = signal<string | null>(null);
+
+  coachOptions = computed<CoachFilterOption[]>(() => {
+    const coaches = new Map<string, string>();
+    for (const session of this.sessions()) {
+      if (!coaches.has(session.coachCode)) {
+        coaches.set(session.coachCode, session.coachNickname?.trim() || session.coachFullName);
+      }
+    }
+
+    return [...coaches.entries()]
+      .map(([coachCode, coachName]) => ({ coachCode, coachName }))
+      .sort((a, b) => a.coachCode.localeCompare(b.coachCode));
+  });
+
+  participantOptions = computed(() =>
+    [...new Set(this.sessions().flatMap((session) => session.participantNames.map((name) => name.trim())).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'th')),
+  );
+
+  filteredSessions = computed(() => {
+    const coachCode = this.selectedCoachCode();
+    const participantName = this.selectedParticipantName();
+
+    return this.sessions().filter(
+      (session) =>
+        (!coachCode || session.coachCode === coachCode) &&
+        (!participantName || session.participantNames.some((name) => name.trim() === participantName)),
+    );
+  });
 
   monthLabel = computed(() =>
     new Intl.DateTimeFormat('th-TH', { month: 'long', year: 'numeric' }).format(this.visibleMonth()),
@@ -70,7 +108,7 @@ export class PrivateSessionCalendar implements OnInit {
         dayNumber: date.getDate(),
         isCurrentMonth: date.getMonth() === month.getMonth(),
         isToday: isoDate === toIsoDate(new Date()),
-        sessions: this.sessions().filter((session) => session.sessionDate === isoDate),
+        sessions: this.filteredSessions().filter((session) => session.sessionDate === isoDate),
         competitionMatches: this.competitionMatches().filter((match) => match.startDate <= isoDate && isoDate <= match.endDate),
         note: this.notes().find((note) => note.noteDate === isoDate) ?? null,
       };
@@ -158,6 +196,150 @@ export class PrivateSessionCalendar implements OnInit {
     void this.load();
   }
 
+  onCoachFilterChange(coachCode: string): void {
+    this.selectedCoachCode.set(coachCode);
+    if (coachCode) {
+      this.selectedParticipantName.set('');
+    }
+  }
+
+  onParticipantFilterChange(participantName: string): void {
+    this.selectedParticipantName.set(participantName);
+    if (participantName) {
+      this.selectedCoachCode.set('');
+    }
+  }
+
+  async exportCalendarImage(): Promise<void> {
+    if (this.state() !== 'ready' || this.exportingImage()) {
+      return;
+    }
+
+    this.exportingImage.set(true);
+    this.exportMessage.set(null);
+    try {
+      await document.fonts?.ready;
+      const canvas = this.createCalendarCanvas();
+      const blob = await canvasToBlob(canvas);
+      const link = document.createElement('a');
+      const objectUrl = URL.createObjectURL(blob);
+      link.href = objectUrl;
+      link.download = `private-training-calendar-${toIsoMonth(this.visibleMonth())}.png`;
+      link.click();
+      URL.revokeObjectURL(objectUrl);
+      this.exportMessage.set('บันทึกรูปปฏิทินแล้ว');
+    } catch {
+      this.exportMessage.set('ไม่สามารถสร้างรูปปฏิทินได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      this.exportingImage.set(false);
+    }
+  }
+
+  private createCalendarCanvas(): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2400;
+    canvas.height = 2140;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Canvas is not supported');
+    }
+
+    const margin = 60;
+    const contentWidth = canvas.width - margin * 2;
+    const columnWidth = contentWidth / 7;
+    const calendarTop = 190;
+    const weekdayHeight = 64;
+    const rowHeight = 300;
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = '#0f172a';
+    context.font = '600 64px Prompt, "Noto Sans Thai", sans-serif';
+    context.fillText(`ปฏิทินฝึกซ้อมส่วนตัว · ${this.monthLabel()}`, margin, 70);
+    context.fillStyle = '#475569';
+    context.font = '34px Prompt, "Noto Sans Thai", sans-serif';
+    context.fillText(this.exportFilterLabel(), margin, 120);
+    context.font = '30px Prompt, "Noto Sans Thai", sans-serif';
+    context.fillText(`${this.currentMonthSessionCount()} เซสชัน`, margin, 158);
+
+    this.dayHeaders.forEach((header, column) => {
+      const x = margin + column * columnWidth;
+      context.fillStyle = '#eff6ff';
+      context.fillRect(x, calendarTop, columnWidth, weekdayHeight);
+      context.strokeStyle = '#cbd5e1';
+      context.strokeRect(x, calendarTop, columnWidth, weekdayHeight);
+      context.fillStyle = '#334155';
+      context.font = '600 38px Prompt, "Noto Sans Thai", sans-serif';
+      context.textAlign = 'center';
+      context.fillText(header, x + columnWidth / 2, calendarTop + 42);
+    });
+
+    this.calendarDays().forEach((day, index) => {
+      const column = index % 7;
+      const row = Math.floor(index / 7);
+      const x = margin + column * columnWidth;
+      const y = calendarTop + weekdayHeight + row * rowHeight;
+      context.fillStyle = day.isCurrentMonth ? '#ffffff' : '#f8fafc';
+      context.fillRect(x, y, columnWidth, rowHeight);
+      context.strokeStyle = '#cbd5e1';
+      context.strokeRect(x, y, columnWidth, rowHeight);
+      context.textAlign = 'left';
+      context.fillStyle = day.isCurrentMonth ? '#0f172a' : '#94a3b8';
+      context.font = '600 38px Prompt, "Noto Sans Thai", sans-serif';
+      context.fillText(String(day.dayNumber), x + 14, y + 34);
+
+      if (day.competitionMatches.length > 0) {
+        context.fillStyle = '#b45309';
+        context.font = '600 25px Prompt, "Noto Sans Thai", sans-serif';
+        context.fillText('แข่งขัน', x + columnWidth - 72, y + 32);
+      }
+      if (day.note) {
+        context.fillStyle = '#d97706';
+        context.font = '700 30px Prompt, "Noto Sans Thai", sans-serif';
+        context.fillText('!', x + columnWidth - 22, y + 32);
+      }
+
+      day.sessions.slice(0, 3).forEach((session, sessionIndex) => {
+        const eventY = y + 48 + sessionIndex * 72;
+        context.fillStyle = session.coachColorHex;
+        context.fillRect(x + 12, eventY, 8, 68);
+        context.fillStyle = '#f8fafc';
+        context.fillRect(x + 20, eventY, columnWidth - 32, 68);
+        context.fillStyle = '#1e293b';
+        context.font = '600 34px Prompt, "Noto Sans Thai", sans-serif';
+        const timeLabel = `${session.startTime.slice(0, 5)}–${session.endTime.slice(0, 5)}`;
+        context.fillText(timeLabel, x + 32, eventY + 32);
+        context.font = '500 30px Prompt, "Noto Sans Thai", sans-serif';
+        const coachName = session.coachNickname?.trim() || session.coachFullName;
+        const participantLabel = `${formatCoachName(coachName)} · ${session.participantNames.join(', ')}`;
+        context.fillText(truncateCanvasText(context, participantLabel, columnWidth - 56), x + 32, eventY + 62);
+      });
+
+      if (day.sessions.length > 3) {
+        context.fillStyle = '#2563eb';
+        context.font = '600 25px Prompt, "Noto Sans Thai", sans-serif';
+        context.fillText(`+ อีก ${day.sessions.length - 3} รายการ`, x + 14, y + 292);
+      }
+    });
+
+    context.textAlign = 'right';
+    context.fillStyle = '#64748b';
+    context.font = '28px Prompt, "Noto Sans Thai", sans-serif';
+    context.fillText(`สร้างเมื่อ ${new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date())}`, canvas.width - margin, canvas.height - 28);
+    return canvas;
+  }
+
+  private exportFilterLabel(): string {
+    if (this.selectedCoachCode()) {
+      const coach = this.coachOptions().find((option) => option.coachCode === this.selectedCoachCode());
+      return `ตัวกรอง: ${formatCoachName(coach?.coachName ?? this.selectedCoachCode())}`;
+    }
+    if (this.selectedParticipantName()) {
+      return `ตัวกรองผู้เข้าร่วม: ${this.selectedParticipantName()}`;
+    }
+    return 'แสดงโค้ชและผู้เข้าร่วมทั้งหมด';
+  }
+
   selectDay(day: CalendarDay): void {
     this.selectedDate.set(day.isoDate);
     if (!day.isCurrentMonth) {
@@ -189,4 +371,26 @@ function toIsoDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function toIsoMonth(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function truncateCanvasText(context: CanvasRenderingContext2D, value: string, maxWidth: number): string {
+  if (context.measureText(value).width <= maxWidth) {
+    return value;
+  }
+
+  let result = value;
+  while (result.length > 0 && context.measureText(`${result}…`).width > maxWidth) {
+    result = result.slice(0, -1);
+  }
+  return `${result}…`;
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Unable to create image')), 'image/png');
+  });
 }

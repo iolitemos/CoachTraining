@@ -48,6 +48,35 @@ describe('PrivateSessionCalendar', () => {
     expect(component.calendarDayBackground(day, true)).toBe('#e5e7eb');
   });
 
+  it('filters by either coach or participant and resets the other filter', () => {
+    const component = TestBed.createComponent(PrivateSessionCalendar).componentInstance;
+    component.visibleMonth.set(new Date(2026, 0, 1));
+    component.sessions.set([
+      createSession(1, 'C002', 'โค้ชสอง', ['เอซ', 'ผู้เล่นรับเชิญ'], '2026-01-05'),
+      createSession(2, 'C001', 'โค้ชหนึ่ง', ['เอซ'], '2026-01-06'),
+      createSession(3, 'C002', 'โค้ชสอง', ['บีม'], '2026-01-07'),
+    ]);
+
+    expect(component.coachOptions().map((coach) => coach.coachCode)).toEqual(['C001', 'C002']);
+    expect(component.participantOptions()).toEqual(['บีม', 'ผู้เล่นรับเชิญ', 'เอซ']);
+
+    component.onCoachFilterChange('C002');
+
+    expect(component.selectedParticipantName()).toBe('');
+    expect(component.currentMonthSessionCount()).toBe(2);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-05')?.sessions).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-06')?.sessions).toHaveLength(0);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-07')?.sessions).toHaveLength(1);
+
+    component.onParticipantFilterChange('เอซ');
+
+    expect(component.selectedCoachCode()).toBe('');
+    expect(component.currentMonthSessionCount()).toBe(2);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-05')?.sessions).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-06')?.sessions).toHaveLength(1);
+    expect(component.calendarDays().find((day) => day.isoDate === '2026-01-07')?.sessions).toHaveLength(0);
+  });
+
   it('shows participant names on calendar session entries', async () => {
     const fixture = TestBed.createComponent(PrivateSessionCalendar);
     const component = fixture.componentInstance;
@@ -128,5 +157,28 @@ describe('PrivateSessionCalendar', () => {
       message: 'Success',
       data: { items, page: 1, pageSize: 100, totalCount: items.length, totalPages: 1 },
     });
+  }
+
+  function createSession(
+    trainingSessionId: number,
+    coachCode: string,
+    coachNickname: string,
+    participantNames: string[],
+    sessionDate: string,
+  ) {
+    return {
+      trainingSessionId,
+      sessionDate,
+      startTime: '17:00:00',
+      endTime: '18:00:00',
+      coachCode,
+      coachFullName: coachNickname,
+      coachNickname,
+      coachColorHex: '#10B981',
+      location: null,
+      status: 'Scheduled' as const,
+      athleteCount: participantNames.length,
+      participantNames,
+    };
   }
 });
