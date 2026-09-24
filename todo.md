@@ -568,6 +568,7 @@
 - [x] Report only explicitly recorded Routine attendance.
 - [x] Do not infer Routine absence from non-selection.
 - [x] Exclude duplicate counts caused by rescheduled-original sessions. <!-- Rescheduled-status sessions excluded from the query entirely -->
+- [x] Group Athlete Attendance report rows and detail history by normalized displayed athlete name, including repeat temporary participants.
 
 ### 4.20 History and Audit Backend
 

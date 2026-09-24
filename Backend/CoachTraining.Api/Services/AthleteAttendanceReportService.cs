@@ -1,5 +1,6 @@
 using CoachTraining.Api.Data;
 using CoachTraining.Api.DTOs.Reports;
+using CoachTraining.Api.Helpers;
 using CoachTraining.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,7 +46,6 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
             {
                 a.AthleteId,
                 a.PrivateSessionAthleteId,
-                ParticipantIdentity = a.AthleteId ?? -a.PrivateSessionAthleteId!.Value,
                 a.AthleteCodeSnapshot,
                 a.AthleteNameSnapshot,
                 Nickname = a.AthleteId.HasValue ? a.Athlete!.Nickname : null,
@@ -60,16 +60,20 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
             .ToListAsync();
 
         var items = records
-            .GroupBy(r => new { r.ParticipantIdentity, r.AthleteId, r.AthleteCodeSnapshot, r.AthleteNameSnapshot, r.Nickname, r.GuestPhone })
+            .GroupBy(
+                r => PersonNameNormalizer.ToComparisonKey(r.Nickname ?? r.AthleteNameSnapshot),
+                StringComparer.Ordinal)
             .Select(g => new AthleteAttendanceReportItemDto
             {
-                AthleteId = g.Key.AthleteId,
-                IsGuest = g.Key.AthleteId is null,
-                ParticipantKey = g.Key.AthleteId is not null ? $"athlete-{g.Key.AthleteId}" : $"guest-{-g.Key.ParticipantIdentity}",
-                GuestPhone = g.Key.GuestPhone,
-                AthleteCode = g.Key.AthleteCodeSnapshot,
-                FullName = g.Key.AthleteNameSnapshot,
-                Nickname = g.Key.Nickname,
+                AthleteId = g.Where(r => r.AthleteId.HasValue).Select(r => r.AthleteId).FirstOrDefault(),
+                IsGuest = g.All(r => r.AthleteId is null),
+                ParticipantKey = $"name-{g.Key}",
+                GuestPhone = g.Select(r => r.GuestPhone).FirstOrDefault(phone => !string.IsNullOrWhiteSpace(phone)),
+                AthleteCode = g.Select(r => r.AthleteCodeSnapshot).FirstOrDefault(code => !string.IsNullOrWhiteSpace(code)) ?? string.Empty,
+                FullName = PersonNameNormalizer.ToDisplayName(g.First().AthleteNameSnapshot),
+                Nickname = g.First().Nickname is null
+                    ? null
+                    : PersonNameNormalizer.ToDisplayName(g.First().Nickname!),
                 RoutineAttendanceCount = g.Count(r => r.TrainingType == TrainingType.Routine),
                 PrivateAttendanceCount = g.Count(r => r.TrainingType == TrainingType.Private),
                 Records = g

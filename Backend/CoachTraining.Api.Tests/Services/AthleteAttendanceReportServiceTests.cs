@@ -129,4 +129,56 @@ public class AthleteAttendanceReportServiceTests
         Assert.Equal(athleteA.AthleteId, item.AthleteId);
         Assert.Single(item.Records);
     }
+
+    [Fact]
+    public async Task GetReportAsync_GroupsGuestAttendanceByNormalizedDisplayedName()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var firstSession = await SeedSessionAsync(db, coach, new DateOnly(2026, 9, 5), TrainingType.Private);
+        var secondSession = await SeedSessionAsync(db, coach, new DateOnly(2026, 9, 6), TrainingType.Private);
+        var firstGuest = new PrivateSessionAthlete
+        {
+            TrainingSessionId = firstSession.TrainingSessionId,
+            IsGuest = true,
+            AthleteNameSnapshot = "พี่ม SCGC",
+        };
+        var secondGuest = new PrivateSessionAthlete
+        {
+            TrainingSessionId = secondSession.TrainingSessionId,
+            IsGuest = true,
+            AthleteNameSnapshot = "พี่ม\u200B\u00A0ＳＣＧＣ",
+        };
+        db.PrivateSessionAthletes.AddRange(firstGuest, secondGuest);
+        await db.SaveChangesAsync();
+
+        db.Attendances.AddRange(
+            new Attendance
+            {
+                TrainingSessionId = firstSession.TrainingSessionId,
+                PrivateSessionAthleteId = firstGuest.PrivateSessionAthleteId,
+                AthleteNameSnapshot = firstGuest.AthleteNameSnapshot,
+                Status = AttendanceStatus.Present,
+            },
+            new Attendance
+            {
+                TrainingSessionId = secondSession.TrainingSessionId,
+                PrivateSessionAthleteId = secondGuest.PrivateSessionAthleteId,
+                AthleteNameSnapshot = secondGuest.AthleteNameSnapshot,
+                Status = AttendanceStatus.Present,
+            });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetReportAsync(new AthleteAttendanceReportFilter
+        {
+            StartDate = new DateOnly(2026, 9, 1),
+            EndDate = new DateOnly(2026, 9, 30),
+        });
+
+        var item = Assert.Single(result.Items);
+        Assert.True(item.IsGuest);
+        Assert.Equal("พี่ม SCGC", item.FullName);
+        Assert.Equal(2, item.PrivateAttendanceCount);
+        Assert.Equal(2, item.Records.Count);
+    }
 }
