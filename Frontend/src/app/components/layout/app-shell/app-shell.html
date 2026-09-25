@@ -1,42 +1,49 @@
 <div class="flex min-h-screen flex-col bg-background">
   <!-- Top bar -->
-  <header class="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-surface/90 px-4 backdrop-blur-md">
+  <header class="shell-navbar sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 px-4 sm:px-5">
+    <div class="shell-navbar-net" aria-hidden="true"></div>
     <button
       type="button"
-      class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700) md:hidden"
+      class="shell-icon-button inline-flex h-10 w-10 items-center justify-center rounded-xl md:hidden"
       (click)="toggleSidebar()"
       aria-label="เปิดเมนู"
     >
       <svg lucideMenu [size]="20"></svg>
     </button>
 
-    <div class="flex min-w-0 flex-1 items-center gap-2.5">
-      <img src="/logo-spinning-star.png" alt="" class="h-8 w-8 rounded-full object-cover shadow-sm ring-2 ring-(--shell-accent-100)" />
-      <span class="hidden truncate text-sm font-semibold text-text min-[480px]:inline sm:text-base">ระบบบริหารการฝึกซ้อม</span>
+    <div class="relative z-10 flex min-w-0 flex-1 items-center gap-3">
+      <span class="shell-brand-mark">
+        <img src="/logo-spinning-star.png" alt="" class="h-9 w-9 rounded-full object-cover" />
+        <span class="shell-brand-ball" aria-hidden="true"></span>
+      </span>
+      <span class="hidden min-w-0 min-[480px]:block">
+        <span class="block truncate text-sm font-semibold leading-tight text-white sm:text-base">ระบบบริหารการฝึกซ้อม</span>
+        <span class="hidden text-[10px] font-medium uppercase tracking-[0.22em] text-blue-100 sm:block">Table Tennis Club</span>
+      </span>
     </div>
 
     @if (authService.currentUser(); as user) {
-      <div class="flex items-center gap-3">
+      <div class="relative z-10 flex items-center gap-2 sm:gap-3">
         <button
           type="button"
-          class="flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-(--shell-accent-50) sm:hidden"
+          class="shell-account-button flex min-w-0 items-center gap-2 rounded-xl px-1.5 py-1 text-left sm:hidden"
           (click)="toggleSidebar()"
           [attr.aria-label]="'บัญชีที่เข้าสู่ระบบ ' + user.username"
         >
           <div class="shell-avatar flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white">
             {{ userInitial(user.fullName) }}
           </div>
-          <span class="max-w-24 truncate text-xs font-medium text-text">{{ user.username }}</span>
+          <span class="max-w-24 truncate text-xs font-medium text-white">{{ user.username }}</span>
         </button>
-        <div class="hidden items-center gap-2 sm:flex">
+        <div class="shell-user-chip hidden items-center gap-2 rounded-full py-1 pl-1 pr-3 sm:flex">
           <div class="shell-avatar flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white">
             {{ userInitial(user.fullName) }}
           </div>
-          <span class="text-sm text-text-secondary">{{ user.fullName }}</span>
+          <span class="max-w-44 truncate text-sm text-white/90">{{ user.fullName }}</span>
         </div>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          class="shell-logout-button inline-flex h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm"
           (click)="logout()"
         >
           <svg lucideLogOut [size]="16"></svg>
@@ -48,13 +55,20 @@
 
   <div class="flex flex-1">
     <!-- Desktop sidebar -->
-    <aside class="hidden w-60 shrink-0 border-r border-border bg-surface md:block">
-      <nav class="flex flex-col gap-1 p-3">
+    <aside class="shell-sidebar hidden w-64 shrink-0 md:block">
+      <div class="shell-court-motif" aria-hidden="true">
+        <span class="shell-court-center-line"></span>
+        <span class="shell-court-net"></span>
+        <span class="shell-court-paddle shell-court-paddle-left"></span>
+        <span class="shell-court-paddle shell-court-paddle-right"></span>
+        <span class="shell-court-ball"></span>
+      </div>
+      <nav class="relative z-10 flex flex-col gap-1 p-3 pt-1">
         @if (authService.hasRole(appRole.Coach)) {
           <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">เมนู</p>
           <a
             routerLink="/coach/home"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideCalendarClock [size]="18"></svg>
@@ -65,7 +79,7 @@
           <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">แดชบอร์ด</p>
           <a
             routerLink="/admin-dashboard"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideLayoutDashboard [size]="18"></svg>
@@ -73,7 +87,7 @@
           </a>
           <a
             routerLink="/reports/coach-teaching-hours"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideFileBarChart [size]="18"></svg>
@@ -81,7 +95,7 @@
           </a>
           <a
             routerLink="/reports/athlete-attendance"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideClipboardList [size]="18"></svg>
@@ -92,7 +106,7 @@
           <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">ตาราง</p>
           <a
             routerLink="/routine-schedules"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideCalendarDays [size]="18"></svg>
@@ -100,7 +114,7 @@
           </a>
           <a
             routerLink="/private-sessions"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideCalendarPlus2 [size]="18"></svg>
@@ -108,7 +122,7 @@
           </a>
           <a
             routerLink="/review"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideClipboardCheck [size]="18"></svg>
@@ -118,7 +132,7 @@
           <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
           <a
             routerLink="/coaches"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideUserCheck [size]="18"></svg>
@@ -126,7 +140,7 @@
           </a>
           <a
             routerLink="/athletes"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideUserPlus [size]="18"></svg>
@@ -134,7 +148,7 @@
           </a>
           <a
             routerLink="/users"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideUsers [size]="18"></svg>
@@ -142,7 +156,7 @@
           </a>
           <a
             routerLink="/competition-matches"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideTrophy [size]="18"></svg>
@@ -150,7 +164,7 @@
           </a>
           <a
             routerLink="/change-password"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideKeyRound [size]="18"></svg>
@@ -160,7 +174,7 @@
           <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
           <a
             routerLink="/change-password"
-            routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+            routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
           >
             <svg lucideKeyRound [size]="18"></svg>
@@ -174,15 +188,18 @@
     @if (sidebarOpen()) {
       <div class="fixed inset-0 z-40 md:hidden">
         <div class="absolute inset-0 bg-black/40" (click)="closeSidebar()"></div>
-        <aside class="relative flex h-full w-64 flex-col gap-1 bg-surface p-3 shadow-lg">
-          <div class="mb-2 flex items-center justify-between">
+        <aside class="shell-sidebar shell-mobile-sidebar relative flex h-full w-72 max-w-[86vw] flex-col gap-1 shadow-2xl">
+          <div class="relative z-10 flex items-center justify-between px-4 pb-3 pt-4">
             <div class="flex items-center gap-2">
-              <img src="/logo-spinning-star.png" alt="" class="h-7 w-7 rounded-full object-cover shadow-sm ring-2 ring-(--shell-accent-100)" />
-              <span class="text-sm font-semibold text-text">เมนู</span>
+              <span class="shell-brand-mark shell-brand-mark-small">
+                <img src="/logo-spinning-star.png" alt="" class="h-8 w-8 rounded-full object-cover" />
+                <span class="shell-brand-ball" aria-hidden="true"></span>
+              </span>
+              <span class="text-sm font-semibold text-white">เมนูหลัก</span>
             </div>
             <button
               type="button"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+              class="shell-icon-button inline-flex h-9 w-9 items-center justify-center rounded-xl"
               (click)="closeSidebar()"
               aria-label="ปิดเมนู"
             >
@@ -190,28 +207,29 @@
             </button>
           </div>
           @if (authService.currentUser(); as user) {
-            <section class="mb-2 rounded-xl border border-(--shell-accent-200) bg-(--shell-accent-50) p-3" aria-label="บัญชีที่เข้าสู่ระบบ">
+            <section class="shell-mobile-account relative z-10 mx-3 mb-2 rounded-2xl p-3" aria-label="บัญชีที่เข้าสู่ระบบ">
               <div class="flex items-center gap-3">
                 <div class="shell-avatar flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white">
                   {{ userInitial(user.fullName) }}
                 </div>
                 <div class="min-w-0">
-                  <p class="truncate text-sm font-semibold text-text">{{ user.fullName }}</p>
-                  <p class="truncate text-xs text-text-secondary">ชื่อผู้ใช้: {{ user.username }}</p>
+                  <p class="truncate text-sm font-semibold text-white">{{ user.fullName }}</p>
+                  <p class="truncate text-xs text-blue-100">ชื่อผู้ใช้: {{ user.username }}</p>
                 </div>
               </div>
               <div class="mt-2 flex flex-wrap gap-1.5">
                 @for (role of user.roles; track role) {
-                  <span class="rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium text-(--shell-accent-700)">{{ roleLabel(role) }}</span>
+                  <span class="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white">{{ roleLabel(role) }}</span>
                 }
               </div>
             </section>
           }
+          <nav class="relative z-10 flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4">
           @if (authService.hasRole(appRole.Coach)) {
             <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">เมนู</p>
             <a
               routerLink="/coach/home"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -223,7 +241,7 @@
             <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">แดชบอร์ด</p>
             <a
               routerLink="/admin-dashboard"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -232,7 +250,7 @@
             </a>
             <a
               routerLink="/reports/coach-teaching-hours"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -241,7 +259,7 @@
             </a>
             <a
               routerLink="/reports/athlete-attendance"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -253,7 +271,7 @@
             <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">ตาราง</p>
             <a
               routerLink="/routine-schedules"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -262,7 +280,7 @@
             </a>
             <a
               routerLink="/private-sessions"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -271,7 +289,7 @@
             </a>
             <a
               routerLink="/review"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -282,7 +300,7 @@
             <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
             <a
               routerLink="/coaches"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -291,7 +309,7 @@
             </a>
             <a
               routerLink="/athletes"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -300,7 +318,7 @@
             </a>
             <a
               routerLink="/users"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -309,7 +327,7 @@
             </a>
             <a
               routerLink="/competition-matches"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -318,7 +336,7 @@
             </a>
             <a
               routerLink="/change-password"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -329,7 +347,7 @@
             <p class="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-text-secondary/70">การจัดการ</p>
             <a
               routerLink="/change-password"
-              routerLinkActive="bg-(--shell-accent-600) text-white shadow-md"
+              routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
               class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
             >
@@ -337,6 +355,7 @@
               เปลี่ยนรหัสผ่าน
             </a>
           }
+          </nav>
         </aside>
       </div>
     }

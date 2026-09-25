@@ -33,6 +33,7 @@
 - [x] Configure project theme tokens using Emerald as the primary color.
 - [x] Define secondary, success, warning, danger, background, surface, text, and border theme values.
 - [x] Create responsive application shell for mobile, tablet, and desktop.
+- [x] Refresh the responsive navbar and sidebar with a professional table-tennis court theme and consistent active-navigation states.
 - [x] Create shared page-header component.
 - [x] Create shared confirmation dialog component.
 - [x] Create shared status badge component for training statuses.
