@@ -15,6 +15,10 @@ export const routes: Routes = [
     path: 'public/routine-calendar/:token',
     loadComponent: () => import('./pages/public-routine-calendar/public-routine-calendar').then((m) => m.PublicRoutineCalendar),
   },
+  {
+    path: 'parent/routine-plan/:token',
+    loadComponent: () => import('./pages/parent-routine-plan/parent-routine-plan').then((m) => m.ParentRoutinePlan),
+  },
   { path: 'login', component: Login },
   {
     path: 'forgot-password',

@@ -199,6 +199,15 @@
 - [x] Verify migration rollback/recovery approach before QAS deployment.
 - [x] Apply `RemoveRoutineScheduleManagedColumns` migration to DEV database after explicit destructive-change approval.
 
+### 2.14 Parent Routine Participation Planning Data
+
+- [x] Add separate Routine Training availability-date persistence that is independent from Coach Routine schedules and Training Sessions.
+- [x] Add athlete-specific secret-link persistence with secure token hash, protected recoverable token, enable/disable state, rotation history, audit fields, and soft delete.
+- [x] Add Routine participation-plan persistence with one unique Athlete + Training Date selection and audit fields.
+- [x] Add foreign keys and indexes supporting athlete-link validation and date-range planning summaries.
+- [x] Create the EF Core migration for parent Routine participation planning.
+- [x] Create the EF Core migration for separate Routine Training availability dates.
+
 ---
 
 ## 3. Authentication
@@ -584,6 +593,17 @@
 - [x] Capture cancellation/rescheduling events. <!-- Dedicated AuditLog ("Cancel"/"Reschedule") entries -->
 - [x] Preserve history when coach or athlete becomes inactive. <!-- Deactivation only sets IsActive=false (query filter is IsDeleted-only, see CoachConfiguration), so history navigations/snapshots remain resolvable -->
 
+### 4.21 Parent Routine Participation Planning Backend
+
+- [x] Add Administrator APIs to list, add, and remove separate Routine Training availability dates.
+- [x] Add Administrator APIs to create/recover, enable/disable, and rotate an athlete-specific planning link.
+- [x] Add a rate-limited anonymous API that returns only the linked athlete identity and active Routine Training dates within a maximum 63-day range.
+- [x] Add a rate-limited anonymous API to synchronize selected planning dates within a maximum 63-day range.
+- [x] Reject dates that are not active in the separate Routine Training availability-date calendar.
+- [x] Reject invalid, disabled, rotated, deleted-athlete, and inactive-athlete links.
+- [x] Add Administrator date-range summary and per-date athlete-name APIs.
+- [x] Keep planning selections separate from Attendance and never infer or create an attendance status.
+
 ---
 
 ## 5. Frontend Modules
@@ -950,6 +970,20 @@
 - [x] Add backend tests for token rotation, invalidation, enable/disable behavior, stable-link recovery, date-range validation, and public projection.
 - [x] Pass backend tests and backend/frontend production builds.
 
+### 5.19 Parent Routine Participation Planning
+
+- [x] Add a dedicated Administrator Routine Training date-management calendar separate from Coach schedule creation.
+- [x] Add Administrator athlete-link management with copyable athlete-specific URL and access/rotation controls.
+- [x] Embed athlete participation-plan link generation, copy, access, and rotation controls directly in the athlete edit page.
+- [x] Add a responsive Thai parent page showing only active Routine Training dates as selectable attendance plans.
+- [x] Support selecting and clearing dates with no deadline or non-attendance status.
+- [x] Add Administrator monthly planned-attendance counts and per-date athlete-name details.
+- [x] Add loading, empty, saving, success, invalid-link, and error states.
+- [x] Confirm the UI contains no coach-count recommendation, capacity calculation/warning, deadline, or Absent planning status.
+- [x] Add a visible-month selected-day summary and monthly calendar view to the parent page.
+- [x] Integrate per-date planned-attendance counts, the monthly total, and selected-date athlete names into the main Administrator Routine Training calendar.
+- [x] Mark Competition Match dates and shared Calendar Notes in the Routine Training date-management calendar and confirm before removing an open date.
+
 ---
 
 ## 6. Realtime Features
@@ -1093,6 +1127,12 @@
 - [x] Test teaching-hour report filters and totals.
 - [x] Test athlete attendance report filters and totals.
 - [ ] Test historical identity is preserved after coach/athlete master changes.
+- [x] Test athlete-specific planning-link creation, recovery, enable/disable, and rotation.
+- [x] Test parent planning exposes and accepts only active Routine Training dates.
+- [x] Test parent date synchronization adds and clears selections without creating Attendance.
+- [x] Test inactive athletes and invalid/disabled/rotated links cannot read or change plans.
+- [x] Test Administrator planning summaries return correct counts and athlete names by date.
+- [x] Test Routine availability-date add/remove behavior remains independent from Coach Routine schedules.
 
 ### 9.2 Backend API Tests
 
@@ -1134,6 +1174,9 @@
 - [ ] Test dashboard filters.
 - [ ] Test report filters.
 - [ ] Test loading, empty, and error states on major listing/dashboard/report pages.
+- [x] Test parent Routine planning date selection, clearing, and saving behavior.
+- [x] Test Administrator athlete-link and Routine planning summary service integration.
+- [x] Test the separate Administrator Routine Training date calendar add/remove behavior.
 
 ### 9.4 Responsive and UX Testing
 
@@ -1190,6 +1233,8 @@
 - [x] Run `ng build` after administrative review/history UI implementation.
 - [x] Run `dotnet build` after dashboard/report backend implementation.
 - [x] Run `ng build` after dashboard/report frontend implementation.
+- [x] Run `dotnet build` and relevant tests after Parent Routine Participation Planning backend implementation.
+- [x] Run `ng build` and relevant tests after Parent Routine Participation Planning frontend implementation.
 
 ### 10.2 Final Validation
 

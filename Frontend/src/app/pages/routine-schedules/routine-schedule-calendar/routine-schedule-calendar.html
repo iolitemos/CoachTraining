@@ -2,27 +2,37 @@
   title="ปฏิทินตารางฝึกซ้อมประจำ"
   subtitle="ดูตารางรายเดือนและเลือกวันที่เพื่อสร้างตารางใหม่"
 >
-  <div actions class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
-    <button type="button" class="hidden min-h-10 items-center justify-center rounded-lg border border-warning/40 bg-warning-surface px-3 py-2 text-sm font-medium text-text md:inline-flex" (click)="openNote(selectedDate(), true)">+ เพิ่ม Note</button>
+  <div actions class="grid w-full grid-cols-2 gap-1.5 rounded-xl border border-border bg-secondary-50 p-1.5 shadow-sm sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+    <a routerLink="/routine-schedules/training-dates" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" /></svg>
+      กำหนดวันเปิดซ้อม
+    </a>
+    <button type="button" class="hidden min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text md:inline-flex" (click)="openNote(selectedDate(), true)">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
+      เพิ่ม Note
+    </button>
     <button
       type="button"
-      class="inline-flex min-h-10 items-center justify-center rounded-lg border border-primary-600 bg-surface px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+      class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
       [disabled]="state() !== 'ready' || exportingImage()"
       (click)="exportCalendarImage()"
     >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
       {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกเป็นรูป' }}
     </button>
     <a
       routerLink="/routine-schedules/list"
-      class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-center text-sm font-medium text-text-secondary transition-colors hover:bg-secondary-50 sm:px-4"
+      class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-center text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text"
     >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
       ดูแบบรายการ
     </a>
     <a
       routerLink="/routine-schedules/new"
       [queryParams]="{ date: selectedDate() }"
-      class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-3 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:px-4"
+      class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-700"
     >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
       เพิ่มตารางฝึกซ้อม
     </a>
   </div>
@@ -48,7 +58,7 @@
       <h2 class="text-lg font-semibold text-text">{{ monthLabel() }}</h2>
       @if (state() === 'ready') {
         <p class="mt-0.5 text-xs text-text-secondary">
-          {{ currentMonthOccurrenceCount() }} รอบฝึกซ้อมในเดือนนี้
+          {{ currentMonthOccurrenceCount() }} รอบฝึกซ้อม · ลงแผนเข้าซ้อม {{ monthlyPlannedAttendanceCount() }} ครั้ง
         </p>
       }
     </div>
@@ -129,7 +139,7 @@
         <div class="grid grid-cols-7">
           @for (day of calendarDays(); track day.isoDate) {
             <div
-              class="group relative min-h-32 border-r border-b border-border p-2 last:border-r-0"
+              class="group relative min-h-32 border-r border-b border-border p-2 pb-10 last:border-r-0"
               [class.bg-secondary-50]="!day.isCurrentMonth"
             >
               <div class="mb-2 flex items-center justify-between">
@@ -205,6 +215,14 @@
                   </button>
                 }
               </div>
+              @if (day.isRoutineTrainingDate) {
+                <button type="button" class="absolute bottom-2 left-2 inline-flex min-h-7 items-center gap-1 rounded-full bg-violet-100 px-2 text-[11px] font-semibold text-violet-800 hover:bg-violet-200" [attr.aria-label]="'นักกีฬาที่วางแผนมาซ้อม ' + day.plannedAthleteCount + ' คน'" (click)="selectDay(day)">
+                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  {{ day.plannedAthleteCount }}
+                </button>
+              }
             </div>
           }
         </div>
@@ -246,6 +264,12 @@
                 <span class="competition-trophy absolute -top-1.5 -right-1.5 inline-flex size-5 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-[10px] leading-none shadow-sm" role="img" aria-label="มีการแข่งขัน">🏆</span>
               }
               @if (day.note) { <span class="absolute -bottom-1 -right-1 inline-flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white" aria-label="มี Note">!</span> }
+              @if (day.isRoutineTrainingDate) {
+                <span class="absolute -bottom-1 -left-1 inline-flex min-w-6 items-center justify-center gap-0.5 rounded-full bg-violet-600 px-1 text-[8px] font-bold text-white" [attr.aria-label]="'นักกีฬาที่วางแผนมาซ้อม ' + day.plannedAthleteCount + ' คน'">
+                  <svg class="size-2.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z" /></svg>
+                  {{ day.plannedAthleteCount }}
+                </span>
+              }
             </button>
           }
         </div>
@@ -325,11 +349,34 @@
         }
       </div>
 
+      @if (selectedDay(); as day) {
+        <section class="border-t border-border bg-violet-50/60 p-4" aria-label="ประมาณการผู้เข้าซ้อมวันที่เลือก">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 class="font-semibold text-text">ประมาณการผู้เข้าซ้อม · {{ day.isoDate | displayDate }}</h3>
+              @if (day.isRoutineTrainingDate) { <p class="mt-1 text-sm text-violet-800">มีแผนเข้าซ้อม {{ day.plannedAthleteCount }} คน</p> }
+              @else { <p class="mt-1 text-sm text-text-secondary">วันที่นี้ยังไม่ได้กำหนดเป็นวันเปิดซ้อม</p> }
+            </div>
+            <a routerLink="/routine-schedules/training-dates" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-medium text-violet-800">กำหนดวันเปิดซ้อม</a>
+          </div>
+          @if (day.isRoutineTrainingDate) {
+            @if (participationLoading()) { <p class="mt-3 text-sm text-text-secondary">กำลังโหลดรายชื่อนักกีฬา...</p> }
+            @else if (plannedAthletes().length === 0) { <p class="mt-3 rounded-lg bg-white px-3 py-4 text-center text-sm text-text-secondary">ยังไม่มีนักกีฬาลงแผนว่าจะมา</p> }
+            @else {
+              <div class="mt-3 flex flex-wrap gap-2">
+                @for (athlete of plannedAthletes(); track athlete.athleteId) { <span class="rounded-full border border-violet-200 bg-white px-3 py-1.5 text-sm text-violet-900">{{ athlete.athleteNickname || athlete.athleteName }}</span> }
+              </div>
+            }
+          }
+        </section>
+      }
+
       <div
         class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border px-4 py-3 text-xs text-text-secondary"
       >
         <span>สีของรายการใช้แยกโค้ชแต่ละคน</span>
         <span class="font-medium text-amber-800">🏆 เครื่องหมายสีเหลืองคือวันแข่งขัน</span>
+        <span class="font-medium text-violet-800">ป้ายสีม่วงคือจำนวนผู้มีแผนเข้าซ้อม</span>
         <span class="opacity-50">รายการสีจางคือรายการที่ปิดใช้งาน</span>
         <span>คลิกตารางเพื่อแก้ไข หรือเลือกวันที่เพื่อเพิ่มตารางใหม่</span>
       </div>

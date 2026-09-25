@@ -2,7 +2,9 @@
   [title]="isEditMode() ? 'แก้ไขข้อมูลนักกีฬา' : 'เพิ่มนักกีฬา'"
   subtitle="ข้อมูลหลักนักกีฬาที่ใช้ในการเช็คชื่อฝึกซ้อม"
 >
-  <a actions routerLink="/athletes" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
+  <div actions class="flex items-center gap-3">
+    <a routerLink="/athletes" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
+  </div>
 </app-page-header>
 
 <div class="mt-4 w-full max-w-2xl">
@@ -161,5 +163,41 @@
         {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
       </button>
     </form>
+
+    @if (isEditMode()) {
+      <section class="mt-4 rounded-xl border border-primary-200 bg-primary-50/50 p-4 sm:p-5" aria-labelledby="plan-link-heading">
+        <div class="flex items-start gap-3">
+          <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
+            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+          </span>
+          <div>
+            <h2 id="plan-link-heading" class="font-semibold text-text">ลิงก์แผนเข้าซ้อมสำหรับผู้ปกครอง</h2>
+            <p class="mt-1 text-sm text-text-secondary">ผู้ปกครองใช้ลิงก์นี้เลือกวันที่นักกีฬามีแผนจะมาซ้อม</p>
+          </div>
+        </div>
+
+        @if (planLinkLoading()) {
+          <p class="mt-4 text-sm text-text-secondary">กำลังโหลดข้อมูลลิงก์...</p>
+        } @else {
+          @if (planLinkUrl()) {
+            <label class="mt-4 block text-sm font-medium text-text" for="plan-link-url">ลิงก์สำหรับผู้ปกครอง</label>
+            <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+              <input id="plan-link-url" readonly [value]="planLinkUrl()" class="min-h-11 min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 text-sm text-text" />
+              <button type="button" class="min-h-11 rounded-lg border border-primary-300 bg-surface px-4 text-sm font-medium text-primary-700 hover:bg-primary-50" (click)="copyPlanLink()">คัดลอก</button>
+            </div>
+            <p class="mt-2 text-xs font-medium" [class]="planLinkStatus()?.isEnabled ? 'text-primary-700' : 'text-danger'">{{ planLinkStatus()?.isEnabled ? 'ลิงก์เปิดใช้งานอยู่' : 'ลิงก์ถูกปิดการเข้าถึงชั่วคราว' }}</p>
+          } @else {
+            <p class="mt-4 rounded-lg border border-dashed border-primary-200 bg-surface px-3 py-4 text-center text-sm text-text-secondary">ยังไม่ได้สร้างลิงก์สำหรับผู้ปกครอง</p>
+          }
+
+          <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <button type="button" class="min-h-11 rounded-lg bg-primary-600 px-4 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60" [disabled]="planLinkProcessing()" (click)="planLinkStatus()?.exists ? togglePlanLinkAccess() : rotatePlanLink()">{{ !planLinkStatus()?.exists ? 'สร้างลิงก์' : (planLinkStatus()?.isEnabled ? 'ปิดการเข้าถึงชั่วคราว' : 'เปิดการเข้าถึง') }}</button>
+            @if (planLinkStatus()?.exists) { <button type="button" class="min-h-11 rounded-lg border border-danger bg-surface px-4 text-sm font-medium text-danger hover:bg-danger-surface disabled:opacity-60" [disabled]="planLinkProcessing()" (click)="rotatePlanLink()">เปลี่ยนลิงก์</button> }
+          </div>
+        }
+
+        @if (planLinkMessage()) { <p class="mt-4 rounded-lg bg-surface px-3 py-2 text-sm text-text-secondary" role="status">{{ planLinkMessage() }}</p> }
+      </section>
+    }
   }
 </div>

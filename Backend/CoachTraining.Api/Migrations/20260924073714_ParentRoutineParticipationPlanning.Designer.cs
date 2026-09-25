@@ -3,6 +3,7 @@ using System;
 using CoachTraining.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CoachTraining.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260924073714_ParentRoutineParticipationPlanning")]
+    partial class ParentRoutineParticipationPlanning
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -837,40 +840,6 @@ namespace CoachTraining.Api.Migrations
                     b.HasIndex("CoachId", "EffectiveStartDate", "IsActive");
 
                     b.ToTable("RoutineSchedules");
-                });
-
-            modelBuilder.Entity("CoachTraining.Api.Models.RoutineTrainingDate", b =>
-                {
-                    b.Property<int>("RoutineTrainingDateId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoutineTrainingDateId"));
-
-                    b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateOnly>("TrainingDate")
-                        .HasColumnType("date");
-
-                    b.Property<int?>("UpdatedByUserId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("RoutineTrainingDateId");
-
-                    b.HasIndex("TrainingDate")
-                        .IsUnique();
-
-                    b.ToTable("RoutineTrainingDates");
                 });
 
             modelBuilder.Entity("CoachTraining.Api.Models.TrainingApprovalHistory", b =>

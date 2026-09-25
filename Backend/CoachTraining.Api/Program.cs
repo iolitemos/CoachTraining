@@ -116,6 +116,8 @@ builder.Services.AddSingleton<ISessionStatusService, SessionStatusService>();
 builder.Services.AddScoped<IScheduleConflictService, ScheduleConflictService>();
 builder.Services.AddScoped<IRoutineScheduleService, RoutineScheduleService>();
 builder.Services.AddScoped<IPublicRoutineCalendarService, PublicRoutineCalendarService>();
+builder.Services.AddScoped<IParentRoutinePlanService, ParentRoutinePlanService>();
+builder.Services.AddScoped<IRoutineTrainingDateService, RoutineTrainingDateService>();
 builder.Services.AddScoped<IPrivateSessionService, PrivateSessionService>();
 builder.Services.AddScoped<ITrainingSessionService, TrainingSessionService>();
 builder.Services.AddScoped<ICoachTeachingService, CoachTeachingService>();

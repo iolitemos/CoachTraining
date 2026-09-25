@@ -8,6 +8,8 @@ import { ApiErrorBody } from '../../../models/paged-result.model';
 import { AthleteService } from '../../../services/athlete.service';
 import { DateInput } from '../../../shared/date-input/date-input';
 import { AthleteType } from '../../../models/athlete.model';
+import { ParentRoutinePlanLinkStatus } from '../../../models/parent-routine-plan.model';
+import { ParentRoutinePlanService } from '../../../services/parent-routine-plan.service';
 
 @Component({
   selector: 'app-athlete-form',
@@ -21,12 +23,17 @@ export class AthleteForm implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly athleteService = inject(AthleteService);
+  private readonly parentRoutinePlanService = inject(ParentRoutinePlanService);
 
   athleteId = signal<number | null>(null);
   isEditMode = signal(false);
   loading = signal(true);
   submitting = signal(false);
   errorMessage = signal<string | null>(null);
+  planLinkStatus = signal<ParentRoutinePlanLinkStatus | null>(null);
+  planLinkLoading = signal(false);
+  planLinkProcessing = signal(false);
+  planLinkMessage = signal<string | null>(null);
 
   form = this.fb.group({
     athleteCode: ['', [Validators.required, Validators.maxLength(30)]],
@@ -72,12 +79,59 @@ export class AthleteForm implements OnInit {
           remarks: athlete.remarks ?? '',
         });
         this.form.controls.athleteCode.disable();
+        await this.loadPlanLink();
       }
     } catch {
       this.errorMessage.set('ไม่สามารถโหลดข้อมูลได้');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  planLinkUrl(): string | null {
+    const token = this.planLinkStatus()?.token;
+    return token ? `${window.location.origin}/parent/routine-plan/${token}` : null;
+  }
+
+  async loadPlanLink(): Promise<void> {
+    const athleteId = this.athleteId();
+    if (!athleteId) return;
+    this.planLinkLoading.set(true);
+    try { this.planLinkStatus.set(await this.parentRoutinePlanService.getLinkStatus(athleteId)); }
+    catch { this.planLinkMessage.set('ไม่สามารถโหลดข้อมูลลิงก์แผนเข้าซ้อมได้'); }
+    finally { this.planLinkLoading.set(false); }
+  }
+
+  async rotatePlanLink(): Promise<void> {
+    const athleteId = this.athleteId();
+    if (!athleteId || this.planLinkProcessing()) return;
+    if (this.planLinkStatus()?.exists && !window.confirm('ลิงก์เดิมจะใช้งานไม่ได้ทันที ต้องการสร้างลิงก์ใหม่หรือไม่?')) return;
+    this.planLinkProcessing.set(true); this.planLinkMessage.set(null);
+    try {
+      const result = await this.parentRoutinePlanService.rotateLink(athleteId);
+      this.planLinkStatus.set({ exists: true, isEnabled: true, ...result });
+      this.planLinkMessage.set('สร้างลิงก์แผนเข้าซ้อมเรียบร้อยแล้ว');
+    } catch { this.planLinkMessage.set('ไม่สามารถสร้างลิงก์แผนเข้าซ้อมได้'); }
+    finally { this.planLinkProcessing.set(false); }
+  }
+
+  async togglePlanLinkAccess(): Promise<void> {
+    const athleteId = this.athleteId();
+    const current = this.planLinkStatus();
+    if (!athleteId || !current || this.planLinkProcessing()) return;
+    this.planLinkProcessing.set(true); this.planLinkMessage.set(null);
+    try {
+      this.planLinkStatus.set(await this.parentRoutinePlanService.setAccess(athleteId, !current.isEnabled));
+      this.planLinkMessage.set(current.isEnabled ? 'ปิดการเข้าถึงลิงก์ชั่วคราวแล้ว' : 'เปิดการเข้าถึงลิงก์แล้ว');
+    } catch { this.planLinkMessage.set('ไม่สามารถเปลี่ยนสถานะลิงก์ได้'); }
+    finally { this.planLinkProcessing.set(false); }
+  }
+
+  async copyPlanLink(): Promise<void> {
+    const url = this.planLinkUrl();
+    if (!url) return;
+    try { await navigator.clipboard.writeText(url); this.planLinkMessage.set('คัดลอกลิงก์แล้ว'); }
+    catch { this.planLinkMessage.set('กรุณาเลือกลิงก์และคัดลอกด้วยตนเอง'); }
   }
 
   async onSubmit(): Promise<void> {

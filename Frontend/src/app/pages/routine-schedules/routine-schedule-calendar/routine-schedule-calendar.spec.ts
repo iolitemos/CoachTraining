@@ -26,6 +26,8 @@ describe('RoutineScheduleCalendar', () => {
       .forEach((request) => request.flush({ message: 'Success', data: { isActive: false, tokenHint: null, createdDate: null } }));
     httpMock.match((request) => request.url.endsWith('/calendar-notes'))
       .forEach((request) => request.flush({ message: 'Success', data: [] }));
+    httpMock.match((request) => request.url.endsWith('/parent-routine-plans/admin/summary'))
+      .forEach((request) => request.flush({ message: 'Success', data: [] }));
     httpMock.verify();
   });
 
@@ -155,6 +157,18 @@ describe('RoutineScheduleCalendar', () => {
     component.onCoachFilterChange('');
     expect(component.selectedCoachId()).toBeNull();
     expect(component.currentMonthOccurrenceCount()).toBe(2);
+  });
+
+  it('shows parent participation estimates on Routine calendar dates', async () => {
+    const loadPromise = component.loadParticipationPlans();
+    httpMock.expectOne(request => request.url.endsWith('/parent-routine-plans/admin/summary'))
+      .flush({ message: 'Success', data: [{ trainingDate: '2026-01-05', athleteCount: 4 }] });
+    await loadPromise;
+
+    const day = component.calendarDays().find(item => item.isoDate === '2026-01-05')!;
+    expect(day.isRoutineTrainingDate).toBe(true);
+    expect(day.plannedAthleteCount).toBe(4);
+    expect(component.monthlyPlannedAttendanceCount()).toBe(4);
   });
 
   it('should move between months and select the first day', () => {

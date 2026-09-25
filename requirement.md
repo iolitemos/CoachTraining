@@ -271,6 +271,17 @@ Purpose:
 
 - Track important business changes to schedules, attendance, coach assignments, and approvals.
 
+### 4.16 Parent Routine Participation Planning
+
+Purpose:
+
+- Allow an Administrator to share a secret athlete-specific link with a parent or guardian.
+- Allow the Administrator to define Routine Training dates independently from Coach teaching schedules.
+- Allow the parent or guardian to indicate only those Administrator-defined dates on which the athlete plans to attend.
+- Give Administrators a date-by-date count and athlete list for operational planning without creating attendance records or a fixed Routine roster.
+
+This narrowly scoped secret-link feature does not create a parent account or a general Athlete / Parent Portal.
+
 ---
 
 ## 5. Business Flow
@@ -386,6 +397,18 @@ For Routine Training, an Administrator may instead finalize scheduled records in
 5. The password-reset token expires 10 minutes after issuance.
 6. The owner sets a new password containing at least 8 characters.
 7. A successfully used token becomes invalid and cannot be reused.
+
+### 5.10 Parent Routine Participation Planning Flow
+
+1. Administrator creates or retrieves the secret participation-planning link for an active athlete.
+2. Administrator shares the link with that athlete's parent or guardian outside the system.
+3. Administrator maintains a separate Routine Training date calendar. Creating a Routine Coach schedule does not automatically add a date to this calendar, and adding a date does not create a Coach schedule or Training Session.
+4. The parent link shows only active dates from that separate Routine Training date calendar.
+5. The parent or guardian selects only the dates on which the athlete plans to attend and saves the selection.
+6. A date that is not selected means the athlete has no plan to attend that date; it must not create an Absent attendance record.
+7. There is no submission deadline. The parent or guardian may select or clear an available date while it remains an active Routine Training date.
+8. Administrator can view the number and names of athletes planning to attend each Routine Training date.
+9. Actual Routine attendance remains recorded independently by a Coach from athletes who actually attend.
 
 ---
 
@@ -671,6 +694,24 @@ Requirements:
 - **FR-CALENDAR-NOTE-004** Coach, Management / Viewer, and public-calendar visitors shall have read-only access to calendar Notes.
 - **FR-CALENDAR-NOTE-005** Calendar Note content shall be limited to 1,000 characters.
 
+### 6.23 Parent Routine Participation Planning Requirements
+
+- **FR-PARENT-PLAN-001** Administrator shall be able to create, retrieve, temporarily disable, re-enable, and rotate one persistent secret participation-planning link for each active athlete.
+- The Administrator shall be able to perform these athlete-link actions directly from the athlete edit page without navigating to a separate management page.
+- **FR-PARENT-PLAN-002** Each link shall identify exactly one athlete and shall not expose another athlete's personal data or plan.
+- **FR-PARENT-PLAN-003** Administrator shall maintain a separate calendar of dates on which Routine Training is available to athletes.
+- **FR-PARENT-PLAN-004** Routine Training availability dates shall be independent from Coach Routine schedules: neither shall automatically create, update, activate, deactivate, or delete the other.
+- **FR-PARENT-PLAN-004A** A valid parent link shall show only active dates from the separate Routine Training availability calendar.
+- **FR-PARENT-PLAN-004B** Dates absent from that calendar shall not be displayed as selectable and shall be rejected by backend validation, even when a Coach Routine schedule exists on the date.
+- **FR-PARENT-PLAN-005** The parent or guardian shall have only one selectable state: the athlete plans to attend. Clearing or not selecting a date means there is no plan to attend.
+- **FR-PARENT-PLAN-006** Participation planning shall have no submission deadline and shall not implement coach-count recommendations or capacity warnings.
+- **FR-PARENT-PLAN-007** Administrator shall be able to view the count and athlete names that currently plan to attend each Routine Training date.
+- **FR-PARENT-PLAN-008** Participation plans shall remain separate from Routine Attendance and shall never create Present, Late, or Absent attendance automatically.
+- **FR-PARENT-PLAN-009** An unselected athlete shall not be treated as Absent in attendance or attendance reporting.
+- **FR-PARENT-PLAN-010** Invalid, disabled, rotated, deleted-athlete, and inactive-athlete links shall not expose planning data or accept changes.
+- **FR-PARENT-PLAN-011** Secret link tokens shall be cryptographically random; only a secure hash shall be used for validation, with a protected encrypted copy permitted for authorized Administrator recovery.
+- **FR-PARENT-PLAN-012** Public date-range queries and saves shall be limited to a maximum of 63 inclusive days.
+
 ---
 
 ## 7. Non-Functional Requirements
@@ -853,6 +894,18 @@ Reports shall clearly distinguish:
 - Session status
 - Attendance status where applicable
 
+### 9.9 Parent Routine Participation Planning
+
+- The parent-facing page shall be mobile-first and use Thai labels.
+- It shall clearly identify the athlete and explain that only selected dates mean the athlete plans to attend.
+- It shall show only available Routine Training dates and provide clear loading, empty, saving, success, invalid-link, and error states.
+- It shall summarize the number of selected participation-plan dates for the visible month.
+- Participation dates shall be presented in a monthly calendar view.
+- The main Administrator Routine Training calendar shall show the planned-attendance count on each Routine Training date, the visible month's total planned selections, and the athlete names for the selected date without requiring navigation to a separate summary page.
+- Administrator shall have a dedicated Routine Training date-management page separate from the Coach Routine schedule form and calendar.
+- The Routine Training date-management calendar shall mark Competition Match dates and shared Calendar Notes, and shall require confirmation before an open Training date is removed.
+- The UI shall not show coach-count recommendations, capacity calculations, capacity warnings, a submission deadline, or an Absent planning status.
+
 ---
 
 ## 10. Out of Scope
@@ -907,7 +960,7 @@ Including:
 - Coach feedback viewing
 - Package balance viewing
 
-The secret-link, read-only Routine calendar defined by `FR-PUBLIC-CALENDAR-001`–`008` is a narrowly approved public-sharing feature and does not constitute an Athlete / Parent Portal. Accounts, personalized data, attendance, feedback, and other portal capabilities remain out of scope.
+The secret-link, read-only Routine calendar defined by `FR-PUBLIC-CALENDAR-001`–`011` and the athlete-specific participation-planning link defined by `FR-PARENT-PLAN-001`–`012` are narrowly approved public-sharing features and do not constitute a general Athlete / Parent Portal. Parent accounts, attendance viewing, coach feedback, package data, and other portal capabilities remain out of scope.
 
 ### 10.6 Self-Service Private Training Booking
 

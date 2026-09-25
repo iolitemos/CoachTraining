@@ -1,16 +1,26 @@
 <app-page-header title="ปฏิทินฝึกซ้อมส่วนตัว" subtitle="ดูเซสชันรายเดือนและเลือกวันที่เพื่อเพิ่มรายการใหม่">
-  <div actions class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
-    <button type="button" class="hidden min-h-10 items-center justify-center rounded-lg border border-warning/40 bg-warning-surface px-3 py-2 text-sm font-medium text-text md:inline-flex" (click)="openNote(selectedDate(), true)">+ เพิ่ม Note</button>
+  <div actions class="grid w-full grid-cols-2 gap-1.5 rounded-xl border border-border bg-secondary-50 p-1.5 shadow-sm sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+    <button type="button" class="hidden min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text md:inline-flex" (click)="openNote(selectedDate(), true)">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
+      เพิ่ม Note
+    </button>
     <button
       type="button"
-      class="inline-flex min-h-10 items-center justify-center rounded-lg border border-primary-600 bg-surface px-3 py-2 text-sm font-medium text-primary-700 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
+      class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
       [disabled]="state() !== 'ready' || exportingImage()"
       (click)="exportCalendarImage()"
     >
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
       {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกเป็นรูป' }}
     </button>
-    <a routerLink="/private-sessions/list" class="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-sm font-medium text-text-secondary hover:bg-secondary-50 sm:px-4">ดูแบบรายการ</a>
-    <a routerLink="/private-sessions/new" [queryParams]="{ date: selectedDate() }" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 sm:px-4">เพิ่มฝึกซ้อม</a>
+    <a routerLink="/private-sessions/list" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
+      ดูแบบรายการ
+    </a>
+    <a routerLink="/private-sessions/new" [queryParams]="{ date: selectedDate() }" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-700">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
+      เพิ่มฝึกซ้อม
+    </a>
   </div>
 </app-page-header>
 

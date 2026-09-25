@@ -61,4 +61,16 @@ describe('AthleteForm', () => {
     request.flush({ message: 'Success', data: { athleteId: 1 } });
     await submitPromise;
   });
+
+  it('creates a parent participation-plan link directly from the athlete form', async () => {
+    component.athleteId.set(7);
+
+    const createPromise = component.rotatePlanLink();
+    const request = httpMock.expectOne((r) => r.url.endsWith('/parent-routine-plans/admin/athletes/7/link') && r.method === 'POST');
+    request.flush({ message: 'Success', data: { token: 'secret-token', tokenHint: 'secr', createdDate: '2026-09-25T00:00:00Z' } });
+    await createPromise;
+
+    expect(component.planLinkStatus()?.exists).toBe(true);
+    expect(component.planLinkUrl()).toContain('/parent/routine-plan/secret-token');
+  });
 });

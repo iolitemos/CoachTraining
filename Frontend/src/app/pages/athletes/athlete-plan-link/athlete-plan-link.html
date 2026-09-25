@@ -1,0 +1,20 @@
+<app-page-header title="ลิงก์แผนเข้าซ้อม" [subtitle]="athlete() ? 'สำหรับ ' + (athlete()!.nickname || athlete()!.fullName) : 'จัดการลิงก์สำหรับผู้ปกครอง'">
+  <a actions routerLink="/athletes" class="text-sm font-medium text-text-secondary hover:underline">ย้อนกลับ</a>
+</app-page-header>
+<section class="mt-4 max-w-2xl rounded-xl border border-border bg-surface p-5">
+  @if (loading()) { <p class="py-8 text-center text-sm text-text-secondary">กำลังโหลด...</p> }
+  @else if (athlete()) {
+    <h2 class="font-semibold text-text">{{ athlete()!.nickname || athlete()!.fullName }}</h2>
+    <p class="mt-1 text-sm text-text-secondary">ผู้ปกครองใช้ลิงก์นี้เลือกเฉพาะวันที่นักกีฬามีแผนจะมาซ้อม</p>
+    @if (url()) {
+      <label class="mt-4 block text-sm font-medium" for="plan-url">ลิงก์สำหรับผู้ปกครอง</label>
+      <div class="mt-2 flex flex-col gap-2 sm:flex-row"><input id="plan-url" readonly [value]="url()" class="min-h-11 min-w-0 flex-1 rounded-lg border border-border px-3 text-sm" /><button class="min-h-11 rounded-lg border border-primary-600 px-4 text-primary-700" (click)="copy()">คัดลอก</button></div>
+      <p class="mt-2 text-xs" [class]="status()?.isEnabled ? 'text-primary-700' : 'text-danger'">{{ status()?.isEnabled ? 'ลิงก์เปิดใช้งานอยู่' : 'ลิงก์ถูกปิดการเข้าถึงชั่วคราว' }}</p>
+    }
+    <div class="mt-5 flex flex-wrap gap-2">
+      <button class="min-h-11 rounded-lg bg-primary-600 px-4 text-white disabled:opacity-60" [disabled]="processing()" (click)="status()?.exists ? setAccess() : rotate()">{{ !status()?.exists ? 'สร้างลิงก์' : (status()?.isEnabled ? 'ปิดการเข้าถึงชั่วคราว' : 'เปิดการเข้าถึง') }}</button>
+      @if (status()?.exists) { <button class="min-h-11 rounded-lg border border-danger px-4 text-danger disabled:opacity-60" [disabled]="processing()" (click)="rotate()">เปลี่ยนลิงก์</button> }
+    </div>
+    @if (message()) { <p class="mt-4 rounded-lg bg-secondary-50 p-3 text-sm" role="status">{{ message() }}</p> }
+  }
+</section>

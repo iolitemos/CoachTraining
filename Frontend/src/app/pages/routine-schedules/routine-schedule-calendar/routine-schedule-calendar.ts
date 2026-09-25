@@ -19,6 +19,8 @@ import { CoachNamePipe, formatCoachName } from '../../../shared/coach-name/coach
 import { CalendarNote } from '../../../models/calendar-note.model';
 import { CalendarNoteService } from '../../../services/calendar-note.service';
 import { CalendarNoteDialog } from '../../../shared/calendar-note-dialog/calendar-note-dialog';
+import { RoutineParticipationPlanAthlete, RoutineParticipationPlanSummary } from '../../../models/parent-routine-plan.model';
+import { ParentRoutinePlanService } from '../../../services/parent-routine-plan.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 
@@ -31,6 +33,8 @@ interface CalendarDay {
   schedules: RoutineScheduleListItem[];
   competitionMatches: CompetitionMatch[];
   note: CalendarNote | null;
+  isRoutineTrainingDate: boolean;
+  plannedAthleteCount: number;
 }
 
 interface CoachFilterOption {
@@ -68,6 +72,9 @@ export class RoutineScheduleCalendar implements OnInit {
   shareQrCode = signal<string | null>(null);
   shareProcessing = signal(false);
   shareMessage = signal<string | null>(null);
+  participationSummaries = signal<RoutineParticipationPlanSummary[]>([]);
+  plannedAthletes = signal<RoutineParticipationPlanAthlete[]>([]);
+  participationLoading = signal(false);
 
   readonly dayHeaders = DAY_HEADERS;
 
@@ -107,9 +114,11 @@ export class RoutineScheduleCalendar implements OnInit {
 
     return Array.from({ length: 42 }, (_, index) => {
       const date = addDays(gridStart, index);
+      const isoDate = toIsoDate(date);
+      const participation = this.participationSummaries().find(item => item.trainingDate === isoDate);
       return {
         date,
-        isoDate: toIsoDate(date),
+        isoDate,
         dayNumber: date.getDate(),
         isCurrentMonth: date.getMonth() === month.getMonth(),
         isToday: toIsoDate(date) === toIsoDate(new Date()),
@@ -123,7 +132,9 @@ export class RoutineScheduleCalendar implements OnInit {
         competitionMatches: this.competitionMatches().filter((match) =>
           occursDuringCompetition(match, toIsoDate(date)),
         ),
-        note: this.notes().find((note) => note.noteDate === toIsoDate(date)) ?? null,
+        note: this.notes().find((note) => note.noteDate === isoDate) ?? null,
+        isRoutineTrainingDate: participation !== undefined,
+        plannedAthleteCount: participation?.athleteCount ?? 0,
       };
     });
   });
@@ -137,16 +148,19 @@ export class RoutineScheduleCalendar implements OnInit {
       .filter((day) => day.isCurrentMonth)
       .reduce((total, day) => total + day.schedules.length, 0),
   );
+  monthlyPlannedAttendanceCount = computed(() => this.participationSummaries().reduce((total, item) => total + item.athleteCount, 0));
 
   constructor(
     private readonly routineScheduleService: RoutineScheduleService,
     private readonly competitionMatchService: CompetitionMatchService,
     private readonly publicCalendarService: PublicRoutineCalendarService,
     private readonly calendarNoteService: CalendarNoteService,
+    private readonly parentRoutinePlanService: ParentRoutinePlanService,
   ) {}
 
   ngOnInit(): void {
     void this.load();
+    void this.loadParticipationPlans();
     void this.loadShareStatus();
   }
 
@@ -251,6 +265,7 @@ export class RoutineScheduleCalendar implements OnInit {
     this.visibleMonth.set(nextMonth);
     this.selectedDate.set(toIsoDate(nextMonth));
     void this.loadNotes();
+    void this.loadParticipationPlans();
   }
 
   goToCurrentMonth(): void {
@@ -258,6 +273,7 @@ export class RoutineScheduleCalendar implements OnInit {
     this.visibleMonth.set(startOfMonth(today));
     this.selectedDate.set(toIsoDate(today));
     void this.loadNotes();
+    void this.loadParticipationPlans();
   }
 
   onCoachFilterChange(value: string): void {
@@ -410,9 +426,33 @@ export class RoutineScheduleCalendar implements OnInit {
 
   selectDay(day: CalendarDay): void {
     this.selectedDate.set(day.isoDate);
+    void this.loadPlannedAthletes(day);
     if (!day.isCurrentMonth) {
       this.visibleMonth.set(startOfMonth(day.date));
     }
+  }
+
+  async loadParticipationPlans(): Promise<void> {
+    const month = this.visibleMonth();
+    const startDate = toIsoDate(new Date(month.getFullYear(), month.getMonth(), 1));
+    const endDate = toIsoDate(new Date(month.getFullYear(), month.getMonth() + 1, 0));
+    try {
+      this.participationSummaries.set(await this.parentRoutinePlanService.getSummary(startDate, endDate));
+      const selected = this.calendarDays().find(day => day.isoDate === this.selectedDate());
+      if (selected) await this.loadPlannedAthletes(selected);
+    } catch {
+      this.participationSummaries.set([]);
+      this.plannedAthletes.set([]);
+    }
+  }
+
+  private async loadPlannedAthletes(day: CalendarDay): Promise<void> {
+    this.plannedAthletes.set([]);
+    if (!day.isRoutineTrainingDate) return;
+    this.participationLoading.set(true);
+    try { this.plannedAthletes.set(await this.parentRoutinePlanService.getAthletes(day.isoDate)); }
+    catch { this.plannedAthletes.set([]); }
+    finally { this.participationLoading.set(false); }
   }
 
   calendarDayBackground(day: CalendarDay, isSelected = false): string | null {

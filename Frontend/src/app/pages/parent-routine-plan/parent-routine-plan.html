@@ -1,0 +1,86 @@
+<main class="min-h-screen bg-background px-4 py-6 text-text sm:px-6">
+  <div class="mx-auto max-w-2xl">
+    <header class="relative min-h-44 overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-600 to-blue-500 px-6 py-7 text-white shadow-lg shadow-blue-200/60 sm:min-h-48 sm:px-8 sm:py-8">
+      <div class="pointer-events-none absolute -top-12 -right-6 size-48 rounded-full bg-white/6"></div>
+      <div class="pointer-events-none absolute -right-16 -bottom-24 size-52 rounded-full bg-cyan-200/10"></div>
+      <div class="pointer-events-none absolute top-4 right-14 size-28 rotate-12 rounded-3xl bg-white/5 sm:size-36"></div>
+
+      <div class="relative z-10 max-w-[72%] sm:max-w-[70%]">
+        <p class="text-sm font-semibold text-blue-100 sm:text-base">แผนเข้าซ้อมประจำ</p>
+        <h1 class="mt-2 text-xl leading-tight font-bold tracking-tight sm:text-2xl">{{ athleteNickname() || athleteFullName() || 'นักกีฬา' }}</h1>
+        @if (athleteNickname() && athleteFullName()) {
+          <p class="mt-1 text-sm font-medium text-blue-100 sm:text-base">{{ athleteFullName() }}</p>
+        }
+        <p class="mt-3 text-xs leading-relaxed text-blue-50 sm:text-sm">เลือกเฉพาะวันที่มีแผนจะเข้าซ้อม วันที่ไม่ได้เลือกหมายถึงไม่มีแผนเข้าซ้อม และไม่ใช่การเช็คชื่อเข้าเรียนจริง</p>
+      </div>
+
+      <div class="absolute right-4 bottom-5 flex size-20 items-center justify-center rounded-2xl border border-white/10 bg-white/15 text-white shadow-xl backdrop-blur-sm sm:right-8 sm:bottom-7 sm:size-24">
+        <span class="-rotate-12 text-5xl drop-shadow-lg sm:text-6xl" role="img" aria-label="ไม้ปิงปอง">🏓</span>
+      </div>
+    </header>
+
+    @if (state() === 'invalid') {
+      <section class="mt-4 rounded-xl border border-danger/30 bg-surface p-6 text-center"><h2 class="font-semibold text-danger">ลิงก์นี้ไม่สามารถใช้งานได้</h2><p class="mt-2 text-sm text-text-secondary">กรุณาติดต่อผู้ดูแลระบบเพื่อขอลิงก์ใหม่</p></section>
+    } @else if (state() === 'error') {
+      <section class="mt-4 rounded-xl border border-border bg-surface p-6 text-center"><p>ไม่สามารถโหลดข้อมูลได้</p><button class="mt-3 rounded-lg bg-primary-600 px-4 py-2 text-white" (click)="load()">ลองใหม่</button></section>
+    } @else {
+      <section class="mt-4 rounded-xl border border-border bg-surface p-4">
+        <div class="flex items-center justify-between gap-3">
+          <button type="button" class="min-h-11 rounded-lg border border-border px-4" (click)="moveMonth(-1)" aria-label="เดือนก่อนหน้า">‹</button>
+          <h2 class="text-lg font-semibold">{{ monthLabel() }}</h2>
+          <button type="button" class="min-h-11 rounded-lg border border-border px-4" (click)="moveMonth(1)" aria-label="เดือนถัดไป">›</button>
+        </div>
+        @if (state() === 'ready' && dates().length > 0) {
+          <div class="mt-4 rounded-xl bg-blue-50 p-4">
+            <div>
+              <p class="text-sm text-blue-700">แผนเข้าซ้อมเดือนนี้</p>
+              <p class="mt-1 text-2xl font-bold text-blue-900">{{ selectedDayCount() }} วัน</p>
+              <p class="mt-0.5 text-xs text-blue-700">จากวันเปิดซ้อมทั้งหมด {{ dates().length }} วัน</p>
+            </div>
+          </div>
+        }
+        @if (state() === 'loading') {
+          <p class="py-10 text-center text-sm text-text-secondary">กำลังโหลดวันฝึกซ้อม...</p>
+        } @else if (dates().length === 0) {
+          <div class="py-10 text-center"><p class="font-medium">ยังไม่มีวันฝึกซ้อมประจำในเดือนนี้</p><p class="mt-1 text-sm text-text-secondary">จะแสดงเฉพาะวันที่ผู้ดูแลระบบกำหนดไว้</p></div>
+        } @else {
+          <div class="mt-4 overflow-hidden rounded-xl border border-border">
+              <div class="grid grid-cols-7 bg-secondary-50">
+                @for (header of dayHeaders; track header) { <div class="py-2 text-center text-xs font-medium text-text-secondary">{{ header }}</div> }
+              </div>
+              <div class="grid grid-cols-7 border-t border-border">
+                @for (day of calendarDays(); track day.isoDate) {
+                  <button type="button" class="relative min-h-16 border-r border-b border-border p-1.5 text-center text-sm transition-colors disabled:cursor-default" [class]="day.planDate?.isSelected ? 'bg-blue-600 text-white' : (day.planDate ? 'bg-blue-50 text-blue-800 hover:bg-blue-100' : (day.isCurrentMonth ? 'bg-white text-secondary-300' : 'bg-secondary-50 text-secondary-300'))" [disabled]="!day.planDate || saving()" (click)="day.planDate && selectDate(day.isoDate)">
+                    <span class="font-semibold">{{ day.dayNumber }}</span>
+                    @if (day.isToday) { <span class="absolute top-1 right-1 size-1.5 rounded-full" [class]="day.planDate?.isSelected ? 'bg-white' : 'bg-blue-600'"></span> }
+                    @if (day.planDate?.isSelected) { <span class="mt-1 block text-[10px] font-semibold">มา ✓</span> }
+                    @else if (day.planDate) { <span class="mt-1 block text-[10px] font-medium">เลือก</span> }
+                  </button>
+                }
+              </div>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-3 text-xs text-text-secondary"><span><i class="mr-1 inline-block size-2.5 rounded-sm bg-blue-600"></i>เลือกว่าจะมา</span><span><i class="mr-1 inline-block size-2.5 rounded-sm bg-blue-100 ring-1 ring-blue-300"></i>วันเปิดซ้อม</span></div>
+        }
+      </section>
+    }
+  </div>
+</main>
+
+@if (message()) {
+  <div class="fixed right-4 bottom-4 left-4 z-60 mx-auto flex max-w-sm items-center gap-3 rounded-xl border bg-white px-4 py-3 shadow-xl sm:right-6 sm:bottom-6 sm:left-auto" [class]="messageType() === 'success' ? 'border-success/30 text-success-hover' : 'border-danger/30 text-danger'" role="status" aria-live="polite">
+    <span class="flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" [class]="messageType() === 'success' ? 'bg-success' : 'bg-danger'">{{ messageType() === 'success' ? '✓' : '!' }}</span>
+    <span class="min-w-0 flex-1 text-sm font-medium">{{ message() }}</span>
+    <button type="button" class="flex size-8 shrink-0 items-center justify-center rounded-lg text-lg text-text-secondary hover:bg-secondary-50" aria-label="ปิดข้อความแจ้งเตือน" (click)="dismissToast()">×</button>
+  </div>
+}
+
+<app-confirmation-dialog
+  [open]="pendingCancellationDate() !== null"
+  [danger]="true"
+  [processing]="saving()"
+  title="ยืนยันการยกเลิกวันเข้าซ้อม"
+  [message]="'ต้องการยกเลิกแผนเข้าซ้อมวันที่ ' + (pendingCancellationDate() || '') + ' ใช่หรือไม่?'"
+  confirmLabel="ยืนยันการยกเลิก"
+  (confirmed)="confirmCancellation()"
+  (cancelled)="cancelCancellation()"
+/>
