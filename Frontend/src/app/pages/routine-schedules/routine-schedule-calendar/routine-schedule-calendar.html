@@ -5,7 +5,7 @@
   <div actions class="grid w-full grid-cols-2 gap-1.5 rounded-xl border border-border bg-secondary-50 p-1.5 shadow-sm sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
     <a routerLink="/routine-schedules/training-dates" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100">
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14H3V6a2 2 0 0 1 2-2Z" /></svg>
-      กำหนดวันเปิดซ้อม
+      กำหนดวันซ้อม
     </a>
     <button type="button" class="hidden min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text md:inline-flex" (click)="openNote(selectedDate(), true)">
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
@@ -18,15 +18,15 @@
       (click)="exportCalendarImage()"
     >
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
-      {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกเป็นรูป' }}
+      {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกรูป' }}
     </button>
-    <a
+    <!-- <a
       routerLink="/routine-schedules/list"
       class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-center text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text"
     >
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
       ดูแบบรายการ
-    </a>
+    </a> -->
     <a
       routerLink="/routine-schedules/new"
       [queryParams]="{ date: selectedDate() }"

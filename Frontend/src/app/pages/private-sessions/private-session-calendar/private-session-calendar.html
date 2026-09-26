@@ -11,12 +11,12 @@
       (click)="exportCalendarImage()"
     >
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
-      {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกเป็นรูป' }}
+      {{ exportingImage() ? 'กำลังสร้างรูป...' : 'บันทึกรูป' }}
     </button>
-    <a routerLink="/private-sessions/list" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text">
+    <!-- <a routerLink="/private-sessions/list" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:border-border hover:bg-surface hover:text-text">
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
       ดูแบบรายการ
-    </a>
+    </a> -->
     <a routerLink="/private-sessions/new" [queryParams]="{ date: selectedDate() }" class="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-primary-700">
       <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" /></svg>
       เพิ่มฝึกซ้อม

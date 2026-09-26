@@ -1,12 +1,19 @@
-<div class="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-  <div>
-    <h1 class="text-lg font-semibold text-text sm:text-xl">{{ title() }}</h1>
+<header class="page-header-hero">
+  <div class="page-header-copy">
+    <p class="page-header-kicker"><span aria-hidden="true"></span>ระบบบริหารการฝึกซ้อม</p>
+    <h1>{{ title() }}</h1>
     @if (subtitle()) {
-      <p class="mt-1 text-sm text-text-secondary">{{ subtitle() }}</p>
+      <p class="page-header-subtitle">{{ subtitle() }}</p>
     }
   </div>
 
-  <div class="flex shrink-0 items-center gap-2">
+  <div class="page-header-court" aria-hidden="true">
+    <span class="page-header-court-line"></span>
+    <span class="page-header-court-net"></span>
+    <span class="page-header-court-ball"></span>
+  </div>
+
+  <div class="page-header-actions">
     <ng-content select="[actions]"></ng-content>
   </div>
-</div>
+</header>

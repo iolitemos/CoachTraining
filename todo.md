@@ -34,6 +34,7 @@
 - [x] Define secondary, success, warning, danger, background, surface, text, and border theme values.
 - [x] Create responsive application shell for mobile, tablet, and desktop.
 - [x] Refresh the responsive navbar and sidebar with a professional table-tennis court theme and consistent active-navigation states.
+- [x] Apply the shared blue table-tennis hero and content background across authenticated application pages.
 - [x] Create shared page-header component.
 - [x] Create shared confirmation dialog component.
 - [x] Create shared status badge component for training statuses.
@@ -895,6 +896,7 @@
 - [x] Add empty state where summary data is unavailable.
 - [x] Add dashboard API error state and retry action.
 - [x] Make dashboard responsive without horizontal overflow.
+- [x] Refresh the Administrator Dashboard with the blue table-tennis visual system used by the application shell.
 - [x] Default Administrator Dashboard filters to the current calendar month, show coach nicknames/colors split by training type, show participation-only athlete names/totals split by training type, and remove coach teaching hours from this page as requested by the user.
 - [x] Remove the Administrator Dashboard KPI card row as requested by the user.
 - [x] Add date-by-athlete attendance matrix tables with daily totals, period totals, and coach names for Routine and Private Training on the Administrator Dashboard.

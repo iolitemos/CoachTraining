@@ -4,7 +4,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   LucideUsers,
 } from '@lucide/angular';
-import { PageHeader } from '../../shared/page-header/page-header';
 import { LoadingIndicator } from '../../shared/loading-indicator/loading-indicator';
 import { ErrorState } from '../../shared/error-state/error-state';
 import { EmptyState } from '../../shared/empty-state/empty-state';
@@ -35,7 +34,6 @@ type ViewState = 'loading' | 'error' | 'ready';
   imports: [
     FormsModule,
     RouterLink,
-    PageHeader,
     LoadingIndicator,
     ErrorState,
     EmptyState,

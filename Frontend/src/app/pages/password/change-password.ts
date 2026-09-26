@@ -4,9 +4,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ApiErrorBody } from '../../models/paged-result.model';
 import { AuthService } from '../../services/auth.service';
+import { PageHeader } from '../../shared/page-header/page-header';
 
 @Component({
-  selector: 'app-change-password', imports: [ReactiveFormsModule, RouterLink],
+  selector: 'app-change-password', imports: [ReactiveFormsModule, RouterLink, PageHeader],
   templateUrl: './change-password.html', styleUrl: './password-page.css',
 })
 export class ChangePassword {
