@@ -93,6 +93,30 @@ public class ParentRoutinePlanServiceTests
         Assert.Equal(athlete.FullName, plannedAthlete.AthleteName);
     }
 
+    [Fact]
+    public async Task GetCalendarAsync_ReturnsCompetitionMatchesOverlappingRequestedRange()
+    {
+        using var db = TestDbContextFactory.Create();
+        var (athlete, trainingDate) = await SeedAsync(db);
+        db.CompetitionMatches.Add(new CompetitionMatch
+        {
+            Name = "Youth Championship",
+            Province = "Bangkok",
+            StartDate = trainingDate.AddDays(-1),
+            EndDate = trainingDate.AddDays(1),
+        });
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+        var link = await service.RotateLinkAsync(athlete.AthleteId, 7);
+
+        var result = await service.GetCalendarAsync(link!.Token, trainingDate, trainingDate);
+
+        var competition = Assert.Single(result!.CompetitionMatches);
+        Assert.Equal("Youth Championship", competition.Name);
+        Assert.Equal(trainingDate.AddDays(-1), competition.StartDate);
+        Assert.Equal(trainingDate.AddDays(1), competition.EndDate);
+    }
+
     private static async Task<(Athlete Athlete, DateOnly TrainingDate)> SeedAsync(CoachTraining.Api.Data.ApplicationDbContext db)
     {
         var athlete = new Athlete { AthleteCode = "A001", FullName = "Athlete One", Nickname = "หนึ่ง", IsActive = true };

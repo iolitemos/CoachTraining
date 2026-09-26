@@ -11,11 +11,17 @@
         @if (athleteNickname() && athleteFullName()) {
           <p class="mt-1 text-sm font-medium text-blue-100 sm:text-base">{{ athleteFullName() }}</p>
         }
-        <p class="mt-3 text-xs leading-relaxed text-blue-50 sm:text-sm">เลือกเฉพาะวันที่มีแผนจะเข้าซ้อม วันที่ไม่ได้เลือกหมายถึงไม่มีแผนเข้าซ้อม และไม่ใช่การเช็คชื่อเข้าเรียนจริง</p>
+        <p class="mt-3 text-xs leading-relaxed text-blue-50 sm:text-sm">เลือกเฉพาะวันที่มีแผนจะเข้าซ้อม<br>ไม่ใช่การเช็คชื่อเข้าเรียน</p>
       </div>
 
-      <div class="absolute right-4 bottom-5 flex size-20 items-center justify-center rounded-2xl border border-white/10 bg-white/15 text-white shadow-xl backdrop-blur-sm sm:right-8 sm:bottom-7 sm:size-24">
-        <span class="-rotate-12 text-5xl drop-shadow-lg sm:text-6xl" role="img" aria-label="ไม้ปิงปอง">🏓</span>
+      <div class="parent-court-stage absolute right-4 bottom-4 h-28 w-20 sm:right-8 sm:bottom-6 sm:h-32 sm:w-24" role="img" aria-label="โต๊ะปิงปองที่มีลูกสีส้มตีโต้ไปมา">
+        <div class="parent-court" aria-hidden="true">
+          <span class="parent-court-center-line"></span>
+          <span class="parent-court-net"></span>
+          <span class="parent-court-paddle parent-court-paddle-top"></span>
+          <span class="parent-court-paddle parent-court-paddle-bottom"></span>
+          <span class="parent-court-ball"></span>
+        </div>
       </div>
     </header>
 
@@ -41,7 +47,7 @@
         }
         @if (state() === 'loading') {
           <p class="py-10 text-center text-sm text-text-secondary">กำลังโหลดวันฝึกซ้อม...</p>
-        } @else if (dates().length === 0) {
+        } @else if (dates().length === 0 && competitionMatches().length === 0) {
           <div class="py-10 text-center"><p class="font-medium">ยังไม่มีวันฝึกซ้อมประจำในเดือนนี้</p><p class="mt-1 text-sm text-text-secondary">จะแสดงเฉพาะวันที่ผู้ดูแลระบบกำหนดไว้</p></div>
         } @else {
           <div class="mt-4 overflow-hidden rounded-xl border border-border">
@@ -52,6 +58,7 @@
                 @for (day of calendarDays(); track day.isoDate) {
                   <button type="button" class="relative min-h-16 border-r border-b border-border p-1.5 text-center text-sm transition-colors disabled:cursor-default" [class]="day.planDate?.isSelected ? 'bg-blue-600 text-white' : (day.planDate ? 'bg-blue-50 text-blue-800 hover:bg-blue-100' : (day.isCurrentMonth ? 'bg-white text-secondary-300' : 'bg-secondary-50 text-secondary-300'))" [disabled]="!day.planDate || saving()" (click)="day.planDate && selectDate(day.isoDate)">
                     <span class="font-semibold">{{ day.dayNumber }}</span>
+                    @if (day.competitionMatches.length > 0) { <span class="competition-trophy absolute top-1 left-1 text-xs leading-none" role="img" [attr.aria-label]="'มีการแข่งขัน ' + day.competitionMatches.length + ' รายการ'" [title]="day.competitionMatches[0].name">🏆</span> }
                     @if (day.isToday) { <span class="absolute top-1 right-1 size-1.5 rounded-full" [class]="day.planDate?.isSelected ? 'bg-white' : 'bg-blue-600'"></span> }
                     @if (day.planDate?.isSelected) { <span class="mt-1 block text-[10px] font-semibold">มา ✓</span> }
                     @else if (day.planDate) { <span class="mt-1 block text-[10px] font-medium">เลือก</span> }
@@ -59,7 +66,17 @@
                 }
               </div>
           </div>
-          <div class="mt-3 flex flex-wrap gap-3 text-xs text-text-secondary"><span><i class="mr-1 inline-block size-2.5 rounded-sm bg-blue-600"></i>เลือกว่าจะมา</span><span><i class="mr-1 inline-block size-2.5 rounded-sm bg-blue-100 ring-1 ring-blue-300"></i>วันเปิดซ้อม</span></div>
+          <div class="mt-3 flex flex-wrap gap-3 text-xs text-text-secondary"><span><i class="mr-1 inline-block size-2.5 rounded-sm bg-blue-600"></i>เลือกว่าจะมา</span><span><i class="mr-1 inline-block size-2.5 rounded-sm bg-blue-100 ring-1 ring-blue-300"></i>วันเปิดซ้อม</span><span>🏆 วันแข่งขัน</span></div>
+          @if (competitionMatches().length > 0) {
+            <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <h3 class="text-sm font-semibold text-amber-900">การแข่งขันเดือนนี้</h3>
+              <div class="mt-2 space-y-2">
+                @for (match of competitionMatches(); track match.name + match.startDate + match.endDate) {
+                  <div class="text-sm text-amber-900"><p class="font-medium">🏆 {{ match.name }}</p><p class="mt-0.5 text-xs text-amber-800">{{ match.province }} · {{ match.startDate | displayDate }} – {{ match.endDate | displayDate }}</p></div>
+                }
+              </div>
+            </div>
+          }
         }
       </section>
     }

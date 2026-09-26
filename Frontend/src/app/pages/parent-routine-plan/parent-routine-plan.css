@@ -1,0 +1,130 @@
+.parent-court-stage {
+  perspective: 360px;
+  filter: drop-shadow(0 12px 14px rgb(23 37 84 / 0.3));
+}
+
+.parent-court {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), rgb(255 255 255 / 0.32) 50%, transparent calc(50% + 0.5px)),
+    linear-gradient(155deg, rgb(59 130 246 / 0.92), rgb(30 64 175 / 0.96));
+  border: 2px solid rgb(255 255 255 / 0.82);
+  border-radius: 13px;
+  box-shadow:
+    inset 0 0 22px rgb(23 37 84 / 0.28),
+    0 0 0 5px rgb(255 255 255 / 0.1);
+  transform: rotateX(3deg);
+}
+
+.parent-court::after {
+  position: absolute;
+  inset: 5px;
+  content: '';
+  pointer-events: none;
+  border: 1px solid rgb(255 255 255 / 0.34);
+  border-radius: 7px;
+}
+
+.parent-court-center-line {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 50%;
+  width: 1px;
+  background: rgb(255 255 255 / 0.3);
+}
+
+.parent-court-net {
+  position: absolute;
+  z-index: 2;
+  top: calc(50% - 2px);
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: repeating-linear-gradient(90deg, #f8fafc 0 3px, #64748b 3px 5px);
+  border-block: 1px solid rgb(255 255 255 / 0.8);
+  box-shadow: 0 0 7px rgb(15 23 42 / 0.45);
+}
+
+.parent-court-paddle {
+  position: absolute;
+  z-index: 3;
+  width: 18px;
+  height: 23px;
+  background: #f8fafc;
+  border: 2px solid #dbeafe;
+  border-radius: 50% 50% 44% 44%;
+  box-shadow: 0 4px 7px rgb(15 23 42 / 0.3);
+  transform-origin: 50% 50%;
+}
+
+.parent-court-paddle::after {
+  position: absolute;
+  bottom: -9px;
+  left: 5px;
+  width: 5px;
+  height: 11px;
+  content: '';
+  background: #c08457;
+  border-radius: 0 0 3px 3px;
+}
+
+.parent-court-paddle-top {
+  top: 9px;
+  left: calc(66% - 9px);
+  transform: rotate(154deg);
+  animation: parent-paddle-top-hit 2.6s ease-in-out infinite;
+}
+
+.parent-court-paddle-bottom {
+  bottom: 10px;
+  left: calc(35% - 9px);
+  transform: rotate(-18deg);
+  animation: parent-paddle-bottom-hit 2.6s ease-in-out infinite;
+}
+
+.parent-court-ball {
+  position: absolute;
+  z-index: 4;
+  top: 19%;
+  left: 66%;
+  width: 12px;
+  height: 12px;
+  background: #fb923c;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow:
+    0 4px 8px rgb(124 45 18 / 0.45),
+    0 0 0 3px rgb(251 146 60 / 0.14);
+  transform: translate(-50%, -50%);
+  animation: parent-ping-pong-rally 2.6s ease-in-out infinite;
+}
+
+@keyframes parent-ping-pong-rally {
+  0%, 100% { top: 19%; left: 66%; }
+  18% { top: 36%; left: 28%; }
+  34% { top: 52%; left: 55%; }
+  50% { top: 80%; left: 35%; }
+  68% { top: 62%; left: 74%; }
+  84% { top: 38%; left: 40%; }
+}
+
+@keyframes parent-paddle-top-hit {
+  0%, 92%, 100% { transform: rotate(154deg); }
+  4% { transform: rotate(174deg); }
+}
+
+@keyframes parent-paddle-bottom-hit {
+  0%, 45%, 55%, 100% { transform: rotate(-18deg); }
+  50% { transform: rotate(-40deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parent-court-ball,
+  .parent-court-paddle {
+    animation: none;
+  }
+}

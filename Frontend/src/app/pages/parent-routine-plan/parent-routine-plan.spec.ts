@@ -14,6 +14,7 @@ class ParentRoutinePlanServiceStub {
       trainingDate: '2026-09-26',
       isSelected: false,
     }],
+    competitionMatches: [{ name: 'ชิงแชมป์เยาวชน', province: 'กรุงเทพฯ', startDate: '2026-09-25', endDate: '2026-09-27' }],
   };
   async getCalendar(): Promise<ParentRoutinePlanCalendar> { return structuredClone(this.calendar); }
   async save(_token: string, _startDate: string, _endDate: string, selectedDates: string[]): Promise<ParentRoutinePlanCalendar> {
@@ -66,5 +67,16 @@ describe('ParentRoutinePlan', () => {
     expect(service.savedDates).toEqual([]);
     expect(component.pendingCancellationDate()).toBeNull();
     expect(component.message()).toContain('ยกเลิก');
+  });
+
+  it('marks every calendar date covered by a competition', async () => {
+    expect(component.calendarDays().find(day => day.isoDate === '2026-09-25')?.competitionMatches).toHaveLength(1);
+    expect(component.calendarDays().find(day => day.isoDate === '2026-09-27')?.competitionMatches).toHaveLength(1);
+    expect(component.calendarDays().find(day => day.isoDate === '2026-09-28')?.competitionMatches).toHaveLength(0);
+    component.state.set('ready');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.competition-trophy').length).toBe(3);
   });
 });

@@ -982,6 +982,8 @@
 - [x] Add loading, empty, saving, success, invalid-link, and error states.
 - [x] Confirm the UI contains no coach-count recommendation, capacity calculation/warning, deadline, or Absent planning status.
 - [x] Add a visible-month selected-day summary and monthly calendar view to the parent page.
+- [x] Replace the parent Routine Plan header paddle illustration with an accessible animated vertical table-tennis court.
+- [x] Mark every Competition Match date and show public competition details in the parent Routine Plan calendar.
 - [x] Integrate per-date planned-attendance counts, the monthly total, and selected-date athlete names into the main Administrator Routine Training calendar.
 - [x] Mark Competition Match dates and shared Calendar Notes in the Routine Training date-management calendar and confirm before removing an open date.
 

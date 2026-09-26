@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using CoachTraining.Api.Data;
 using CoachTraining.Api.DTOs.ParentRoutinePlans;
+using CoachTraining.Api.DTOs.PublicCalendar;
 using CoachTraining.Api.Models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.WebUtilities;
@@ -179,11 +180,17 @@ public class ParentRoutinePlanService : IParentRoutinePlanService
         var selected = await _db.RoutineParticipationPlans.AsNoTracking()
             .Where(plan => plan.AthleteId == athleteId && plan.TrainingDate >= startDate && plan.TrainingDate <= endDate)
             .Select(plan => plan.TrainingDate).ToListAsync(cancellationToken);
+        var competitionMatches = await _db.CompetitionMatches.AsNoTracking()
+            .Where(match => match.StartDate <= endDate && match.EndDate >= startDate)
+            .OrderBy(match => match.StartDate)
+            .ThenBy(match => match.Name)
+            .Select(match => new PublicCompetitionMatchDto(match.Name, match.Province, match.StartDate, match.EndDate))
+            .ToListAsync(cancellationToken);
         var selectedSet = selected.ToHashSet();
         var dates = availableDates
             .Select(date => new ParentRoutinePlanCalendarItemDto(date, selectedSet.Contains(date)))
             .ToList();
-        return new(athlete.AthleteId, athlete.Nickname, athlete.FullName, dates);
+        return new(athlete.AthleteId, athlete.Nickname, athlete.FullName, dates, competitionMatches);
     }
 
     private ParentRoutinePlanLinkStatusDto ToStatus(ParentRoutinePlanLink? link)

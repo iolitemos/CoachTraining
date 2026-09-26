@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CoachTraining.Api.DTOs.PublicCalendar;
 
 namespace CoachTraining.Api.DTOs.ParentRoutinePlans;
 
@@ -6,7 +7,12 @@ public record ParentRoutinePlanLinkStatusDto(bool Exists, bool IsEnabled, string
 public record ParentRoutinePlanLinkCreatedDto(string Token, string TokenHint, DateTime CreatedDate);
 public record ParentRoutinePlanAccessRequest(bool IsEnabled);
 public record ParentRoutinePlanCalendarItemDto(DateOnly TrainingDate, bool IsSelected);
-public record ParentRoutinePlanCalendarDto(int AthleteId, string? AthleteNickname, string AthleteFullName, IReadOnlyList<ParentRoutinePlanCalendarItemDto> Dates);
+public record ParentRoutinePlanCalendarDto(
+    int AthleteId,
+    string? AthleteNickname,
+    string AthleteFullName,
+    IReadOnlyList<ParentRoutinePlanCalendarItemDto> Dates,
+    IReadOnlyList<PublicCompetitionMatchDto> CompetitionMatches);
 public record ParentRoutinePlanRangeRequest(DateOnly? StartDate, DateOnly? EndDate);
 public class ParentRoutinePlanSaveRequest
 {

@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ParentRoutinePlanDate } from '../../models/parent-routine-plan.model';
+import { PublicCompetitionMatch } from '../../models/public-routine-calendar.model';
 import { ParentRoutinePlanService } from '../../services/parent-routine-plan.service';
 import { ConfirmationDialog } from '../../shared/confirmation-dialog/confirmation-dialog';
+import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 
 type ViewState = 'loading' | 'ready' | 'error' | 'invalid';
 interface ParentCalendarDay {
@@ -11,19 +13,22 @@ interface ParentCalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   planDate: ParentRoutinePlanDate | null;
+  competitionMatches: PublicCompetitionMatch[];
 }
 const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 @Component({
   selector: 'app-parent-routine-plan',
-  imports: [ConfirmationDialog],
+  imports: [ConfirmationDialog, DisplayDatePipe],
   templateUrl: './parent-routine-plan.html',
+  styleUrl: './parent-routine-plan.css',
 })
 export class ParentRoutinePlan implements OnInit, OnDestroy {
   state = signal<ViewState>('loading');
   athleteNickname = signal<string | null>(null);
   athleteFullName = signal('');
   dates = signal<ParentRoutinePlanDate[]>([]);
+  competitionMatches = signal<PublicCompetitionMatch[]>([]);
   visibleMonth = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   saving = signal(false);
   pendingCancellationDate = signal<string | null>(null);
@@ -45,6 +50,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
         isCurrentMonth: date.getMonth() === month.getMonth(),
         isToday: isoDate === toIso(new Date()),
         planDate: planDates.get(isoDate) ?? null,
+        competitionMatches: this.competitionMatches().filter(match => match.startDate <= isoDate && isoDate <= match.endDate),
       };
     });
   });
@@ -60,7 +66,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
     const [startDate, endDate] = monthRange(this.visibleMonth());
     try {
       const result = await this.service.getCalendar(this.token, startDate, endDate);
-      this.athleteNickname.set(result.athleteNickname); this.athleteFullName.set(result.athleteFullName); this.dates.set(result.dates); this.state.set('ready');
+      this.athleteNickname.set(result.athleteNickname); this.athleteFullName.set(result.athleteFullName); this.dates.set(result.dates); this.competitionMatches.set(result.competitionMatches); this.state.set('ready');
     } catch (error: unknown) {
       const status = typeof error === 'object' && error !== null && 'status' in error ? (error as { status: number }).status : 0;
       this.state.set(status === 404 ? 'invalid' : 'error');
@@ -92,6 +98,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
     try {
       const result = await this.service.save(this.token, startDate, endDate, selectedDates);
       this.dates.set(result.dates);
+      this.competitionMatches.set(result.competitionMatches);
       this.showToast(selected ? 'บันทึกแผนเข้าซ้อมเรียบร้อยแล้ว' : 'ยกเลิกแผนเข้าซ้อมเรียบร้อยแล้ว', 'success');
       return true;
     } catch (error: unknown) {
