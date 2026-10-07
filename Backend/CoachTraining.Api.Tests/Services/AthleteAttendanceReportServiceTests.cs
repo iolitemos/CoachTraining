@@ -65,6 +65,9 @@ public class AthleteAttendanceReportServiceTests
             new Attendance { TrainingSessionId = routineSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Present },
             new Attendance { TrainingSessionId = privateSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Late },
             new Attendance { TrainingSessionId = absentPrivateSession.TrainingSessionId, AthleteId = athlete.AthleteId, AthleteCodeSnapshot = athlete.AthleteCode, AthleteNameSnapshot = athlete.FullName, Status = AttendanceStatus.Absent });
+        db.RoutineParticipationPlans.AddRange(
+            new RoutineParticipationPlan { AthleteId = athlete.AthleteId, TrainingDate = new DateOnly(2026, 1, 5) },
+            new RoutineParticipationPlan { AthleteId = athlete.AthleteId, TrainingDate = new DateOnly(2026, 1, 12) });
         await db.SaveChangesAsync();
 
         var service = CreateService(db);
@@ -72,6 +75,7 @@ public class AthleteAttendanceReportServiceTests
 
         var item = Assert.Single(result.Items);
         Assert.Equal("Nick A001", item.Nickname);
+        Assert.Equal(2, item.RoutinePlannedDateCount);
         Assert.Equal(1, item.RoutineAttendanceCount);
         Assert.Equal(1, item.PrivateAttendanceCount);
         Assert.Equal(2, item.Records.Count);
@@ -128,6 +132,34 @@ public class AthleteAttendanceReportServiceTests
         var item = Assert.Single(result.Items);
         Assert.Equal(athleteA.AthleteId, item.AthleteId);
         Assert.Single(item.Records);
+    }
+
+    [Fact]
+    public async Task GetReportAsync_IncludesPlannedDatesAndAthletesWithoutAttendance()
+    {
+        using var db = TestDbContextFactory.Create();
+        var athleteA = await SeedAthleteAsync(db, "A001");
+        var athleteB = await SeedAthleteAsync(db, "A002");
+        db.RoutineParticipationPlans.AddRange(
+            new RoutineParticipationPlan { AthleteId = athleteA.AthleteId, TrainingDate = new DateOnly(2026, 1, 5) },
+            new RoutineParticipationPlan { AthleteId = athleteA.AthleteId, TrainingDate = new DateOnly(2026, 1, 12) },
+            new RoutineParticipationPlan { AthleteId = athleteA.AthleteId, TrainingDate = new DateOnly(2026, 2, 2) },
+            new RoutineParticipationPlan { AthleteId = athleteB.AthleteId, TrainingDate = new DateOnly(2026, 1, 19) });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetReportAsync(new AthleteAttendanceReportFilter
+        {
+            AthleteId = athleteA.AthleteId,
+            StartDate = new DateOnly(2026, 1, 1),
+            EndDate = new DateOnly(2026, 1, 31),
+        });
+
+        var item = Assert.Single(result.Items);
+        Assert.Equal(athleteA.AthleteId, item.AthleteId);
+        Assert.Equal(2, item.RoutinePlannedDateCount);
+        Assert.Equal(0, item.RoutineAttendanceCount);
+        Assert.Equal(0, item.PrivateAttendanceCount);
+        Assert.Empty(item.Records);
     }
 
     [Fact]

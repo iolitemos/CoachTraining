@@ -253,9 +253,16 @@ public class RoutineScheduleServiceTests
         Assert.Null(second.Error);
         Assert.NotNull(second.Schedule);
         Assert.Equal(2, await db.RoutineSchedules.CountAsync());
+        Assert.Equal(2, await db.TrainingSessions.CountAsync());
+
+        var overriddenSession = await db.TrainingSessions.SingleAsync(session =>
+            session.RoutineScheduleId == second.Schedule.RoutineScheduleId);
+        Assert.True(overriddenSession.IsConflictOverridden);
+        Assert.Equal("โค้ชยืนยันสอนสองกลุ่มพร้อมกัน", overriddenSession.ConflictOverrideReason);
 
         var overrideHistory = await db.ConflictOverrideHistories.SingleAsync();
         Assert.Equal(second.Schedule!.RoutineScheduleId, overrideHistory.RoutineScheduleId);
+        Assert.Equal(overriddenSession.TrainingSessionId, overrideHistory.TrainingSessionId);
         Assert.Equal("โค้ชยืนยันสอนสองกลุ่มพร้อมกัน", overrideHistory.Reason);
         Assert.Equal(42, overrideHistory.ActionByUserId);
     }
@@ -332,7 +339,7 @@ public class RoutineScheduleServiceTests
     }
 
     [Fact]
-    public async Task GenerateSessionsAsync_SkipsDateWithExistingCoachConflict()
+    public async Task CreateAsync_WithExistingCoachSession_ReturnsConflictAndRollsBackSchedule()
     {
         using var db = TestDbContextFactory.Create();
         var coach = await SeedCoachAsync(db);
@@ -361,12 +368,11 @@ public class RoutineScheduleServiceTests
             EffectiveStartDate = occurrenceDate,
         }, actionByUserId: 1);
 
-        Assert.Null(result.Error);
-        Assert.Contains(result.InitialGeneration!.SkippedDueToConflict, s => s.SessionDate == occurrenceDate);
-
-        var hasRoutineSessionOnConflictDate = await db.TrainingSessions.AnyAsync(s =>
-            s.RoutineScheduleId == result.Schedule!.RoutineScheduleId && s.SessionDate == occurrenceDate);
-        Assert.False(hasRoutineSessionOnConflictDate);
+        Assert.NotNull(result.Error);
+        Assert.NotEmpty(result.Conflicts);
+        Assert.Null(result.Schedule);
+        Assert.Empty(await db.RoutineSchedules.ToListAsync());
+        Assert.Single(await db.TrainingSessions.ToListAsync());
     }
 
     [Fact]

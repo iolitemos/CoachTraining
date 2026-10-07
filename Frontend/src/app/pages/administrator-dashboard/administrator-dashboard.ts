@@ -86,6 +86,10 @@ export class AdministratorDashboard implements OnInit {
     return attendances.find((attendance) => attendance.athleteId === athleteId)?.attendanceCount ?? 0;
   }
 
+  attendanceEmoji(count: number): string {
+    return '😊'.repeat(Math.max(0, count));
+  }
+
   teachingDayCount(summary: AttendanceByTrainingType): number {
     return summary.dailySummaries.filter((day) => day.coaches.length > 0).length;
   }

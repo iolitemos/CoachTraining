@@ -71,8 +71,10 @@ public class RoutineScheduleService : IRoutineScheduleService
                 return new RoutineScheduleSaveResult { Error = "ไม่สามารถกำหนดตารางฝึกซ้อมให้โค้ชที่ปิดใช้งานได้" };
             }
 
-            var conflicts = await _conflictService.CheckRoutineTemplateOverlapAsync(
-                dto.CoachId, dto.StartTime, dto.EndTime, dto.EffectiveStartDate);
+            var scheduledStart = dto.EffectiveStartDate.ToDateTime(dto.StartTime);
+            var scheduledEnd = dto.EffectiveStartDate.ToDateTime(dto.EndTime);
+            var conflicts = await GetCreateConflictsAsync(
+                dto.CoachId, dto.StartTime, dto.EndTime, dto.EffectiveStartDate, scheduledStart, scheduledEnd);
 
             // FR-CONFLICT-004: an authorized Administrator (this controller is
             // Administrator-only) may proceed past a detected conflict only by
@@ -101,11 +103,24 @@ public class RoutineScheduleService : IRoutineScheduleService
             _db.RoutineSchedules.Add(schedule);
             await _db.SaveChangesAsync();
 
-            // FR-CONFLICT-005 — the override itself remains identifiable in history.
-            await RecordConflictOverrideAsync(conflicts, overrideReason, routineScheduleId: schedule.RoutineScheduleId, actionByUserId);
-
             var generation = await GenerateOccurrencesAsync(
-                schedule, coach, schedule.EffectiveStartDate, actionByUserId);
+                schedule, coach, schedule.EffectiveStartDate, actionByUserId,
+                allowConflict: !string.IsNullOrWhiteSpace(overrideReason), overrideReason);
+
+            // A RoutineSchedule without its operational TrainingSession is not a
+            // valid completed create. This also protects against a conflict that
+            // appears between the preflight query and session generation.
+            if (generation.GeneratedCount != 1)
+            {
+                return new RoutineScheduleSaveResult
+                {
+                    Error = "ไม่สามารถสร้างรายการฝึกซ้อมได้ เนื่องจากพบตารางฝึกซ้อมของโค้ชทับซ้อนกัน",
+                    Conflicts = generation.SkippedDueToConflict.Select(ToRoutineConflict).ToList(),
+                };
+            }
+
+            // FR-CONFLICT-005 — the override itself remains identifiable in history.
+            await RecordConflictOverrideAsync(conflicts, overrideReason, schedule.RoutineScheduleId, actionByUserId);
 
             await transaction.CommitAsync();
 
@@ -334,7 +349,13 @@ public class RoutineScheduleService : IRoutineScheduleService
         return (result, null);
     }
 
-    private async Task<GenerateSessionsResult> GenerateOccurrencesAsync(RoutineSchedule schedule, Coach coach, DateOnly throughDateRequested, int actionByUserId)
+    private async Task<GenerateSessionsResult> GenerateOccurrencesAsync(
+        RoutineSchedule schedule,
+        Coach coach,
+        DateOnly throughDateRequested,
+        int actionByUserId,
+        bool allowConflict = false,
+        string? overrideReason = null)
     {
         var result = new GenerateSessionsResult();
 
@@ -357,7 +378,7 @@ public class RoutineScheduleService : IRoutineScheduleService
 
         var conflicts = await _conflictService.CheckCoachOverlapAsync(
             schedule.CoachId, scheduledStart, scheduledEnd);
-        if (conflicts.Count > 0)
+        if (conflicts.Count > 0 && !allowConflict)
         {
             result.SkippedDueToConflict.Add(new SkippedOccurrence
             {
@@ -378,6 +399,8 @@ public class RoutineScheduleService : IRoutineScheduleService
             AssignedCoachCodeSnapshot = coach.CoachCode,
             AssignedCoachNameSnapshot = coach.FullName,
             Status = SessionStatus.Scheduled,
+            IsConflictOverridden = conflicts.Count > 0,
+            ConflictOverrideReason = conflicts.Count > 0 ? overrideReason : null,
             CreatedByUserId = actionByUserId,
         });
         result.GeneratedCount = 1;
@@ -415,6 +438,46 @@ public class RoutineScheduleService : IRoutineScheduleService
         Remarks = schedule.Remarks,
     };
 
+    private async Task<List<RoutineTemplateConflictDetail>> GetCreateConflictsAsync(
+        int coachId,
+        TimeOnly startTime,
+        TimeOnly endTime,
+        DateOnly sessionDate,
+        DateTime scheduledStart,
+        DateTime scheduledEnd)
+    {
+        var conflicts = await _conflictService.CheckRoutineTemplateOverlapAsync(
+            coachId, startTime, endTime, sessionDate);
+        var sessionConflicts = await _conflictService.CheckCoachOverlapAsync(
+            coachId, scheduledStart, scheduledEnd);
+
+        var conflictingRoutineScheduleIds = conflicts
+            .Select(conflict => conflict.ConflictingRoutineScheduleId)
+            .ToHashSet();
+
+        conflicts.AddRange(sessionConflicts
+            .Where(conflict => conflict.RoutineScheduleId is null ||
+                !conflictingRoutineScheduleIds.Contains(conflict.RoutineScheduleId.Value))
+            .Select(conflict => new RoutineTemplateConflictDetail
+        {
+            ConflictingRoutineScheduleId = 0,
+            ConflictingRoutineScheduleName = $"รายการฝึกซ้อม #{conflict.ConflictingTrainingSessionId}",
+            Message = conflict.Message,
+        }));
+
+        return conflicts
+            .GroupBy(conflict => conflict.Message)
+            .Select(group => group.First())
+            .ToList();
+    }
+
+    private static RoutineTemplateConflictDetail ToRoutineConflict(SkippedOccurrence occurrence) => new()
+    {
+        ConflictingRoutineScheduleId = 0,
+        ConflictingRoutineScheduleName = $"รายการฝึกซ้อมวันที่ {occurrence.SessionDate:dd/MM/yyyy}",
+        Message = occurrence.Reason,
+    };
+
     /// <summary>FR-CONFLICT-004/005 — records one history row per detected conflict once an
     /// authorized Administrator has supplied an override reason. No-op when there is
     /// nothing to override.</summary>
@@ -426,11 +489,17 @@ public class RoutineScheduleService : IRoutineScheduleService
             return;
         }
 
+        var trainingSessionId = await _db.TrainingSessions
+            .Where(session => session.RoutineScheduleId == routineScheduleId)
+            .Select(session => (int?)session.TrainingSessionId)
+            .SingleOrDefaultAsync();
+
         foreach (var _ in conflicts)
         {
             _db.ConflictOverrideHistories.Add(new ConflictOverrideHistory
             {
                 ConflictType = ConflictType.CoachOverlap,
+                TrainingSessionId = trainingSessionId,
                 RoutineScheduleId = routineScheduleId,
                 Reason = overrideReason,
                 ActionByUserId = actionByUserId,

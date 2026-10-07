@@ -25,7 +25,7 @@ public class ScheduleConflictService : IScheduleConflictService
         int? excludeTrainingSessionId = null)
     {
         var query = _db.TrainingSessions.Where(s =>
-            (s.AssignedCoachId == coachId || s.ActualCoachId == coachId) &&
+            (s.ActualCoachId ?? s.AssignedCoachId) == coachId &&
             !NonOccupyingStatuses.Contains(s.Status) &&
             s.ScheduledStartDateTime < endDateTime &&
             startDateTime < s.ScheduledEndDateTime);
@@ -36,17 +36,39 @@ public class ScheduleConflictService : IScheduleConflictService
         }
 
         var overlapping = await query
-            .Select(s => new { s.TrainingSessionId, s.SessionDate, s.ScheduledStartDateTime, s.ScheduledEndDateTime })
+            .Select(s => new
+            {
+                s.TrainingSessionId,
+                s.RoutineScheduleId,
+                s.TrainingType,
+                s.Status,
+                s.SessionDate,
+                s.ScheduledStartDateTime,
+                s.ScheduledEndDateTime,
+                s.AssignedCoachNameSnapshot,
+                s.ActualCoachId,
+                s.ActualCoachNameSnapshot,
+            })
             .ToListAsync();
 
         return overlapping.Select(s => new ConflictDetail
         {
             ConflictType = nameof(ConflictType.CoachOverlap),
             ConflictingTrainingSessionId = s.TrainingSessionId,
+            RoutineScheduleId = s.RoutineScheduleId,
             SessionDate = s.SessionDate,
             ScheduledStartDateTime = s.ScheduledStartDateTime,
             ScheduledEndDateTime = s.ScheduledEndDateTime,
-            Message = $"โค้ชมีตารางฝึกซ้อมทับซ้อนในวันที่ {s.SessionDate:dd/MM/yyyy} เวลา {s.ScheduledStartDateTime:HH:mm}-{s.ScheduledEndDateTime:HH:mm}",
+            Message = BuildCoachConflictMessage(
+                s.TrainingSessionId,
+                s.TrainingType,
+                s.Status,
+                s.SessionDate,
+                s.ScheduledStartDateTime,
+                s.ScheduledEndDateTime,
+                s.AssignedCoachNameSnapshot,
+                s.ActualCoachId,
+                s.ActualCoachNameSnapshot),
         }).ToList();
     }
 
@@ -133,4 +155,35 @@ public class ScheduleConflictService : IScheduleConflictService
 
     private static string BuildRoutineScheduleName(DateOnly effectiveStartDate, TimeOnly startTime, TimeOnly endTime) =>
         $"ฝึกซ้อมวันที่ {effectiveStartDate:dd/MM/yyyy} {startTime:HH:mm}-{endTime:HH:mm}";
+
+    private static string BuildCoachConflictMessage(
+        int trainingSessionId,
+        TrainingType trainingType,
+        SessionStatus status,
+        DateOnly sessionDate,
+        DateTime scheduledStart,
+        DateTime scheduledEnd,
+        string assignedCoachName,
+        int? actualCoachId,
+        string? actualCoachName)
+    {
+        var trainingTypeLabel = trainingType == TrainingType.Routine ? "ฝึกซ้อมประจำ" : "ฝึกซ้อมส่วนตัว";
+        var statusLabel = status switch
+        {
+            SessionStatus.Scheduled => "กำหนดการ",
+            SessionStatus.InProgress => "กำลังฝึกซ้อม",
+            SessionStatus.Completed => "เสร็จสิ้น",
+            SessionStatus.Submitted => "ส่งตรวจแล้ว",
+            SessionStatus.Approved => "อนุมัติแล้ว",
+            SessionStatus.Locked => "ล็อกแล้ว",
+            SessionStatus.CoachAbsent => "โค้ชขาด",
+            _ => status.ToString(),
+        };
+        var coachContext = actualCoachId is not null
+            ? $"ผู้สอนจริง: {actualCoachName ?? "ไม่ระบุ"}, โค้ชที่มอบหมาย: {assignedCoachName}"
+            : $"โค้ชที่มอบหมาย: {assignedCoachName}";
+
+        return $"โค้ชมี{trainingTypeLabel} #{trainingSessionId} ทับซ้อนในวันที่ {sessionDate:dd/MM/yyyy} " +
+            $"เวลา {scheduledStart:HH:mm}-{scheduledEnd:HH:mm} (สถานะ: {statusLabel}, {coachContext})";
+    }
 }

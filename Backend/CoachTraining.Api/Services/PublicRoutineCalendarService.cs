@@ -183,7 +183,33 @@ public class PublicRoutineCalendarService : IPublicRoutineCalendarService
             .OrderBy(item => item.TrainingDate)
             .ToList();
 
-        return new PublicRoutineCalendarDto(schedules, competitionMatches, notes, attendanceSummary, dailyAttendance);
+        var plannedAttendanceRecords = await _db.RoutineParticipationPlans.AsNoTracking()
+            .Where(plan => plan.TrainingDate >= startDate
+                && plan.TrainingDate <= endDate
+                && plan.Athlete.IsActive
+                && plan.Athlete.Nickname != null
+                && plan.Athlete.Nickname != "")
+            .Select(plan => new
+            {
+                plan.TrainingDate,
+                plan.Athlete.AthleteCode,
+                AthleteNickname = plan.Athlete.Nickname!,
+            })
+            .ToListAsync(cancellationToken);
+
+        var dailyPlannedAttendance = plannedAttendanceRecords
+            .GroupBy(record => record.TrainingDate)
+            .Select(group => new PublicRoutineDailyPlanDto(
+                group.Key,
+                group.OrderBy(record => record.AthleteCode)
+                    .Select(record => record.AthleteNickname.Trim())
+                    .Where(name => name.Length > 0)
+                    .ToList()))
+            .Where(item => item.AthleteNicknames.Count > 0)
+            .OrderBy(item => item.TrainingDate)
+            .ToList();
+
+        return new PublicRoutineCalendarDto(schedules, competitionMatches, notes, attendanceSummary, dailyAttendance, dailyPlannedAttendance);
     }
 
     private async Task<bool> RevokeActiveLinksAsync(int userId, DateTime now, CancellationToken cancellationToken)

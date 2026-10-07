@@ -3,6 +3,15 @@ import { AttendanceByTrainingType } from '../../models/administrator-dashboard.m
 import { AdministratorDashboard } from './administrator-dashboard';
 
 describe('AdministratorDashboard', () => {
+  it('renders one smile emoji for each attendance occurrence', () => {
+    const component = new AdministratorDashboard(null!, null!, null!, null!);
+
+    expect(component.attendanceEmoji(0)).toBe('');
+    expect(component.attendanceEmoji(1)).toBe('😊');
+    expect(component.attendanceEmoji(2)).toBe('😊😊');
+    expect(component.attendanceEmoji(3)).toBe('😊😊😊');
+  });
+
   it('uses the number of distinct dates with a teaching coach as the progress maximum', () => {
     const component = new AdministratorDashboard(null!, null!, null!, null!);
     const summary: AttendanceByTrainingType = {

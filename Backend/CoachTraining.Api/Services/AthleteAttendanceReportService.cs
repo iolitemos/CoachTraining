@@ -59,35 +59,85 @@ public class AthleteAttendanceReportService : IAthleteAttendanceReportService
             })
             .ToListAsync();
 
-        var items = records
+        var planQuery = _db.RoutineParticipationPlans.AsNoTracking().AsQueryable();
+        if (filter.AthleteId is not null)
+        {
+            planQuery = planQuery.Where(plan => plan.AthleteId == filter.AthleteId.Value);
+        }
+        if (filter.StartDate is not null)
+        {
+            planQuery = planQuery.Where(plan => plan.TrainingDate >= filter.StartDate.Value);
+        }
+        if (filter.EndDate is not null)
+        {
+            planQuery = planQuery.Where(plan => plan.TrainingDate <= filter.EndDate.Value);
+        }
+
+        var plannedRecords = await planQuery
+            .Select(plan => new
+            {
+                plan.AthleteId,
+                plan.Athlete.AthleteCode,
+                plan.Athlete.FullName,
+                plan.Athlete.Nickname,
+                plan.TrainingDate,
+            })
+            .ToListAsync();
+
+        var attendanceGroups = records
             .GroupBy(
                 r => PersonNameNormalizer.ToComparisonKey(r.Nickname ?? r.AthleteNameSnapshot),
                 StringComparer.Ordinal)
-            .Select(g => new AthleteAttendanceReportItemDto
+            .ToDictionary(group => group.Key, StringComparer.Ordinal);
+        var plannedGroups = plannedRecords
+            .GroupBy(
+                plan => PersonNameNormalizer.ToComparisonKey(plan.Nickname ?? plan.FullName),
+                StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, StringComparer.Ordinal);
+
+        var participantKeys = attendanceGroups.Keys
+            .Union(plannedGroups.Keys, StringComparer.Ordinal);
+        var items = participantKeys
+            .Select(participantKey =>
             {
-                AthleteId = g.Where(r => r.AthleteId.HasValue).Select(r => r.AthleteId).FirstOrDefault(),
-                IsGuest = g.All(r => r.AthleteId is null),
-                ParticipantKey = $"name-{g.Key}",
-                GuestPhone = g.Select(r => r.GuestPhone).FirstOrDefault(phone => !string.IsNullOrWhiteSpace(phone)),
-                AthleteCode = g.Select(r => r.AthleteCodeSnapshot).FirstOrDefault(code => !string.IsNullOrWhiteSpace(code)) ?? string.Empty,
-                FullName = PersonNameNormalizer.ToDisplayName(g.First().AthleteNameSnapshot),
-                Nickname = g.First().Nickname is null
-                    ? null
-                    : PersonNameNormalizer.ToDisplayName(g.First().Nickname!),
-                RoutineAttendanceCount = g.Count(r => r.TrainingType == TrainingType.Routine),
-                PrivateAttendanceCount = g.Count(r => r.TrainingType == TrainingType.Private),
-                Records = g
-                    .OrderByDescending(r => r.SessionDate)
-                    .Select(r => new AthleteAttendanceRecordDto
-                    {
-                        TrainingSessionId = r.TrainingSessionId,
-                        TrainingType = r.TrainingType,
-                        SessionDate = r.SessionDate,
-                        Status = r.Status,
-                        ArrivalTime = r.ArrivalTime,
-                        Remark = r.Remark,
-                    })
-                    .ToList(),
+                var attendanceGroup = attendanceGroups.TryGetValue(participantKey, out var attendance)
+                    ? attendance.ToList()
+                    : [];
+                var plannedGroup = plannedGroups.TryGetValue(participantKey, out var plans)
+                    ? plans.ToList()
+                    : [];
+                var registeredAttendance = attendanceGroup.FirstOrDefault(record => record.AthleteId.HasValue);
+                var firstPlan = plannedGroup.FirstOrDefault();
+                var nickname = registeredAttendance?.Nickname ?? firstPlan?.Nickname;
+                var fullName = registeredAttendance?.AthleteNameSnapshot
+                    ?? firstPlan?.FullName
+                    ?? attendanceGroup.First().AthleteNameSnapshot;
+
+                return new AthleteAttendanceReportItemDto
+                {
+                    AthleteId = registeredAttendance?.AthleteId ?? firstPlan?.AthleteId,
+                    IsGuest = firstPlan is null && attendanceGroup.All(record => record.AthleteId is null),
+                    ParticipantKey = $"name-{participantKey}",
+                    GuestPhone = attendanceGroup.Select(record => record.GuestPhone).FirstOrDefault(phone => !string.IsNullOrWhiteSpace(phone)),
+                    AthleteCode = registeredAttendance?.AthleteCodeSnapshot ?? firstPlan?.AthleteCode ?? string.Empty,
+                    FullName = PersonNameNormalizer.ToDisplayName(fullName),
+                    Nickname = nickname is null ? null : PersonNameNormalizer.ToDisplayName(nickname),
+                    RoutinePlannedDateCount = plannedGroup.Select(plan => plan.TrainingDate).Distinct().Count(),
+                    RoutineAttendanceCount = attendanceGroup.Count(record => record.TrainingType == TrainingType.Routine),
+                    PrivateAttendanceCount = attendanceGroup.Count(record => record.TrainingType == TrainingType.Private),
+                    Records = attendanceGroup
+                        .OrderByDescending(r => r.SessionDate)
+                        .Select(r => new AthleteAttendanceRecordDto
+                        {
+                            TrainingSessionId = r.TrainingSessionId,
+                            TrainingType = r.TrainingType,
+                            SessionDate = r.SessionDate,
+                            Status = r.Status,
+                            ArrivalTime = r.ArrivalTime,
+                            Remark = r.Remark,
+                        })
+                        .ToList(),
+                };
             })
             .OrderBy(i => i.Nickname ?? i.FullName)
             .ToList();

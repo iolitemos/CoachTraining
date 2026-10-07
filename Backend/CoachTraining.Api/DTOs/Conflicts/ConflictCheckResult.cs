@@ -5,6 +5,7 @@ public class ConflictDetail
 {
     public string ConflictType { get; set; } = string.Empty;
     public int ConflictingTrainingSessionId { get; set; }
+    public int? RoutineScheduleId { get; set; }
     public DateOnly SessionDate { get; set; }
     public DateTime ScheduledStartDateTime { get; set; }
     public DateTime ScheduledEndDateTime { get; set; }

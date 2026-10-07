@@ -5,6 +5,7 @@ using CoachTraining.Api.DTOs.PrivateSessions;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace CoachTraining.Api.Services;
 
@@ -292,9 +293,50 @@ public class PrivateSessionService : IPrivateSessionService
             return new PrivateSessionSaveResult { Error = "พบตารางฝึกซ้อมทับซ้อน", Conflicts = conflicts };
         }
 
+        var assignedCoachChanged = session.AssignedCoachId != coach.CoachId;
+        var previousAssignedCoachId = session.AssignedCoachId;
+        var previousAssignedCoachCode = session.AssignedCoachCodeSnapshot;
+        var previousAssignedCoachName = session.AssignedCoachNameSnapshot;
+        var previousActualCoachId = session.ActualCoachId;
+        var previousActualCoachCode = session.ActualCoachCodeSnapshot;
+        var previousActualCoachName = session.ActualCoachNameSnapshot;
+
         session.AssignedCoachId = coach.CoachId;
         session.AssignedCoachCodeSnapshot = coach.CoachCode;
         session.AssignedCoachNameSnapshot = coach.FullName;
+        if (assignedCoachChanged)
+        {
+            // Editing a still-Scheduled Private session to another assigned coach
+            // is a fresh assignment, not a substitution. Any previously staged
+            // Actual Coach must not continue to own the time slot invisibly.
+            session.ActualCoachId = null;
+            session.ActualCoachCodeSnapshot = null;
+            session.ActualCoachNameSnapshot = null;
+
+            _db.AuditLogs.Add(new AuditLog
+            {
+                EntityName = nameof(TrainingSession),
+                EntityId = session.TrainingSessionId,
+                Action = "ReassignCoach",
+                PreviousValue = JsonSerializer.Serialize(new
+                {
+                    AssignedCoachId = previousAssignedCoachId,
+                    AssignedCoachCode = previousAssignedCoachCode,
+                    AssignedCoachName = previousAssignedCoachName,
+                    ActualCoachId = previousActualCoachId,
+                    ActualCoachCode = previousActualCoachCode,
+                    ActualCoachName = previousActualCoachName,
+                }),
+                NewValue = JsonSerializer.Serialize(new
+                {
+                    AssignedCoachId = coach.CoachId,
+                    AssignedCoachCode = coach.CoachCode,
+                    AssignedCoachName = coach.FullName,
+                    ActualCoachId = (int?)null,
+                }),
+                ActionByUserId = actionByUserId,
+            });
+        }
         session.SessionDate = dto.SessionDate;
         session.ScheduledStartDateTime = scheduledStart;
         session.ScheduledEndDateTime = scheduledEnd;

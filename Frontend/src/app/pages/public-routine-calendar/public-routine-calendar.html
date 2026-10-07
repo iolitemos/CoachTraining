@@ -25,6 +25,11 @@
             <button type="button" class="flex min-h-16 flex-col items-stretch justify-start border-r border-t border-border p-1 text-left align-top sm:min-h-24" [class.opacity-40]="!day.isCurrentMonth" [class.bg-primary-50]="day.items.length > 0" [class.bg-amber-50]="day.items.length === 0 && day.competitionMatches.length > 0" [class.ring-2]="selectedDate() === day.isoDate" [class.ring-inset]="selectedDate() === day.isoDate" [class.ring-primary-600]="selectedDate() === day.isoDate" (click)="selectDay(day)">
               <span class="flex items-start justify-between text-xs"><span class="flex min-w-7 flex-col items-center rounded-lg px-1 py-0.5" [class.border-2]="day.isToday" [class.border-blue-600]="day.isToday" [class.bg-blue-50]="day.isToday"><span>{{ day.dayNumber }}</span>@if (day.isToday) { <span class="today-label mt-0.5 text-[8px] leading-none font-semibold text-blue-700">วันนี้</span> }</span><span class="flex items-center gap-1">@if (day.note) { <span class="inline-flex size-5 items-center justify-center rounded-full bg-warning text-[10px] font-bold text-white" title="มี Note">!</span> }@if (day.competitionMatches.length > 0) { <span title="วันแข่งขัน" aria-label="วันแข่งขัน">🏆</span> }</span></span>
               <div class="mt-1 space-y-1">@for (item of day.items; track item.trainingDate + item.startTime + item.coachNickname) { <span class="block truncate rounded px-1 py-0.5 text-[10px] text-white sm:text-xs" [style.background-color]="item.coachColorHex">{{ item.coachNickname | coachName }}</span> }</div>
+              @if (day.plannedAthleteCount > 0) {
+                <span class="mt-auto inline-flex items-center self-start rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-semibold text-violet-800 sm:text-[10px]" [attr.aria-label]="'นักกีฬาวางแผนมาเข้าซ้อม ' + day.plannedAthleteCount + ' คน'">
+                  👥 {{ day.plannedAthleteCount }}
+                </span>
+              }
             </button>
           }
         </div>
@@ -36,6 +41,16 @@
         }
         @if (selectedItems().length === 0) { <p class="mt-3 rounded-lg bg-secondary-50 p-4 text-center text-sm text-text-secondary">ไม่มีรอบฝึกซ้อมในวันนี้</p> }
         @else { <div class="mt-3 grid gap-2 sm:grid-cols-2">@for (item of selectedItems(); track item.startTime + item.coachNickname) { <article class="rounded-lg border border-border border-l-4 px-3 py-2" [style.border-left-color]="item.coachColorHex"><div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5"><p class="font-medium">{{ item.coachNickname | coachName }}</p><p class="text-sm text-text-secondary">{{ item.startTime.slice(0, 5) }}–{{ item.endTime.slice(0, 5) }} น.</p></div><p class="mt-1 text-[11px] leading-4 text-text-secondary">Latest Update: {{ item.latestUpdate | displayDateTime }}</p></article> }</div> }
+        @if (selectedPlannedAthleteNicknames().length > 0) {
+          <div class="mt-3 rounded-lg border border-violet-200 bg-violet-50 p-3">
+            <p class="text-sm font-semibold text-violet-900">นักกีฬาที่วางแผนมาเข้าซ้อม ({{ selectedPlannedAthleteNicknames().length }} คน)</p>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+              @for (nickname of selectedPlannedAthleteNicknames(); track $index) {
+                <span class="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-violet-800 ring-1 ring-violet-200">{{ nickname }}</span>
+              }
+            </div>
+          </div>
+        }
         @if (selectedAthleteNicknames().length > 0) {
           <div class="mt-3 rounded-lg border border-border bg-secondary-50 p-3">
             <p class="text-sm font-semibold text-text">นักกีฬาที่เข้าร่วม</p>

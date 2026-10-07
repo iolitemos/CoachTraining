@@ -32,6 +32,9 @@ public class AthleteAttendanceReportItemDto
     public string FullName { get; set; } = string.Empty;
     public string? Nickname { get; set; }
 
+    /// <summary>Distinct Routine Training dates explicitly selected in the athlete's participation plan.</summary>
+    public int RoutinePlannedDateCount { get; set; }
+
     /// <summary>Explicitly recorded participation only. Present and Late both count
     /// as attendance; Absent and Excused are not participation records in this report.</summary>
     public int RoutineAttendanceCount { get; set; }

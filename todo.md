@@ -357,6 +357,8 @@
 - [x] Derive Routine Schedule display name from its selected training date without recurrence.
 - [x] Validate Routine schedule coach conflicts before save.
 - [x] Generate exactly one Routine Training Session for the selected schedule date.
+- [x] Prevent Routine Schedule creation from succeeding without its required Training Session when an existing coach session conflicts.
+- [x] Repair historical non-deleted Routine Schedules that never received a Training Session, without recreating intentionally soft-deleted sessions.
 - [x] Ensure schedule edits do not modify completed historical sessions.
 - [x] Ensure generated Routine sessions are identified as Routine throughout queries and reports.
 - [x] Confirm Routine APIs do not expose Group, Team, or Location fields.
@@ -370,6 +372,8 @@
 - [x] Add API to get Private Training detail.
 - [x] Add API to create Private Training session.
 - [x] Add API to update future Private Training session.
+- [x] Treat changing the Assigned Coach on a Scheduled Private session as a fresh reassignment, clear stale Actual Coach data, and record an audit entry.
+- [x] Repair existing Scheduled Private sessions whose latest substitution no longer matches the edited Assigned Coach, with migration audit history.
 - [x] Validate exactly one assigned coach.
 - [x] Validate at least one assigned athlete.
 - [x] Support multiple athlete assignments.
@@ -498,6 +502,8 @@
 - [x] Detect overlapping sessions for the same coach.
 - [x] Detect overlapping Private sessions for the same athlete.
 - [x] Detect Private Training overlap with the coach's Routine Training. <!-- CheckCoachOverlapAsync queries all TrainingSessions regardless of type -->
+- [x] Use the Actual Coach as the effective conflict owner after substitution instead of continuing to block the originally assigned Coach.
+- [x] Include the conflicting session number, training type, status, and assigned/actual Coach context in coach-conflict feedback.
 - [x] Reuse conflict validation for routine create/update.
 - [x] Reuse conflict validation for private create/update.
 - [x] Reuse conflict validation for substitution.
@@ -580,6 +586,7 @@
 - [x] Do not infer Routine absence from non-selection.
 - [x] Exclude duplicate counts caused by rescheduled-original sessions. <!-- Rescheduled-status sessions excluded from the query entirely -->
 - [x] Group Athlete Attendance report rows and detail history by normalized displayed athlete name, including repeat temporary participants.
+- [ ] Split Athlete Attendance reporting into Routine and Private views and add Routine planned-date counts, including athletes with plans but no recorded attendance. <!-- Implemented; all 279 backend tests, backend build, and all frontend tests pass. Awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
 
 ### 4.20 History and Audit Backend
 
@@ -902,6 +909,7 @@
 - [x] Add date-by-athlete attendance matrix tables with daily totals, period totals, and coach names for Routine and Private Training on the Administrator Dashboard.
 - [x] Group Administrator Dashboard attendance summaries and daily matrices by displayed athlete name, combining attendance totals when names match.
 - [x] Show Routine athlete attendance as progress bars whose maximum is the number of distinct dates with at least one Coach teaching in the filtered date range.
+- [ ] Display one smile emoji per attendance occurrence in Administrator Dashboard attendance matrix cells, with accessible count labels. <!-- Implemented and targeted tests pass; awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
 
 ### 5.15 Coach Teaching-Hour Report Frontend
 
@@ -938,6 +946,7 @@
 - [x] Show participation-only summaries, athlete nickname followed by full name, and default filters to the current month as requested by the user.
 - [x] Use a compact athlete summary table with on-demand expandable attendance history.
 - [x] Present athlete attendance details in a responsive monthly calendar modal, including a seven-day mobile calendar with green Routine and blue Private markers.
+- [ ] Add Routine and Private tabs to the Athlete Attendance Report and show planned dates versus actual Routine attendance. <!-- Implemented; frontend tests pass. Awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
 
 ### 5.17 History and Audit Frontend
 
@@ -972,6 +981,7 @@
 - [x] Add shared daily Calendar Notes with Administrator management, read-only Coach/public visibility, and clickable `!` indicators on Routine, Private, Coach, and public calendars.
 - [x] Add backend tests for token rotation, invalidation, enable/disable behavior, stable-link recovery, date-range validation, and public projection.
 - [x] Pass backend tests and backend/frontend production builds.
+- [ ] Show per-date planned-athlete counts and nickname-only planned-athlete lists on the public Routine calendar. <!-- Implemented; targeted frontend tests, all 278 backend tests, and backend build pass. Awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
 
 ### 5.19 Parent Routine Participation Planning
 

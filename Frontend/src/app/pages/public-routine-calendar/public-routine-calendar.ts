@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PublicCalendarNote, PublicCompetitionMatch, PublicRoutineAttendanceItem, PublicRoutineCalendarItem, PublicRoutineDailyAttendance } from '../../models/public-routine-calendar.model';
+import { PublicCalendarNote, PublicCompetitionMatch, PublicRoutineAttendanceItem, PublicRoutineCalendarItem, PublicRoutineDailyAttendance, PublicRoutineDailyPlan } from '../../models/public-routine-calendar.model';
 import { PublicRoutineCalendarService } from '../../services/public-routine-calendar.service';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
 import { DisplayDateTimePipe } from '../../shared/display-date-time/display-date-time.pipe';
@@ -8,7 +8,7 @@ import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
 import { CalendarNoteDialog } from '../../shared/calendar-note-dialog/calendar-note-dialog';
 
 type ViewState = 'loading' | 'ready' | 'error' | 'invalid';
-interface CalendarDay { isoDate: string; dayNumber: number; isCurrentMonth: boolean; isToday: boolean; items: PublicRoutineCalendarItem[]; competitionMatches: PublicCompetitionMatch[]; note: PublicCalendarNote | null; }
+interface CalendarDay { isoDate: string; dayNumber: number; isCurrentMonth: boolean; isToday: boolean; items: PublicRoutineCalendarItem[]; competitionMatches: PublicCompetitionMatch[]; note: PublicCalendarNote | null; plannedAthleteCount: number; }
 const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 @Component({
@@ -23,6 +23,7 @@ export class PublicRoutineCalendar implements OnInit {
   notes = signal<PublicCalendarNote[]>([]);
   attendanceSummary = signal<PublicRoutineAttendanceItem[]>([]);
   dailyAttendance = signal<PublicRoutineDailyAttendance[]>([]);
+  dailyPlannedAttendance = signal<PublicRoutineDailyPlan[]>([]);
   noteDialogOpen = signal(false);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
@@ -45,6 +46,8 @@ export class PublicRoutineCalendar implements OnInit {
           .sort(compareRoutineCalendarItems),
         competitionMatches: this.competitionMatches().filter(match => match.startDate <= isoDate && isoDate <= match.endDate),
         note: this.notes().find(note => note.noteDate === isoDate) ?? null,
+        plannedAthleteCount: this.dailyPlannedAttendance()
+          .find(plan => plan.trainingDate === isoDate)?.athleteNicknames.length ?? 0,
       };
     });
   });
@@ -56,6 +59,8 @@ export class PublicRoutineCalendar implements OnInit {
   totalAttendance = computed(() => this.attendanceSummary().reduce((total, athlete) => total + athlete.attendanceCount, 0));
   selectedAthleteNicknames = computed(() => this.dailyAttendance()
     .find(attendance => attendance.trainingDate === this.selectedDate())?.athleteNicknames ?? []);
+  selectedPlannedAthleteNicknames = computed(() => this.dailyPlannedAttendance()
+    .find(plan => plan.trainingDate === this.selectedDate())?.athleteNicknames ?? []);
 
   private readonly token: string;
   constructor(route: ActivatedRoute, private readonly service: PublicRoutineCalendarService) {
@@ -75,6 +80,7 @@ export class PublicRoutineCalendar implements OnInit {
       this.notes.set(data.notes ?? []);
       this.attendanceSummary.set(data.attendanceSummary ?? []);
       this.dailyAttendance.set(data.dailyAttendance ?? []);
+      this.dailyPlannedAttendance.set(data.dailyPlannedAttendance ?? []);
       this.state.set('ready');
     }
     catch (error: unknown) {

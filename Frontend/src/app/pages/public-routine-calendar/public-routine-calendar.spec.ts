@@ -25,4 +25,18 @@ describe('PublicRoutineCalendar', () => {
 
     expect(component.selectedAthleteNicknames()).toEqual(['สอง', 'สาม']);
   });
+
+  it('returns planned athlete nicknames and count for each selected calendar date', () => {
+    const route = { snapshot: { paramMap: { get: () => 'token' } } };
+    const component = new PublicRoutineCalendar(route as never, null!);
+    component.visibleMonth.set(new Date(2026, 8, 1));
+    component.selectedDate.set('2026-09-02');
+    component.dailyPlannedAttendance.set([
+      { trainingDate: '2026-09-01', athleteNicknames: ['หนึ่ง'] },
+      { trainingDate: '2026-09-02', athleteNicknames: ['สอง', 'สาม'] },
+    ]);
+
+    expect(component.selectedPlannedAthleteNicknames()).toEqual(['สอง', 'สาม']);
+    expect(component.calendarDays().find(day => day.isoDate === '2026-09-02')?.plannedAthleteCount).toBe(2);
+  });
 });

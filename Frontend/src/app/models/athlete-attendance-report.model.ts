@@ -22,6 +22,7 @@ export interface AthleteAttendanceReportItem {
   athleteCode: string;
   fullName: string;
   nickname: string | null;
+  routinePlannedDateCount: number;
   routineAttendanceCount: number;
   privateAttendanceCount: number;
   records: AthleteAttendanceRecord[];

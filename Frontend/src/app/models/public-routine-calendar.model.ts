@@ -31,12 +31,18 @@ export interface PublicRoutineDailyAttendance {
   athleteNicknames: string[];
 }
 
+export interface PublicRoutineDailyPlan {
+  trainingDate: string;
+  athleteNicknames: string[];
+}
+
 export interface PublicRoutineCalendarData {
   schedules: PublicRoutineCalendarItem[];
   competitionMatches: PublicCompetitionMatch[];
   notes: PublicCalendarNote[];
   attendanceSummary: PublicRoutineAttendanceItem[];
   dailyAttendance: PublicRoutineDailyAttendance[];
+  dailyPlannedAttendance: PublicRoutineDailyPlan[];
 }
 
 export interface RoutineCalendarShareStatus {

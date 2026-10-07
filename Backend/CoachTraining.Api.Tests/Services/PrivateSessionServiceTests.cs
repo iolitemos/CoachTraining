@@ -356,4 +356,68 @@ public class PrivateSessionServiceTests
         var assignmentCount = await db.PrivateSessionAthletes.CountAsync(psa => psa.TrainingSessionId == created.Session.TrainingSessionId);
         Assert.Equal(1, assignmentCount);
     }
+
+    [Fact]
+    public async Task UpdateAsync_WhenAssignedCoachChanges_ClearsStaleActualCoachAndReleasesOriginalCoach()
+    {
+        using var db = TestDbContextFactory.Create();
+        var originalCoach = await SeedCoachAsync(db, "MOSS");
+        var replacementCoach = await SeedCoachAsync(db, "NEW");
+        var athlete = await SeedAthleteAsync(db);
+        var service = CreateService(db);
+        var date = new DateOnly(2026, 10, 8);
+
+        var created = await service.CreateAsync(
+            BuildCreateDto(
+                originalCoach.CoachId,
+                [athlete.AthleteId],
+                date,
+                new TimeOnly(18, 30),
+                new TimeOnly(20, 30)),
+            actionByUserId: 1);
+
+        var session = await db.TrainingSessions.SingleAsync();
+        session.ActualCoachId = originalCoach.CoachId;
+        session.ActualCoachCodeSnapshot = originalCoach.CoachCode;
+        session.ActualCoachNameSnapshot = originalCoach.FullName;
+        await db.SaveChangesAsync();
+
+        var result = await service.UpdateAsync(
+            created.Session!.TrainingSessionId,
+            new PrivateSessionUpdateDto
+            {
+                CoachId = replacementCoach.CoachId,
+                AthleteIds = [athlete.AthleteId],
+                SessionDate = date,
+                StartTime = new TimeOnly(18, 30),
+                EndTime = new TimeOnly(20, 30),
+            },
+            actionByUserId: 7);
+
+        Assert.Null(result.Error);
+        var updated = await db.TrainingSessions.AsNoTracking().SingleAsync();
+        Assert.Equal(replacementCoach.CoachId, updated.AssignedCoachId);
+        Assert.Null(updated.ActualCoachId);
+        Assert.Null(updated.ActualCoachCodeSnapshot);
+        Assert.Null(updated.ActualCoachNameSnapshot);
+
+        var originalCoachConflicts = await new ScheduleConflictService(db).CheckCoachOverlapAsync(
+            originalCoach.CoachId,
+            date.ToDateTime(new TimeOnly(18, 30)),
+            date.ToDateTime(new TimeOnly(20, 30)));
+        Assert.Empty(originalCoachConflicts);
+
+        var replacementCoachConflicts = await new ScheduleConflictService(db).CheckCoachOverlapAsync(
+            replacementCoach.CoachId,
+            date.ToDateTime(new TimeOnly(18, 30)),
+            date.ToDateTime(new TimeOnly(20, 30)));
+        Assert.Single(replacementCoachConflicts);
+
+        var audit = await db.AuditLogs.SingleAsync();
+        Assert.Equal("ReassignCoach", audit.Action);
+        Assert.Equal(created.Session.TrainingSessionId, audit.EntityId);
+        Assert.Equal(7, audit.ActionByUserId);
+        Assert.Contains($"\"AssignedCoachId\":{originalCoach.CoachId}", audit.PreviousValue);
+        Assert.Contains($"\"AssignedCoachId\":{replacementCoach.CoachId}", audit.NewValue);
+    }
 }

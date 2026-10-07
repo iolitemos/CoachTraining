@@ -124,6 +124,56 @@ public class ScheduleConflictServiceTests
     }
 
     [Fact]
+    public async Task CheckCoachOverlapAsync_WhenSubstituteAssigned_DoesNotBlockOriginalCoach()
+    {
+        using var db = TestDbContextFactory.Create();
+        var assignedCoach = await SeedCoachAsync(db, "C001");
+        var actualCoach = await SeedCoachAsync(db, "C002");
+        var date = new DateOnly(2026, 10, 8);
+        var session = BuildSession(assignedCoach, date, new TimeOnly(18, 30), new TimeOnly(20, 30));
+        session.ActualCoachId = actualCoach.CoachId;
+        session.ActualCoachCodeSnapshot = actualCoach.CoachCode;
+        session.ActualCoachNameSnapshot = actualCoach.FullName;
+        db.TrainingSessions.Add(session);
+        await db.SaveChangesAsync();
+
+        var service = new ScheduleConflictService(db);
+        var conflicts = await service.CheckCoachOverlapAsync(
+            assignedCoach.CoachId,
+            date.ToDateTime(new TimeOnly(18, 30)),
+            date.ToDateTime(new TimeOnly(20, 30)));
+
+        Assert.Empty(conflicts);
+    }
+
+    [Fact]
+    public async Task CheckCoachOverlapAsync_WhenSubstituteAssigned_BlocksActualCoachWithTraceableMessage()
+    {
+        using var db = TestDbContextFactory.Create();
+        var assignedCoach = await SeedCoachAsync(db, "C001");
+        var actualCoach = await SeedCoachAsync(db, "C002");
+        var date = new DateOnly(2026, 10, 8);
+        var session = BuildSession(assignedCoach, date, new TimeOnly(18, 30), new TimeOnly(20, 30));
+        session.ActualCoachId = actualCoach.CoachId;
+        session.ActualCoachCodeSnapshot = actualCoach.CoachCode;
+        session.ActualCoachNameSnapshot = actualCoach.FullName;
+        db.TrainingSessions.Add(session);
+        await db.SaveChangesAsync();
+
+        var service = new ScheduleConflictService(db);
+        var conflicts = await service.CheckCoachOverlapAsync(
+            actualCoach.CoachId,
+            date.ToDateTime(new TimeOnly(18, 30)),
+            date.ToDateTime(new TimeOnly(20, 30)));
+
+        var conflict = Assert.Single(conflicts);
+        Assert.Contains($"#{session.TrainingSessionId}", conflict.Message);
+        Assert.Contains("ผู้สอนจริง", conflict.Message);
+        Assert.Contains(actualCoach.FullName, conflict.Message);
+        Assert.Contains(assignedCoach.FullName, conflict.Message);
+    }
+
+    [Fact]
     public async Task CheckRoutineTemplateOverlapAsync_WithSameDateAndOverlappingTime_ReturnsConflict()
     {
         using var db = TestDbContextFactory.Create();

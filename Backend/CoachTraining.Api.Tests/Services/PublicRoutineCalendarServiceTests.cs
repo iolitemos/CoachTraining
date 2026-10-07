@@ -181,6 +181,34 @@ public class PublicRoutineCalendarServiceTests
     }
 
     [Fact]
+    public async Task GetCalendarAsync_ReturnsActiveAthleteNicknamesPlannedForEachDate()
+    {
+        using var db = TestDbContextFactory.Create();
+        var firstAthlete = new Athlete { AthleteCode = "A001", FullName = "Athlete One", Nickname = "หนึ่ง", IsActive = true };
+        var secondAthlete = new Athlete { AthleteCode = "A002", FullName = "Athlete Two", Nickname = "สอง", IsActive = true };
+        var inactiveAthlete = new Athlete { AthleteCode = "A003", FullName = "Inactive Athlete", Nickname = "ไม่แสดง", IsActive = false };
+        db.Athletes.AddRange(firstAthlete, secondAthlete, inactiveAthlete);
+        await db.SaveChangesAsync();
+
+        var trainingDate = new DateOnly(2026, 9, 12);
+        db.RoutineParticipationPlans.AddRange(
+            new RoutineParticipationPlan { AthleteId = secondAthlete.AthleteId, TrainingDate = trainingDate },
+            new RoutineParticipationPlan { AthleteId = firstAthlete.AthleteId, TrainingDate = trainingDate },
+            new RoutineParticipationPlan { AthleteId = inactiveAthlete.AthleteId, TrainingDate = trainingDate },
+            new RoutineParticipationPlan { AthleteId = firstAthlete.AthleteId, TrainingDate = trainingDate.AddMonths(1) });
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db);
+        var link = await service.RotateLinkAsync(7);
+
+        var result = await service.GetCalendarAsync(link.Token, new DateOnly(2026, 9, 1), new DateOnly(2026, 9, 30));
+
+        var dailyPlan = Assert.Single(result!.DailyPlannedAttendance);
+        Assert.Equal(trainingDate, dailyPlan.TrainingDate);
+        Assert.Equal(["หนึ่ง", "สอง"], dailyPlan.AthleteNicknames);
+    }
+
+    [Fact]
     public async Task GetCalendarAsync_RejectsRangeLongerThanSixtyThreeDays()
     {
         using var db = TestDbContextFactory.Create();

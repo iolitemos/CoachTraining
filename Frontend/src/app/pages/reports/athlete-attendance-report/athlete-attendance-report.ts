@@ -18,6 +18,7 @@ import { DateInput } from '../../../shared/date-input/date-input';
 import { FilterStateService } from '../../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
+type AttendanceReportTab = 'Routine' | 'Private';
 
 interface AttendanceCalendarDay {
   isoDate: string;
@@ -58,6 +59,13 @@ export class AthleteAttendanceReport implements OnInit {
   readonly athletePickerLabel = athletePickerLabel;
   state = signal<ViewState>('loading');
   report = signal<AthleteAttendanceReportResponse | null>(null);
+  activeTrainingType = signal<AttendanceReportTab>('Routine');
+  visibleItems = computed(() => {
+    const items = this.report()?.items ?? [];
+    return this.activeTrainingType() === 'Routine'
+      ? items.filter((item) => item.routinePlannedDateCount > 0 || item.routineAttendanceCount > 0)
+      : items.filter((item) => item.privateAttendanceCount > 0);
+  });
   calendarAthlete = signal<AthleteAttendanceReportItem | null>(null);
   calendarMonth = signal(new Date());
   readonly weekdayLabels = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
@@ -76,7 +84,8 @@ export class AthleteAttendanceReport implements OnInit {
         dayNumber: date.getDate(),
         inCurrentMonth: date.getMonth() === monthIndex,
         isToday: isoDate === this.formatLocalDate(new Date()),
-        records: athlete?.records.filter((record) => record.sessionDate === isoDate) ?? [],
+        records: athlete?.records.filter((record) =>
+          record.sessionDate === isoDate && record.trainingType === this.activeTrainingType()) ?? [],
       };
     });
   });
@@ -144,6 +153,11 @@ export class AthleteAttendanceReport implements OnInit {
     void this.load();
   }
 
+  selectTrainingType(trainingType: AttendanceReportTab): void {
+    this.activeTrainingType.set(trainingType);
+    this.closeCalendar();
+  }
+
   async searchAthletes(): Promise<void> {
     this.athleteSearching.set(true);
     this.athleteSearchError.set(null);
@@ -184,9 +198,15 @@ export class AthleteAttendanceReport implements OnInit {
 
   openCalendar(item: AthleteAttendanceReportItem): void {
     this.calendarAthlete.set(item);
-    const initialDate = item.records[0]?.sessionDate ?? this.startDate;
+    const initialDate = item.records.find((record) => record.trainingType === this.activeTrainingType())?.sessionDate ?? this.startDate;
     const [year, month] = initialDate.split('-').map(Number);
     this.calendarMonth.set(new Date(year, month - 1, 1));
+  }
+
+  activeAttendanceCount(item: AthleteAttendanceReportItem): number {
+    return this.activeTrainingType() === 'Routine'
+      ? item.routineAttendanceCount
+      : item.privateAttendanceCount;
   }
 
   closeCalendar(): void {

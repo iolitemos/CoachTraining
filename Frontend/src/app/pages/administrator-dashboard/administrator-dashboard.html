@@ -194,7 +194,7 @@
                           @for (athlete of matrix.data.athletes; track athlete.athleteId) {
                             @if (attendanceCount(day.attendances, athlete.athleteId); as count) {
                               <span class="rounded-md bg-secondary-100 px-2 py-1 text-xs text-text">
-                                {{ athlete.athleteName }}<span class="ml-1 font-semibold">{{ count === 1 ? '😊' : count }}</span>
+                                {{ athlete.athleteName }}<span class="ml-1 font-semibold" [attr.aria-label]="'เข้าร่วม ' + count + ' ครั้ง'"><span aria-hidden="true">{{ attendanceEmoji(count) }}</span></span>
                               </span>
                             }
                           }
@@ -238,7 +238,7 @@
                             @for (athlete of matrix.data.athletes; track athlete.athleteId) {
                               <td class="border-r border-b border-border px-3 py-2 font-medium text-text">
                                 @if (attendanceCount(day.attendances, athlete.athleteId); as count) {
-                                  <span [attr.aria-label]="count === 1 ? 'เข้าร่วม 1 ครั้ง' : null">{{ count === 1 ? '😊' : count }}</span>
+                                  <span [attr.aria-label]="'เข้าร่วม ' + count + ' ครั้ง'"><span aria-hidden="true">{{ attendanceEmoji(count) }}</span></span>
                                 }
                               </td>
                             }

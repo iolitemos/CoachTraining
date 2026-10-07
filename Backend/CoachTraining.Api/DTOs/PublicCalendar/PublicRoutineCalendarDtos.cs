@@ -32,12 +32,15 @@ public record PublicRoutineAttendanceItemDto(string AthleteName, int AttendanceC
 
 public record PublicRoutineDailyAttendanceDto(DateOnly TrainingDate, IReadOnlyList<string> AthleteNicknames);
 
+public record PublicRoutineDailyPlanDto(DateOnly TrainingDate, IReadOnlyList<string> AthleteNicknames);
+
 public record PublicRoutineCalendarDto(
     IReadOnlyList<PublicRoutineCalendarItemDto> Schedules,
     IReadOnlyList<PublicCompetitionMatchDto> CompetitionMatches,
     IReadOnlyList<PublicCalendarNoteDto> Notes,
     IReadOnlyList<PublicRoutineAttendanceItemDto> AttendanceSummary,
-    IReadOnlyList<PublicRoutineDailyAttendanceDto> DailyAttendance);
+    IReadOnlyList<PublicRoutineDailyAttendanceDto> DailyAttendance,
+    IReadOnlyList<PublicRoutineDailyPlanDto> DailyPlannedAttendance);
 
 public record RoutineCalendarShareStatusDto(
     bool Exists,
