@@ -1,4 +1,5 @@
 using CoachTraining.Api.Data;
+using CoachTraining.Api.DTOs.Athletes;
 using CoachTraining.Api.DTOs.RoutineAttendance;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
@@ -21,16 +22,8 @@ public class RoutineAttendanceService : IRoutineAttendanceService
 
     public async Task<List<RoutineAttendanceListItemDto>?> ListAsync(int trainingSessionId, bool isPrivilegedRole, int? currentCoachId)
     {
-        var session = await _db.TrainingSessions.FirstOrDefaultAsync(s => s.TrainingSessionId == trainingSessionId);
-        if (session is null || session.TrainingType != TrainingType.Routine)
-        {
-            return null;
-        }
-
-        if (!isPrivilegedRole && session.AssignedCoachId != currentCoachId && session.ActualCoachId != currentCoachId)
-        {
-            return null;
-        }
+        var session = await LoadAccessibleRoutineSessionAsync(trainingSessionId, isPrivilegedRole, currentCoachId);
+        if (session is null) return null;
 
         return await _db.Attendances
             .Where(a => a.TrainingSessionId == trainingSessionId)
@@ -46,6 +39,27 @@ public class RoutineAttendanceService : IRoutineAttendanceService
                 ArrivalTime = a.ArrivalTime,
                 Remark = a.Remark,
                 RecordedDate = a.RecordedDate,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<AthleteOptionDto>?> ListPlannedAthletesAsync(int trainingSessionId, bool isPrivilegedRole, int? currentCoachId)
+    {
+        var session = await LoadAccessibleRoutineSessionAsync(trainingSessionId, isPrivilegedRole, currentCoachId);
+        if (session is null) return null;
+
+        // FR-PARENT-PLAN-008 / FR-RATT-003: these rows are suggestions only.
+        // Reading them must never create Attendance or infer absence.
+        return await _db.RoutineParticipationPlans.AsNoTracking()
+            .Where(plan => plan.TrainingDate == session.SessionDate && plan.Athlete.IsActive)
+            .OrderBy(plan => plan.Athlete.AthleteCode)
+            .Select(plan => new AthleteOptionDto
+            {
+                AthleteId = plan.AthleteId,
+                AthleteCode = plan.Athlete.AthleteCode,
+                FullName = plan.Athlete.FullName,
+                Nickname = plan.Athlete.Nickname,
+                AthleteType = plan.Athlete.AthleteType,
             })
             .ToListAsync();
     }
@@ -184,6 +198,16 @@ public class RoutineAttendanceService : IRoutineAttendanceService
         }
 
         return (session, null);
+    }
+
+    private async Task<TrainingSession?> LoadAccessibleRoutineSessionAsync(int trainingSessionId, bool isPrivilegedRole, int? currentCoachId)
+    {
+        var session = await _db.TrainingSessions.AsNoTracking()
+            .FirstOrDefaultAsync(item => item.TrainingSessionId == trainingSessionId);
+        if (session is null || session.TrainingType != TrainingType.Routine) return null;
+        return isPrivilegedRole || session.AssignedCoachId == currentCoachId || session.ActualCoachId == currentCoachId
+            ? session
+            : null;
     }
 
     private static RoutineAttendanceListItemDto MapToListItem(Attendance attendance) => new()

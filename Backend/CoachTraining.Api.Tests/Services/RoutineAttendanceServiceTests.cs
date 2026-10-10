@@ -230,6 +230,46 @@ public class RoutineAttendanceServiceTests
     }
 
     [Fact]
+    public async Task ListPlannedAthletesAsync_ReturnsOnlyActivePlansForSessionDateWithoutCreatingAttendance()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var plannedAthlete = await SeedAthleteAsync(db, "A001");
+        var inactiveAthlete = await SeedAthleteAsync(db, "A002", isActive: false);
+        var otherDateAthlete = await SeedAthleteAsync(db, "A003");
+        var session = await SeedSessionAsync(db, coach);
+        db.RoutineParticipationPlans.AddRange(
+            new RoutineParticipationPlan { AthleteId = plannedAthlete.AthleteId, TrainingDate = session.SessionDate },
+            new RoutineParticipationPlan { AthleteId = inactiveAthlete.AthleteId, TrainingDate = session.SessionDate },
+            new RoutineParticipationPlan { AthleteId = otherDateAthlete.AthleteId, TrainingDate = session.SessionDate.AddDays(1) });
+        await db.SaveChangesAsync();
+        var service = CreateService(db);
+
+        var planned = await service.ListPlannedAthletesAsync(
+            session.TrainingSessionId, isPrivilegedRole: false, currentCoachId: coach.CoachId);
+
+        var athlete = Assert.Single(planned!);
+        Assert.Equal(plannedAthlete.AthleteId, athlete.AthleteId);
+        Assert.Equal(plannedAthlete.AthleteCode, athlete.AthleteCode);
+        Assert.Empty(db.Attendances);
+    }
+
+    [Fact]
+    public async Task ListPlannedAthletesAsync_AsUnauthorizedCoach_ReturnsNull()
+    {
+        using var db = TestDbContextFactory.Create();
+        var assignedCoach = await SeedCoachAsync(db, "C001");
+        var otherCoach = await SeedCoachAsync(db, "C002");
+        var session = await SeedSessionAsync(db, assignedCoach);
+        var service = CreateService(db);
+
+        var planned = await service.ListPlannedAthletesAsync(
+            session.TrainingSessionId, isPrivilegedRole: false, currentCoachId: otherCoach.CoachId);
+
+        Assert.Null(planned);
+    }
+
+    [Fact]
     public async Task UpdateAsync_ChangesStatusFromLateToPresent()
     {
         using var db = TestDbContextFactory.Create();

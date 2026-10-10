@@ -1,4 +1,5 @@
 using CoachTraining.Api.DTOs.RoutineAttendance;
+using CoachTraining.Api.DTOs.Athletes;
 
 namespace CoachTraining.Api.Services;
 
@@ -11,6 +12,13 @@ public interface IRoutineAttendanceService
 {
     /// <summary>Null means the session doesn't exist, isn't Routine, or isn't this Coach's.</summary>
     Task<List<RoutineAttendanceListItemDto>?> ListAsync(int trainingSessionId, bool isPrivilegedRole, int? currentCoachId);
+
+    /// <summary>
+    /// Returns active athletes who explicitly planned to attend on the Routine
+    /// session date. These are selection suggestions only and are never
+    /// Attendance records until the Coach confirms an athlete.
+    /// </summary>
+    Task<List<AthleteOptionDto>?> ListPlannedAthletesAsync(int trainingSessionId, bool isPrivilegedRole, int? currentCoachId);
 
     Task<RoutineAttendanceActionResult> AddAsync(int trainingSessionId, RoutineAttendanceCreateDto dto, bool isPrivilegedRole, int? currentCoachId, int actionByUserId);
 

@@ -7,6 +7,43 @@
     ค้นหาและเพิ่มเฉพาะนักกีฬาที่มาฝึกซ้อมจริง ระบบจะไม่ถือว่านักกีฬาที่ไม่ได้เลือกขาดฝึกซ้อม
   </p>
 
+  @if (state() === 'ready' && plannedAthletes().length > 0) {
+    <section class="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3" aria-labelledby="planned-athletes-heading">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h4 id="planned-athletes-heading" class="text-sm font-semibold text-blue-950">นักกีฬาที่ลงแผนเข้าซ้อมวันนี้</h4>
+          <p class="mt-0.5 text-xs text-blue-800">รายชื่อนี้เป็นตัวเลือกเท่านั้น กดยืนยันเฉพาะคนที่มาเรียนจริง</p>
+        </div>
+        <span class="rounded-full bg-blue-200 px-2.5 py-1 text-xs font-semibold text-blue-900">{{ plannedAthletes().length }} คน</span>
+      </div>
+      <ul class="mt-3 grid gap-2 sm:grid-cols-2">
+        @for (athlete of plannedAthletes(); track athlete.athleteId) {
+          <li class="flex min-h-12 items-center justify-between gap-3 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm">
+            <span class="min-w-0 break-words font-medium text-text">{{ athletePickerLabel(athlete) }}</span>
+            @if (isAdded(athlete.athleteId)) {
+              <span class="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success">
+                <svg lucideCircleCheckBig [size]="15"></svg>
+                เช็คชื่อแล้ว
+              </span>
+            } @else if (readOnly()) {
+              <span class="shrink-0 text-xs text-text-secondary">ไม่ได้บันทึกว่ามา</span>
+            } @else {
+              <button
+                type="button"
+                (click)="confirmPlannedAthlete(athlete)"
+                [disabled]="adding()"
+                class="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+              >
+                <svg lucideCircleCheckBig [size]="14"></svg>
+                ยืนยันว่ามา
+              </button>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
   @if (!readOnly()) {
     <div class="mt-3 flex min-w-0 items-center gap-2">
       <div class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg border border-border px-3 py-2">

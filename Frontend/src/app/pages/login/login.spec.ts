@@ -60,4 +60,16 @@ describe('Login', () => {
     expect(linkedButtons[0].nativeElement.textContent).toContain('ลืมรหัสผ่าน');
     expect(linkedButtons[0].injector.get(RouterLink).urlTree?.toString()).toBe('/forgot-password');
   });
+
+  it('should present table-tennis context in the mobile hero', () => {
+    fixture.detectChanges();
+
+    const mobileHero = fixture.nativeElement.querySelector('.login-mobile-hero') as HTMLElement;
+    const heroImage = mobileHero.querySelector('img') as HTMLImageElement;
+
+    expect(mobileHero.textContent).toContain('TABLE TENNIS');
+    expect(mobileHero.textContent).toContain('พร้อมลงสนาม');
+    expect(heroImage.getAttribute('src')).toBe('/table-tennis-login-hero.jpg');
+    expect(heroImage.getAttribute('alt')).toBe('');
+  });
 });

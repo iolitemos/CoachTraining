@@ -1,6 +1,6 @@
 import { Component, OnChanges, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideSearch, LucideTrash2, LucideUserPlus } from '@lucide/angular';
+import { LucideCircleCheckBig, LucideSearch, LucideTrash2, LucideUserPlus } from '@lucide/angular';
 import { LoadingIndicator } from '../loading-indicator/loading-indicator';
 import { ErrorState } from '../error-state/error-state';
 import { ConfirmationDialog } from '../confirmation-dialog/confirmation-dialog';
@@ -19,7 +19,7 @@ type ViewState = 'loading' | 'error' | 'ready';
  */
 @Component({
   selector: 'app-routine-attendance',
-  imports: [FormsModule, LoadingIndicator, ErrorState, ConfirmationDialog, LucideSearch, LucideUserPlus, LucideTrash2, DisplayDateTimePipe],
+  imports: [FormsModule, LoadingIndicator, ErrorState, ConfirmationDialog, LucideCircleCheckBig, LucideSearch, LucideUserPlus, LucideTrash2, DisplayDateTimePipe],
   templateUrl: './routine-attendance.html',
   styleUrl: './routine-attendance.css',
 })
@@ -30,6 +30,7 @@ export class RoutineAttendance implements OnChanges {
 
   state = signal<ViewState>('loading');
   attendees = signal<RoutineAttendanceItem[]>([]);
+  plannedAthletes = signal<AthleteOption[]>([]);
   savingIds = signal<Set<number>>(new Set());
   actionError = signal<string | null>(null);
 
@@ -54,7 +55,12 @@ export class RoutineAttendance implements OnChanges {
   async load(): Promise<void> {
     this.state.set('loading');
     try {
-      this.attendees.set(await this.routineAttendanceService.list(this.trainingSessionId()));
+      const [attendees, plannedAthletes] = await Promise.all([
+        this.routineAttendanceService.list(this.trainingSessionId()),
+        this.routineAttendanceService.listPlannedAthletes(this.trainingSessionId()),
+      ]);
+      this.attendees.set(attendees);
+      this.plannedAthletes.set(plannedAthletes);
       this.state.set('ready');
     } catch {
       this.state.set('error');
@@ -97,6 +103,10 @@ export class RoutineAttendance implements OnChanges {
     } finally {
       this.adding.set(false);
     }
+  }
+
+  async confirmPlannedAthlete(athlete: AthleteOption): Promise<void> {
+    await this.addAthlete(athlete);
   }
 
   async updateStatus(item: RoutineAttendanceItem, status: RoutineAttendanceStatus): Promise<void> {

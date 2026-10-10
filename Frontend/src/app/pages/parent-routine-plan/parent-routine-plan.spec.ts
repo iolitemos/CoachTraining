@@ -15,6 +15,14 @@ class ParentRoutinePlanServiceStub {
       isSelected: false,
     }],
     competitionMatches: [{ name: 'ชิงแชมป์เยาวชน', province: 'กรุงเทพฯ', startDate: '2026-09-25', endDate: '2026-09-27' }],
+    privateSessions: [{
+      sessionDate: '2026-09-28',
+      startTime: '17:00:00',
+      endTime: '18:00:00',
+      coachNickname: 'หนึ่ง',
+      location: 'โต๊ะ 1',
+      status: 'Scheduled',
+    }],
   };
   async getCalendar(): Promise<ParentRoutinePlanCalendar> { return structuredClone(this.calendar); }
   async save(_token: string, _startDate: string, _endDate: string, selectedDates: string[]): Promise<ParentRoutinePlanCalendar> {
@@ -78,5 +86,42 @@ describe('ParentRoutinePlan', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.competition-trophy').length).toBe(3);
+  });
+
+  it('shows assigned Private Training as read-only calendar information', async () => {
+    const privateDay = component.calendarDays().find(day => day.isoDate === '2026-09-28');
+    expect(privateDay?.privateSessions).toHaveLength(1);
+
+    component.state.set('ready');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const privateSummary = fixture.nativeElement.querySelector('[aria-labelledby="private-session-heading"]') as HTMLElement;
+    expect(privateSummary.textContent).toContain('ตารางเรียนส่วนตัวเดือนนี้');
+    expect(privateSummary.textContent).toContain('สำหรับตรวจสอบตารางเรียนส่วนตัวเท่านั้น');
+    expect(privateSummary.textContent).toContain('17:00–18:00');
+    expect(privateSummary.textContent).toContain('โค้ชหนึ่ง');
+    expect(privateSummary.textContent).not.toContain('ชื่อเต็มโค้ช');
+    expect(privateSummary.querySelector('button')).toBeNull();
+  });
+
+  it('uses a purple symbol without the Private label in mobile calendar cells', async () => {
+    component.state.set('ready');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const mobileMarker = fixture.nativeElement.querySelector('.private-session-mobile-marker') as HTMLElement;
+    const desktopLabel = fixture.nativeElement.querySelector('.private-session-desktop-label') as HTMLElement;
+    expect(mobileMarker).not.toBeNull();
+    expect(mobileMarker.textContent?.trim()).toBe('');
+    expect(mobileMarker.classList).toContain('bg-orange-500');
+    expect(mobileMarker.classList).not.toContain('bg-violet-600');
+    expect(mobileMarker.classList).toContain('sm:hidden');
+    expect(desktopLabel.textContent).toContain('ส่วนตัว 1');
+    expect(desktopLabel.classList).toContain('hidden');
+    expect(desktopLabel.classList).toContain('sm:block');
+    expect(desktopLabel.classList).toContain('bg-orange-700');
   });
 });

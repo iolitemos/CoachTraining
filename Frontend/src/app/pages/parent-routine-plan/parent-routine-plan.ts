@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ParentRoutinePlanDate } from '../../models/parent-routine-plan.model';
+import { ParentPrivateSession, ParentRoutinePlanDate } from '../../models/parent-routine-plan.model';
 import { PublicCompetitionMatch } from '../../models/public-routine-calendar.model';
 import { ParentRoutinePlanService } from '../../services/parent-routine-plan.service';
 import { ConfirmationDialog } from '../../shared/confirmation-dialog/confirmation-dialog';
 import { DisplayDatePipe } from '../../shared/display-date/display-date.pipe';
+import { CoachNamePipe } from '../../shared/coach-name/coach-name.pipe';
 
 type ViewState = 'loading' | 'ready' | 'error' | 'invalid';
 interface ParentCalendarDay {
@@ -14,12 +15,13 @@ interface ParentCalendarDay {
   isToday: boolean;
   planDate: ParentRoutinePlanDate | null;
   competitionMatches: PublicCompetitionMatch[];
+  privateSessions: ParentPrivateSession[];
 }
 const DAY_HEADERS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
 @Component({
   selector: 'app-parent-routine-plan',
-  imports: [ConfirmationDialog, DisplayDatePipe],
+  imports: [CoachNamePipe, ConfirmationDialog, DisplayDatePipe],
   templateUrl: './parent-routine-plan.html',
   styleUrl: './parent-routine-plan.css',
 })
@@ -29,6 +31,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
   athleteFullName = signal('');
   dates = signal<ParentRoutinePlanDate[]>([]);
   competitionMatches = signal<PublicCompetitionMatch[]>([]);
+  privateSessions = signal<ParentPrivateSession[]>([]);
   visibleMonth = signal(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   saving = signal(false);
   pendingCancellationDate = signal<string | null>(null);
@@ -37,6 +40,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
   readonly dayHeaders = DAY_HEADERS;
   readonly monthLabel = computed(() => new Intl.DateTimeFormat('th-TH', { month: 'long', year: 'numeric' }).format(this.visibleMonth()));
   readonly selectedDayCount = computed(() => this.dates().filter(item => item.isSelected).length);
+  readonly privateSessionCount = computed(() => this.privateSessions().length);
   readonly calendarDays = computed<ParentCalendarDay[]>(() => {
     const month = this.visibleMonth();
     const gridStart = new Date(month.getFullYear(), month.getMonth(), 1 - month.getDay());
@@ -51,6 +55,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
         isToday: isoDate === toIso(new Date()),
         planDate: planDates.get(isoDate) ?? null,
         competitionMatches: this.competitionMatches().filter(match => match.startDate <= isoDate && isoDate <= match.endDate),
+        privateSessions: this.privateSessions().filter(session => session.sessionDate === isoDate),
       };
     });
   });
@@ -66,7 +71,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
     const [startDate, endDate] = monthRange(this.visibleMonth());
     try {
       const result = await this.service.getCalendar(this.token, startDate, endDate);
-      this.athleteNickname.set(result.athleteNickname); this.athleteFullName.set(result.athleteFullName); this.dates.set(result.dates); this.competitionMatches.set(result.competitionMatches); this.state.set('ready');
+      this.athleteNickname.set(result.athleteNickname); this.athleteFullName.set(result.athleteFullName); this.dates.set(result.dates); this.competitionMatches.set(result.competitionMatches); this.privateSessions.set(result.privateSessions); this.state.set('ready');
     } catch (error: unknown) {
       const status = typeof error === 'object' && error !== null && 'status' in error ? (error as { status: number }).status : 0;
       this.state.set(status === 404 ? 'invalid' : 'error');
@@ -99,6 +104,7 @@ export class ParentRoutinePlan implements OnInit, OnDestroy {
       const result = await this.service.save(this.token, startDate, endDate, selectedDates);
       this.dates.set(result.dates);
       this.competitionMatches.set(result.competitionMatches);
+      this.privateSessions.set(result.privateSessions);
       this.showToast(selected ? 'บันทึกแผนเข้าซ้อมเรียบร้อยแล้ว' : 'ยกเลิกแผนเข้าซ้อมเรียบร้อยแล้ว', 'success');
       return true;
     } catch (error: unknown) {

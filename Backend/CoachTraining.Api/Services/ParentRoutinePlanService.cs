@@ -4,6 +4,7 @@ using CoachTraining.Api.Data;
 using CoachTraining.Api.DTOs.ParentRoutinePlans;
 using CoachTraining.Api.DTOs.PublicCalendar;
 using CoachTraining.Api.Models;
+using CoachTraining.Api.Models.Enums;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -186,11 +187,32 @@ public class ParentRoutinePlanService : IParentRoutinePlanService
             .ThenBy(match => match.Name)
             .Select(match => new PublicCompetitionMatchDto(match.Name, match.Province, match.StartDate, match.EndDate))
             .ToListAsync(cancellationToken);
+        var privateSessions = await _db.PrivateSessionAthletes.AsNoTracking()
+            .Where(assignment =>
+                assignment.AthleteId == athleteId &&
+                assignment.TrainingSession.TrainingType == TrainingType.Private &&
+                assignment.TrainingSession.SessionDate >= startDate &&
+                assignment.TrainingSession.SessionDate <= endDate &&
+                assignment.TrainingSession.Status != SessionStatus.Cancelled &&
+                assignment.TrainingSession.Status != SessionStatus.Rescheduled)
+            .OrderBy(assignment => assignment.TrainingSession.SessionDate)
+            .ThenBy(assignment => assignment.TrainingSession.ScheduledStartDateTime)
+            .Select(assignment => new ParentPrivateSessionCalendarItemDto(
+                assignment.TrainingSession.SessionDate,
+                TimeOnly.FromDateTime(assignment.TrainingSession.ScheduledStartDateTime),
+                TimeOnly.FromDateTime(assignment.TrainingSession.ScheduledEndDateTime),
+                assignment.TrainingSession.AssignedCoach.Nickname != null &&
+                    assignment.TrainingSession.AssignedCoach.Nickname.Trim() != string.Empty
+                        ? assignment.TrainingSession.AssignedCoach.Nickname
+                        : assignment.TrainingSession.AssignedCoachNameSnapshot,
+                assignment.TrainingSession.Location,
+                assignment.TrainingSession.Status))
+            .ToListAsync(cancellationToken);
         var selectedSet = selected.ToHashSet();
         var dates = availableDates
             .Select(date => new ParentRoutinePlanCalendarItemDto(date, selectedSet.Contains(date)))
             .ToList();
-        return new(athlete.AthleteId, athlete.Nickname, athlete.FullName, dates, competitionMatches);
+        return new(athlete.AthleteId, athlete.Nickname, athlete.FullName, dates, competitionMatches, privateSessions);
     }
 
     private ParentRoutinePlanLinkStatusDto ToStatus(ParentRoutinePlanLink? link)

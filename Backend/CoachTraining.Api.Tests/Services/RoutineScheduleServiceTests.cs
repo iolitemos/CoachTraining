@@ -268,16 +268,69 @@ public class RoutineScheduleServiceTests
     }
 
     [Fact]
-    public async Task UpdateAsync_DoesNotModifyAlreadyGeneratedSessionTimes()
+    public async Task UpdateAsync_UpdatesLinkedScheduledSessionAndClearsStaleActualCoach()
     {
         using var db = TestDbContextFactory.Create();
-        var coach = await SeedCoachAsync(db);
+        var originalCoach = await SeedCoachAsync(db, "OLD");
+        var replacementCoach = await SeedCoachAsync(db, "NEW");
+        var service = CreateService(db);
+        var originalDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
+        var updatedDate = originalDate.AddDays(1);
+
+        var created = await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = originalCoach.CoachId,
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(19, 0),
+            EffectiveStartDate = originalDate,
+        }, actionByUserId: 1);
+
+        var session = await db.TrainingSessions.SingleAsync();
+        session.ActualCoachId = originalCoach.CoachId;
+        session.ActualCoachCodeSnapshot = originalCoach.CoachCode;
+        session.ActualCoachNameSnapshot = originalCoach.FullName;
+        await db.SaveChangesAsync();
+
+        var result = await service.UpdateAsync(created.Schedule!.RoutineScheduleId, new RoutineScheduleUpdateDto
+        {
+            CoachId = replacementCoach.CoachId,
+            StartTime = new TimeOnly(9, 0),
+            EndTime = new TimeOnly(11, 0),
+            EffectiveStartDate = updatedDate,
+        }, actionByUserId: 7);
+
+        Assert.Null(result.Error);
+        var updated = await db.TrainingSessions.AsNoTracking().SingleAsync();
+        Assert.Equal(updatedDate, updated.SessionDate);
+        Assert.Equal(updatedDate.ToDateTime(new TimeOnly(9, 0)), updated.ScheduledStartDateTime);
+        Assert.Equal(updatedDate.ToDateTime(new TimeOnly(11, 0)), updated.ScheduledEndDateTime);
+        Assert.Equal(replacementCoach.CoachId, updated.AssignedCoachId);
+        Assert.Equal(replacementCoach.CoachCode, updated.AssignedCoachCodeSnapshot);
+        Assert.Equal(replacementCoach.FullName, updated.AssignedCoachNameSnapshot);
+        Assert.Null(updated.ActualCoachId);
+        Assert.Null(updated.ActualCoachCodeSnapshot);
+        Assert.Null(updated.ActualCoachNameSnapshot);
+
+        var audit = await db.AuditLogs.SingleAsync();
+        Assert.Equal("ReassignCoach", audit.Action);
+        Assert.Equal(updated.TrainingSessionId, audit.EntityId);
+        Assert.Equal(7, audit.ActionByUserId);
+        Assert.Contains($"\"AssignedCoachId\":{originalCoach.CoachId}", audit.PreviousValue);
+        Assert.Contains($"\"AssignedCoachId\":{replacementCoach.CoachId}", audit.NewValue);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_DoesNotModifyCompletedHistoricalSession()
+    {
+        using var db = TestDbContextFactory.Create();
+        var originalCoach = await SeedCoachAsync(db, "OLD");
+        var replacementCoach = await SeedCoachAsync(db, "NEW");
         var service = CreateService(db);
         var effectiveStart = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
 
         var created = await service.CreateAsync(new RoutineScheduleCreateDto
         {
-            CoachId = coach.CoachId,
+            CoachId = originalCoach.CoachId,
             StartTime = new TimeOnly(17, 0),
             EndTime = new TimeOnly(19, 0),
             EffectiveStartDate = effectiveStart,
@@ -295,7 +348,7 @@ public class RoutineScheduleServiceTests
         // Change the schedule's time — completed historical sessions must not move (FR-ROUTINE-007).
         var updateResult = await service.UpdateAsync(created.Schedule!.RoutineScheduleId, new RoutineScheduleUpdateDto
         {
-            CoachId = coach.CoachId,
+            CoachId = replacementCoach.CoachId,
             StartTime = new TimeOnly(9, 0),
             EndTime = new TimeOnly(11, 0),
             EffectiveStartDate = effectiveStart,
@@ -306,7 +359,59 @@ public class RoutineScheduleServiceTests
         var reloadedSession = await db.TrainingSessions.AsNoTracking().FirstAsync(s => s.TrainingSessionId == generatedSession.TrainingSessionId);
         Assert.Equal(originalStart, reloadedSession.ScheduledStartDateTime);
         Assert.Equal(originalEnd, reloadedSession.ScheduledEndDateTime);
+        Assert.Equal(originalCoach.CoachId, reloadedSession.AssignedCoachId);
+        Assert.Equal(originalCoach.CoachCode, reloadedSession.AssignedCoachCodeSnapshot);
         Assert.Equal(SessionStatus.Completed, reloadedSession.Status);
+        Assert.Empty(await db.AuditLogs.ToListAsync());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_WhenNewCoachHasPrivateSessionConflict_DoesNotModifyRoutineScheduleOrSession()
+    {
+        using var db = TestDbContextFactory.Create();
+        var originalCoach = await SeedCoachAsync(db, "OLD");
+        var replacementCoach = await SeedCoachAsync(db, "NEW");
+        var service = CreateService(db);
+        var date = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
+
+        var created = await service.CreateAsync(new RoutineScheduleCreateDto
+        {
+            CoachId = originalCoach.CoachId,
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(19, 0),
+            EffectiveStartDate = date,
+        }, actionByUserId: 1);
+
+        db.TrainingSessions.Add(new TrainingSession
+        {
+            TrainingType = TrainingType.Private,
+            SessionDate = date,
+            ScheduledStartDateTime = date.ToDateTime(new TimeOnly(18, 0)),
+            ScheduledEndDateTime = date.ToDateTime(new TimeOnly(20, 0)),
+            AssignedCoachId = replacementCoach.CoachId,
+            AssignedCoachCodeSnapshot = replacementCoach.CoachCode,
+            AssignedCoachNameSnapshot = replacementCoach.FullName,
+            Status = SessionStatus.Scheduled,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await service.UpdateAsync(created.Schedule!.RoutineScheduleId, new RoutineScheduleUpdateDto
+        {
+            CoachId = replacementCoach.CoachId,
+            StartTime = new TimeOnly(17, 0),
+            EndTime = new TimeOnly(19, 0),
+            EffectiveStartDate = date,
+        }, actionByUserId: 1);
+
+        Assert.NotNull(result.Error);
+        Assert.NotEmpty(result.Conflicts);
+
+        var schedule = await db.RoutineSchedules.AsNoTracking().SingleAsync();
+        var routineSession = await db.TrainingSessions.AsNoTracking()
+            .SingleAsync(session => session.RoutineScheduleId == schedule.RoutineScheduleId);
+        Assert.Equal(originalCoach.CoachId, schedule.CoachId);
+        Assert.Equal(originalCoach.CoachId, routineSession.AssignedCoachId);
+        Assert.Empty(await db.AuditLogs.ToListAsync());
     }
 
     [Fact]

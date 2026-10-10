@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 namespace CoachTraining.Api.DTOs.RoutineSchedules;
 
 /// <summary>
-/// Updates apply to the schedule configuration itself. Already generated
-/// TrainingSession rows keep the scheduled time they were created with so
-/// completed historical records remain stable.
+/// Updates apply to the schedule configuration and its still-Scheduled
+/// TrainingSession. Progressed historical sessions retain their original
+/// scheduled information.
 /// </summary>
 public class RoutineScheduleUpdateDto : IValidatableObject
 {

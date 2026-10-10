@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiSuccessBody } from '../models/paged-result.model';
+import { AthleteOption } from '../models/athlete.model';
 import {
   RoutineAttendanceCreateRequest,
   RoutineAttendanceItem,
@@ -23,6 +24,13 @@ export class RoutineAttendanceService {
   async list(trainingSessionId: number): Promise<RoutineAttendanceItem[]> {
     const response = await firstValueFrom(
       this.http.get<ApiSuccessBody<RoutineAttendanceItem[]>>(this.baseUrl(trainingSessionId)),
+    );
+    return response.data;
+  }
+
+  async listPlannedAthletes(trainingSessionId: number): Promise<AthleteOption[]> {
+    const response = await firstValueFrom(
+      this.http.get<ApiSuccessBody<AthleteOption[]>>(`${this.baseUrl(trainingSessionId)}/planned-athletes`),
     );
     return response.data;
   }

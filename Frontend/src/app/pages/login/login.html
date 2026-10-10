@@ -88,11 +88,39 @@
   <section
     class="login-form-panel relative order-1 flex min-h-screen items-center justify-center overflow-hidden px-5 py-8 sm:px-8 md:px-12 xl:order-2 xl:px-[clamp(2.5rem,4vw,5rem)]"
   >
+    <div class="login-mobile-hero absolute inset-x-0 top-0 h-[292px] overflow-hidden md:hidden">
+      <img
+        src="/table-tennis-login-hero.jpg"
+        alt=""
+        class="absolute inset-0 h-full w-full object-cover object-[center_48%]"
+      />
+      <div class="login-mobile-hero-overlay absolute inset-0"></div>
+      <div
+        class="login-mobile-sweep pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full border-[48px] border-white/10"
+      ></div>
+      <div class="relative z-10 flex h-full flex-col px-6 pb-[5.4rem] pt-7 text-white">
+        <p
+          class="flex w-fit items-center gap-2 rounded-full border border-white/20 bg-[#071c46]/45 px-3 py-1.5 text-[10px] font-semibold tracking-[0.18em] text-blue-50 backdrop-blur-sm"
+        >
+          <span
+            class="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_4px_rgba(110,231,183,0.14)]"
+          ></span>
+          SPINNING STAR · TABLE TENNIS
+        </p>
+        <div class="mt-auto">
+          <p class="text-sm font-medium text-blue-100">จัดการทุกการฝึกซ้อมได้ในที่เดียว</p>
+          <h1 class="mt-1.5 text-[1.75rem] font-bold leading-[1.22] tracking-tight">
+            พร้อมลงสนาม<br />ในทุกการฝึกซ้อม
+          </h1>
+        </div>
+      </div>
+    </div>
+
     <div
       class="login-form-orb pointer-events-none absolute -right-36 -top-40 h-[29rem] w-[29rem] rounded-full"
     ></div>
     <div
-      class="pointer-events-none absolute -bottom-48 -left-44 h-[30rem] w-[30rem] rounded-full border-[72px] border-blue-100/80"
+      class="login-form-corner-ring pointer-events-none absolute -bottom-48 -left-44 h-[30rem] w-[30rem] rounded-full border-[72px] border-blue-100/80"
     ></div>
 
     <div
@@ -110,6 +138,11 @@
             class="h-full w-full rounded-full object-cover"
           />
         </div>
+        <p
+          class="login-mobile-kicker mt-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#2563EB] md:hidden"
+        >
+          COACH TRAINING
+        </p>
         <h2 class="mt-5 text-xl font-bold tracking-tight text-[#0F2A5F] sm:text-2xl xl:mt-3">
           ระบบบริหารการฝึกซ้อม
         </h2>

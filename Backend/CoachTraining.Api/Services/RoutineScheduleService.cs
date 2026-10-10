@@ -5,6 +5,7 @@ using CoachTraining.Api.DTOs.RoutineSchedules;
 using CoachTraining.Api.Models;
 using CoachTraining.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace CoachTraining.Api.Services;
 
@@ -218,9 +219,37 @@ public class RoutineScheduleService : IRoutineScheduleService
             }
         }
 
+        var editableSession = await _db.TrainingSessions
+            .FirstOrDefaultAsync(session =>
+                session.RoutineScheduleId == routineScheduleId &&
+                session.Status == SessionStatus.Scheduled);
+
         var conflicts = await _conflictService.CheckRoutineTemplateOverlapAsync(
             dto.CoachId, dto.StartTime, dto.EndTime, dto.EffectiveStartDate,
             excludeRoutineScheduleId: routineScheduleId);
+
+        if (editableSession is not null)
+        {
+            var scheduledStart = dto.EffectiveStartDate.ToDateTime(dto.StartTime);
+            var scheduledEnd = dto.EffectiveStartDate.ToDateTime(dto.EndTime);
+            var sessionConflicts = await _conflictService.CheckCoachOverlapAsync(
+                dto.CoachId,
+                scheduledStart,
+                scheduledEnd,
+                excludeTrainingSessionId: editableSession.TrainingSessionId);
+
+            var conflictingRoutineScheduleIds = conflicts
+                .Select(conflict => conflict.ConflictingRoutineScheduleId)
+                .ToHashSet();
+            conflicts.AddRange(sessionConflicts
+                .Where(conflict => conflict.RoutineScheduleId is null ||
+                    !conflictingRoutineScheduleIds.Contains(conflict.RoutineScheduleId.Value))
+                .Select(ToRoutineConflict));
+            conflicts = conflicts
+                .GroupBy(conflict => conflict.Message)
+                .Select(group => group.First())
+                .ToList();
+        }
 
         var overrideReason = conflicts.Count > 0 && dto.OverrideConflict ? dto.OverrideReason?.Trim() : null;
         if (conflicts.Count > 0 && string.IsNullOrWhiteSpace(overrideReason))
@@ -228,8 +257,10 @@ public class RoutineScheduleService : IRoutineScheduleService
             return new RoutineScheduleSaveResult { Error = "พบตารางฝึกซ้อมของโค้ชทับซ้อนกัน", Conflicts = conflicts };
         }
 
-        // FR-ROUTINE-007: only the schedule template changes here — already generated
-        // TrainingSession rows (past or future) are never modified by this update.
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
+        // FR-ROUTINE-007: apply a changed Routine configuration to its still-Scheduled
+        // operational session while preserving every progressed historical session.
         schedule.CoachId = dto.CoachId;
         schedule.StartTime = dto.StartTime;
         schedule.EndTime = dto.EndTime;
@@ -238,12 +269,78 @@ public class RoutineScheduleService : IRoutineScheduleService
         schedule.UpdatedByUserId = actionByUserId;
         schedule.UpdatedDate = DateTime.UtcNow;
 
+        if (editableSession is not null)
+        {
+            UpdateScheduledSession(editableSession, coach, dto, overrideReason, actionByUserId);
+        }
+
         await _db.SaveChangesAsync();
 
         // FR-CONFLICT-005 — the override itself remains identifiable in history.
         await RecordConflictOverrideAsync(conflicts, overrideReason, routineScheduleId: schedule.RoutineScheduleId, actionByUserId);
 
+        await transaction.CommitAsync();
+
         return new RoutineScheduleSaveResult { Schedule = MapToDetail(schedule, coach) };
+    }
+
+    private void UpdateScheduledSession(
+        TrainingSession session,
+        Coach coach,
+        RoutineScheduleUpdateDto dto,
+        string? overrideReason,
+        int actionByUserId)
+    {
+        var previousValue = JsonSerializer.Serialize(new
+        {
+            session.SessionDate,
+            session.ScheduledStartDateTime,
+            session.ScheduledEndDateTime,
+            session.AssignedCoachId,
+            AssignedCoachCode = session.AssignedCoachCodeSnapshot,
+            AssignedCoachName = session.AssignedCoachNameSnapshot,
+            session.ActualCoachId,
+            ActualCoachCode = session.ActualCoachCodeSnapshot,
+            ActualCoachName = session.ActualCoachNameSnapshot,
+        });
+        var assignedCoachChanged = session.AssignedCoachId != coach.CoachId;
+
+        session.SessionDate = dto.EffectiveStartDate;
+        session.ScheduledStartDateTime = dto.EffectiveStartDate.ToDateTime(dto.StartTime);
+        session.ScheduledEndDateTime = dto.EffectiveStartDate.ToDateTime(dto.EndTime);
+        session.AssignedCoachId = coach.CoachId;
+        session.AssignedCoachCodeSnapshot = coach.CoachCode;
+        session.AssignedCoachNameSnapshot = coach.FullName;
+        if (assignedCoachChanged)
+        {
+            session.ActualCoachId = null;
+            session.ActualCoachCodeSnapshot = null;
+            session.ActualCoachNameSnapshot = null;
+        }
+
+        session.IsConflictOverridden = overrideReason is not null;
+        session.ConflictOverrideReason = overrideReason;
+        session.UpdatedByUserId = actionByUserId;
+        session.UpdatedDate = DateTime.UtcNow;
+
+        _db.AuditLogs.Add(new AuditLog
+        {
+            EntityName = nameof(TrainingSession),
+            EntityId = session.TrainingSessionId,
+            Action = assignedCoachChanged ? "ReassignCoach" : "UpdateRoutineScheduleSession",
+            PreviousValue = previousValue,
+            NewValue = JsonSerializer.Serialize(new
+            {
+                session.SessionDate,
+                session.ScheduledStartDateTime,
+                session.ScheduledEndDateTime,
+                session.AssignedCoachId,
+                AssignedCoachCode = session.AssignedCoachCodeSnapshot,
+                AssignedCoachName = session.AssignedCoachNameSnapshot,
+                session.ActualCoachId,
+            }),
+            ActionByUserId = actionByUserId,
+        });
     }
 
     public async Task<bool> SetStatusAsync(int routineScheduleId, bool isActive, int actionByUserId)
@@ -476,6 +573,13 @@ public class RoutineScheduleService : IRoutineScheduleService
         ConflictingRoutineScheduleId = 0,
         ConflictingRoutineScheduleName = $"รายการฝึกซ้อมวันที่ {occurrence.SessionDate:dd/MM/yyyy}",
         Message = occurrence.Reason,
+    };
+
+    private static RoutineTemplateConflictDetail ToRoutineConflict(ConflictDetail conflict) => new()
+    {
+        ConflictingRoutineScheduleId = conflict.RoutineScheduleId ?? 0,
+        ConflictingRoutineScheduleName = $"รายการฝึกซ้อม #{conflict.ConflictingTrainingSessionId}",
+        Message = conflict.Message,
     };
 
     /// <summary>FR-CONFLICT-004/005 — records one history row per detected conflict once an

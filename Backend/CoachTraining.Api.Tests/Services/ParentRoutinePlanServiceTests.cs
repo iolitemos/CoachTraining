@@ -1,4 +1,5 @@
 using CoachTraining.Api.Models;
+using CoachTraining.Api.Models.Enums;
 using CoachTraining.Api.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -115,6 +116,65 @@ public class ParentRoutinePlanServiceTests
         Assert.Equal("Youth Championship", competition.Name);
         Assert.Equal(trainingDate.AddDays(-1), competition.StartDate);
         Assert.Equal(trainingDate.AddDays(1), competition.EndDate);
+    }
+
+    [Fact]
+    public async Task GetCalendarAsync_ReturnsOnlyActivePrivateSessionsAssignedToLinkedAthlete()
+    {
+        using var db = TestDbContextFactory.Create();
+        var (athlete, trainingDate) = await SeedAsync(db);
+        var otherAthlete = new Athlete { AthleteCode = "A002", FullName = "Athlete Two", IsActive = true };
+        var coach = new Coach { CoachCode = "C001", FullName = "Coach One", Nickname = "Coach Nick", IsActive = true };
+        db.AddRange(otherAthlete, coach);
+        await db.SaveChangesAsync();
+
+        AddPrivateSession(db, athlete, coach, trainingDate, SessionStatus.Scheduled);
+        AddPrivateSession(db, athlete, coach, trainingDate.AddDays(1), SessionStatus.Cancelled);
+        AddPrivateSession(db, athlete, coach, trainingDate.AddDays(2), SessionStatus.Rescheduled);
+        AddPrivateSession(db, otherAthlete, coach, trainingDate, SessionStatus.Scheduled);
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db);
+        var link = await service.RotateLinkAsync(athlete.AthleteId, 7);
+        var result = await service.GetCalendarAsync(link!.Token, trainingDate, trainingDate.AddDays(2));
+
+        var privateSession = Assert.Single(result!.PrivateSessions);
+        Assert.Equal(trainingDate, privateSession.SessionDate);
+        Assert.Equal(new TimeOnly(17, 0), privateSession.StartTime);
+        Assert.Equal(new TimeOnly(18, 0), privateSession.EndTime);
+        Assert.Equal(coach.Nickname, privateSession.CoachNickname);
+        Assert.Equal("Court 1", privateSession.Location);
+    }
+
+    private static void AddPrivateSession(
+        CoachTraining.Api.Data.ApplicationDbContext db,
+        Athlete athlete,
+        Coach coach,
+        DateOnly sessionDate,
+        SessionStatus status)
+    {
+        db.TrainingSessions.Add(new TrainingSession
+        {
+            TrainingType = TrainingType.Private,
+            SessionDate = sessionDate,
+            ScheduledStartDateTime = sessionDate.ToDateTime(new TimeOnly(17, 0)),
+            ScheduledEndDateTime = sessionDate.ToDateTime(new TimeOnly(18, 0)),
+            AssignedCoachId = coach.CoachId,
+            AssignedCoachCodeSnapshot = coach.CoachCode,
+            AssignedCoachNameSnapshot = coach.FullName,
+            Status = status,
+            Location = "Court 1",
+            PrivateAthletes =
+            [
+                new PrivateSessionAthlete
+                {
+                    AthleteId = athlete.AthleteId,
+                    AthleteCodeSnapshot = athlete.AthleteCode,
+                    AthleteNameSnapshot = athlete.FullName,
+                    AthleteNicknameSnapshot = athlete.Nickname,
+                },
+            ],
+        });
     }
 
     private static async Task<(Athlete Athlete, DateOnly TrainingDate)> SeedAsync(CoachTraining.Api.Data.ApplicationDbContext db)

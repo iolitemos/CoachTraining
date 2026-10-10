@@ -360,6 +360,7 @@
 - [x] Prevent Routine Schedule creation from succeeding without its required Training Session when an existing coach session conflicts.
 - [x] Repair historical non-deleted Routine Schedules that never received a Training Session, without recreating intentionally soft-deleted sessions.
 - [x] Ensure schedule edits do not modify completed historical sessions.
+- [x] Synchronize Routine Schedule coach/date/time edits to the linked Scheduled Training Session while preserving progressed history.
 - [x] Ensure generated Routine sessions are identified as Routine throughout queries and reports.
 - [x] Confirm Routine APIs do not expose Group, Team, or Location fields.
 
@@ -426,6 +427,7 @@
 
 ### 4.8 Routine Attendance Backend
 
+- [x] Add a Coach-scoped Routine Session endpoint that returns active athletes with participation plans on the session date without creating Attendance records.
 - [x] Create Routine Attendance request/response DTOs (`FR-RATT-001`–`006`).
 - [x] Create Routine Attendance service.
 - [x] Add API to list recorded Routine attendance for a session.
@@ -778,6 +780,7 @@
 
 ### 5.7 Routine Attendance Frontend
 
+- [x] Pre-fill planned athletes as confirmation options in Routine Attendance while requiring the Coach to explicitly record actual participation.
 - [x] Create Routine Attendance component.
 - [x] Add athlete search from active Athlete Master.
 - [x] Add selected athlete to attendance list.
@@ -985,6 +988,10 @@
 
 ### 5.19 Parent Routine Participation Planning
 
+- [x] Change Private Training calendar accents from purple to orange so they remain distinct on selected blue Routine-plan dates.
+- [x] Use a compact orange symbol without text for Private Training dates in the parent calendar's mobile view.
+- [x] Display the Coach nickname in the parent calendar's monthly Private Training details, with the full name only as a fallback when no nickname exists.
+- [x] Show each linked athlete's assigned Private Training sessions in the participation calendar as read-only information without self-service booking or editing.
 - [x] Add a dedicated Administrator Routine Training date-management calendar separate from Coach schedule creation.
 - [x] Add Administrator athlete-link management with copyable athlete-specific URL and access/rotation controls.
 - [x] Embed athlete participation-plan link generation, copy, access, and rotation controls directly in the athlete edit page.

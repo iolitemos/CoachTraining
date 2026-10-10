@@ -1,4 +1,5 @@
 using CoachTraining.Api.Constants;
+using CoachTraining.Api.DTOs.Athletes;
 using CoachTraining.Api.DTOs.Common;
 using CoachTraining.Api.DTOs.RoutineAttendance;
 using CoachTraining.Api.Helpers;
@@ -62,6 +63,23 @@ public class RoutineAttendanceController : ControllerBase
         {
             _logger.LogError(ex, "Route: api/training-sessions/{SessionId}/routine-attendance Controller: RoutineAttendanceController Function: Add UserId: {UserId}", sessionId, _currentUser.UserId);
             return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถเพิ่มการเข้าร่วมได้"));
+        }
+    }
+
+    [HttpGet("planned-athletes")]
+    public async Task<IActionResult> ListPlannedAthletes(int sessionId)
+    {
+        try
+        {
+            var result = await _routineAttendanceService.ListPlannedAthletesAsync(sessionId, IsAdministrator, _currentUser.CoachId);
+            return result is null
+                ? NotFound(new ApiErrorResponse("ไม่พบเซสชันฝึกซ้อมประจำที่ต้องการ"))
+                : Ok(new ApiResponse<List<AthleteOptionDto>>(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Route: api/training-sessions/{SessionId}/routine-attendance/planned-athletes Controller: RoutineAttendanceController Function: ListPlannedAthletes UserId: {UserId}", sessionId, _currentUser.UserId);
+            return StatusCode(500, new ApiErrorResponse("เกิดข้อผิดพลาด ไม่สามารถโหลดรายชื่อนักกีฬาที่ลงแผนได้"));
         }
     }
 
