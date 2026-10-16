@@ -48,6 +48,12 @@
                           </span>
                           <app-status-badge [status]="session.status" />
                         </div>
+                        @if (session.participantNames.length > 0) {
+                          <p class="mt-1.5 truncate text-xs text-text-secondary" [title]="session.participantNames.join(', ')">
+                            <span class="font-medium text-text">{{ session.trainingType === 'Routine' ? 'มีแผนเข้าร่วม:' : 'ผู้เข้าร่วม:' }}</span>
+                            {{ session.participantNames.join(', ') }}
+                          </p>
+                        }
                       </div>
                       <svg lucideChevronRight [size]="18" class="text-blue-600"></svg>
                     </a>
@@ -94,6 +100,12 @@
                           </span>
                           <app-status-badge [status]="session.status" />
                         </div>
+                        @if (session.participantNames.length > 0) {
+                          <p class="mt-1.5 truncate text-xs text-text-secondary" [title]="session.participantNames.join(', ')">
+                            <span class="font-medium text-text">{{ session.trainingType === 'Routine' ? 'มีแผนเข้าร่วม:' : 'ผู้เข้าร่วม:' }}</span>
+                            {{ session.participantNames.join(', ') }}
+                          </p>
+                        }
                       </div>
                       <svg lucideChevronRight [size]="18" class="text-blue-600"></svg>
                     </a>
@@ -333,6 +345,9 @@
                           >
                             <span class="block truncate font-semibold">{{ session.trainingType === 'Routine' ? 'ประจำ' : 'ส่วนตัว' }}</span>
                             <span class="block truncate text-[11px] opacity-80">{{ timeRange(session) }}</span>
+                            @if (session.participantNames.length > 0) {
+                              <span class="block truncate text-[11px] opacity-80" [title]="session.participantNames.join(', ')">{{ session.participantNames.join(', ') }}</span>
+                            }
                           </a>
                           @if (canDelete(session)) {
                             <button
@@ -436,6 +451,11 @@
                               <div>
                                 <p class="font-semibold text-text">{{ session.trainingType === 'Routine' ? 'ฝึกซ้อมประจำ' : 'ฝึกซ้อมส่วนตัว' }}</p>
                                 <p class="mt-1 text-sm text-text-secondary">{{ timeRange(session) }}</p>
+                                @if (session.participantNames.length > 0) {
+                                  <p class="mt-1 text-xs text-text-secondary">
+                                    {{ session.trainingType === 'Routine' ? 'มีแผนเข้าร่วม: ' : 'ผู้เข้าร่วม: ' }}{{ session.participantNames.join(', ') }}
+                                  </p>
+                                }
                               </div>
                               <app-status-badge [status]="session.status" />
                             </div>

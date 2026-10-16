@@ -64,6 +64,7 @@ public class CoachDashboardService : ICoachDashboardService
         {
             session.RequiredNextAction = BuildNextAction(session.Status);
         }
+        await PopulateParticipantNamesAsync(overdueActionSessions.Concat(todaySessions).Concat(upcomingSessions));
 
         var monthSessions = await coachSessions
             .Where(s => s.SessionDate >= monthStart && s.SessionDate <= monthEnd)
@@ -151,6 +152,51 @@ public class CoachDashboardService : ICoachDashboardService
         SessionStatus.Completed => "ส่งตรวจ",
         _ => null,
     };
+
+    private async Task PopulateParticipantNamesAsync(IEnumerable<CoachDashboardSessionDto> sessions)
+    {
+        var sessionList = sessions.ToList();
+        var sessionIds = sessionList.Select(session => session.TrainingSessionId).ToList();
+        var privateParticipantNames = await _db.PrivateSessionAthletes
+            .Where(participant => sessionIds.Contains(participant.TrainingSessionId))
+            .OrderBy(participant => participant.PrivateSessionAthleteId)
+            .Select(participant => new
+            {
+                participant.TrainingSessionId,
+                Name = participant.IsGuest
+                    ? participant.AthleteNameSnapshot
+                    : participant.AthleteNicknameSnapshot ?? participant.AthleteNameSnapshot,
+            })
+            .ToListAsync();
+
+        var routineDates = sessionList
+            .Where(session => session.TrainingType == TrainingType.Routine)
+            .Select(session => session.SessionDate)
+            .Distinct()
+            .ToList();
+        var routineParticipantNames = await _db.RoutineParticipationPlans
+            .Where(plan => routineDates.Contains(plan.TrainingDate) && plan.Athlete.IsActive)
+            .OrderBy(plan => plan.Athlete.AthleteCode)
+            .Select(plan => new
+            {
+                plan.TrainingDate,
+                Name = plan.Athlete.Nickname ?? plan.Athlete.FullName,
+            })
+            .ToListAsync();
+
+        foreach (var session in sessionList)
+        {
+            session.ParticipantNames = session.TrainingType == TrainingType.Private
+                ? privateParticipantNames
+                    .Where(participant => participant.TrainingSessionId == session.TrainingSessionId)
+                    .Select(participant => participant.Name)
+                    .ToList()
+                : routineParticipantNames
+                    .Where(participant => participant.TrainingDate == session.SessionDate)
+                    .Select(participant => participant.Name)
+                    .ToList();
+        }
+    }
 
     private static readonly System.Linq.Expressions.Expression<Func<TrainingSession, CoachDashboardSessionDto>> ToDashboardSession = s => new CoachDashboardSessionDto
     {

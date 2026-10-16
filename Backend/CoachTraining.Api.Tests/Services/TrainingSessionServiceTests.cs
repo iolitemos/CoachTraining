@@ -123,6 +123,39 @@ public class TrainingSessionServiceTests
     }
 
     [Fact]
+    public async Task ListAsync_IncludesPrivateParticipantsAndRoutinePlannedAthletes()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db, "C001");
+        var privateAthlete = new Athlete { AthleteCode = "A001", FullName = "Private Athlete", Nickname = "ไพรเวท", IsActive = true };
+        var plannedAthlete = new Athlete { AthleteCode = "A002", FullName = "Planned Athlete", Nickname = "แพลน", IsActive = true };
+        db.Athletes.AddRange(privateAthlete, plannedAthlete);
+
+        var sessionDate = new DateOnly(2026, 1, 5);
+        var privateSession = BuildSession(coach, sessionDate, new TimeOnly(16, 0), new TimeOnly(17, 0), TrainingType.Private);
+        privateSession.PrivateAthletes.Add(new PrivateSessionAthlete
+        {
+            Athlete = privateAthlete,
+            AthleteCodeSnapshot = privateAthlete.AthleteCode,
+            AthleteNameSnapshot = privateAthlete.FullName,
+            AthleteNicknameSnapshot = privateAthlete.Nickname,
+        });
+        var routineSession = BuildSession(coach, sessionDate, new TimeOnly(18, 0), new TimeOnly(20, 0));
+        db.TrainingSessions.AddRange(privateSession, routineSession);
+        db.RoutineParticipationPlans.Add(new RoutineParticipationPlan
+        {
+            Athlete = plannedAthlete,
+            TrainingDate = sessionDate,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).ListAsync(new TrainingSessionFilterRequest(), true, null);
+
+        Assert.Equal(["ไพรเวท"], result.Items.Single(item => item.TrainingType == TrainingType.Private).ParticipantNames);
+        Assert.Equal(["แพลน"], result.Items.Single(item => item.TrainingType == TrainingType.Routine).ParticipantNames);
+    }
+
+    [Fact]
     public async Task GetByIdAsync_AsCoach_RequestingAnotherCoachsSession_ReturnsNull()
     {
         using var db = TestDbContextFactory.Create();

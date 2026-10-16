@@ -754,6 +754,7 @@
 - [x] Use a gray selected-day background only when empty while preserving training-type backgrounds on populated dates.
 - [x] Match the selected calendar-day border to a darker shade of its Routine or Private Training background.
 - [x] Show nickname-only colleague presence on dates shared with the signed-in Coach without exposing other session details.
+- [ ] Show assigned Private participants and date-specific planned Routine athletes in the Coach Home overview cards and calendar. <!-- Implemented; targeted backend/frontend tests, backend build, and frontend TypeScript compilation pass. Awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
 - [x] Add distinct colors to Coach Home summary statuses and consistently color Routine/Private type badges.
 - [x] Allow Coach self-service Routine Training creation across a date range filtered by selected weekdays.
 

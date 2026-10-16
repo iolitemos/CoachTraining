@@ -22,4 +22,5 @@ public class TrainingSessionListItemDto
     public string? ActualCoachColorHex { get; set; }
     public SessionStatus Status { get; set; }
     public string? Location { get; set; }
+    public List<string> ParticipantNames { get; set; } = [];
 }

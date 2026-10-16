@@ -39,7 +39,13 @@ describe('CoachHome calendar', () => {
 
     request.flush({
       message: 'Success',
-      data: { items: [], page: 1, pageSize: 100, totalCount: 0, totalPages: 0 },
+      data: {
+        items: [{ trainingSessionId: 1, participantNames: ['น้องเอ'] }],
+        page: 1,
+        pageSize: 100,
+        totalCount: 1,
+        totalPages: 1,
+      },
     });
     colleaguesRequest.flush({ message: 'Success', data: [] });
     competitionRequest.flush({
@@ -51,6 +57,7 @@ describe('CoachHome calendar', () => {
 
     expect(component.calendarState()).toBe('ready');
     expect(component.calendarDays()).toHaveLength(42);
+    expect(component.calendarSessions()[0].participantNames).toEqual(['น้องเอ']);
   });
 
   it('marks each day in a competition range', () => {

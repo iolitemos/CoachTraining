@@ -79,6 +79,8 @@ export interface TrainingSessionListItem {
   actualCoachColorHex: string | null;
   status: TrainingSessionStatus;
   location: string | null;
+  /** Assigned Private participants or athletes planning to attend Routine training on this date. */
+  participantNames: string[];
 }
 
 /** Filters for the unified Training Session list — by coach, type, status, date range. */

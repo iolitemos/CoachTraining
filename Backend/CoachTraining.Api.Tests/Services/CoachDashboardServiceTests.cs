@@ -80,6 +80,40 @@ public class CoachDashboardServiceTests
     }
 
     [Fact]
+    public async Task GetDashboardAsync_IncludesPrivateParticipantsAndRoutinePlannedAthletes()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var privateAthlete = new Athlete { AthleteCode = "A001", FullName = "Private Athlete", Nickname = "ไพรเวท", IsActive = true };
+        var plannedAthlete = new Athlete { AthleteCode = "A002", FullName = "Planned Athlete", Nickname = "แพลน", IsActive = true };
+        db.Athletes.AddRange(privateAthlete, plannedAthlete);
+
+        var now = new DateTime(2026, 1, 10, 9, 0, 0);
+        var today = DateOnly.FromDateTime(now);
+        var privateSession = BuildSession(coach, today, new TimeOnly(16, 0), new TimeOnly(17, 0), SessionStatus.Scheduled, TrainingType.Private);
+        privateSession.PrivateAthletes.Add(new PrivateSessionAthlete
+        {
+            Athlete = privateAthlete,
+            AthleteCodeSnapshot = privateAthlete.AthleteCode,
+            AthleteNameSnapshot = privateAthlete.FullName,
+            AthleteNicknameSnapshot = privateAthlete.Nickname,
+        });
+        var routineSession = BuildSession(coach, today.AddDays(1), new TimeOnly(18, 0), new TimeOnly(20, 0), SessionStatus.Scheduled);
+        db.TrainingSessions.AddRange(privateSession, routineSession);
+        db.RoutineParticipationPlans.Add(new RoutineParticipationPlan
+        {
+            Athlete = plannedAthlete,
+            TrainingDate = routineSession.SessionDate,
+        });
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).GetDashboardAsync(coach.CoachId, now);
+
+        Assert.Equal(["ไพรเวท"], Assert.Single(result.TodaySessions).ParticipantNames);
+        Assert.Equal(["แพลน"], Assert.Single(result.UpcomingSessions).ParticipantNames);
+    }
+
+    [Fact]
     public async Task GetDashboardAsync_ComputesMonthlyCountsAndDistinctTeachingDays()
     {
         using var db = TestDbContextFactory.Create();

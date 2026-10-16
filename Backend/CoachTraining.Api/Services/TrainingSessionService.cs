@@ -87,6 +87,47 @@ public class TrainingSessionService : ITrainingSessionService
             })
             .ToListAsync();
 
+        var sessionIds = items.Select(item => item.TrainingSessionId).ToList();
+        var privateParticipantNames = await _db.PrivateSessionAthletes
+            .Where(participant => sessionIds.Contains(participant.TrainingSessionId))
+            .OrderBy(participant => participant.PrivateSessionAthleteId)
+            .Select(participant => new
+            {
+                participant.TrainingSessionId,
+                Name = participant.IsGuest
+                    ? participant.AthleteNameSnapshot
+                    : participant.AthleteNicknameSnapshot ?? participant.AthleteNameSnapshot,
+            })
+            .ToListAsync();
+
+        var routineDates = items
+            .Where(item => item.TrainingType == TrainingType.Routine)
+            .Select(item => item.SessionDate)
+            .Distinct()
+            .ToList();
+        var routineParticipantNames = await _db.RoutineParticipationPlans
+            .Where(plan => routineDates.Contains(plan.TrainingDate) && plan.Athlete.IsActive)
+            .OrderBy(plan => plan.Athlete.AthleteCode)
+            .Select(plan => new
+            {
+                plan.TrainingDate,
+                Name = plan.Athlete.Nickname ?? plan.Athlete.FullName,
+            })
+            .ToListAsync();
+
+        foreach (var item in items)
+        {
+            item.ParticipantNames = item.TrainingType == TrainingType.Private
+                ? privateParticipantNames
+                    .Where(participant => participant.TrainingSessionId == item.TrainingSessionId)
+                    .Select(participant => participant.Name)
+                    .ToList()
+                : routineParticipantNames
+                    .Where(participant => participant.TrainingDate == item.SessionDate)
+                    .Select(participant => participant.Name)
+                    .ToList();
+        }
+
         return new PagedResponse<TrainingSessionListItemDto>(items, filter.Page, filter.PageSize, totalCount);
     }
 

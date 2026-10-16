@@ -9,6 +9,8 @@ export interface CoachDashboardSession {
   scheduledStartDateTime: string;
   scheduledEndDateTime: string;
   status: TrainingSessionStatus;
+  /** Assigned Private participants or athletes planning to attend Routine training on this date. */
+  participantNames: string[];
   /** Thai label for the action the Coach still needs to take, or null when the
    * session is finalized / needs no Coach action (FR-CDASH-003). */
   requiredNextAction: string | null;

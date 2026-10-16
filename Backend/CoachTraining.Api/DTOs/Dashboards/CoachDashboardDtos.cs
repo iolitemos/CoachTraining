@@ -11,6 +11,7 @@ public class CoachDashboardSessionDto
     public DateTime ScheduledStartDateTime { get; set; }
     public DateTime ScheduledEndDateTime { get; set; }
     public SessionStatus Status { get; set; }
+    public List<string> ParticipantNames { get; set; } = [];
 
     /// <summary>Thai label for the action the Coach still needs to take, or null when the
     /// session is finalized / needs no Coach action (FR-CDASH-003).</summary>
