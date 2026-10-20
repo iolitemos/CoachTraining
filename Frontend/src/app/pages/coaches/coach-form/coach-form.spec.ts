@@ -42,6 +42,16 @@ describe('CoachForm', () => {
     expect(component.form.controls.colorHex.value).toBe('#10B981');
   });
 
+  it('should reject negative compensation reference values', async () => {
+    await component.ngOnInit();
+
+    component.form.controls.baseSalary.setValue(-1);
+    component.form.controls.privateRate.setValue(-0.01);
+
+    expect(component.form.controls.baseSalary.hasError('min')).toBe(true);
+    expect(component.form.controls.privateRate.hasError('min')).toBe(true);
+  });
+
   it('should require coach code and full name before submit', async () => {
     await component.ngOnInit();
 

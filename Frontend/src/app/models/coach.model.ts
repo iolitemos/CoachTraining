@@ -25,6 +25,10 @@ export interface CoachDetail {
   bankName: string | null;
   bankAccountNumber: string | null;
   bankAccountName: string | null;
+  /** Administrator-only reference data; no payroll calculation is performed. */
+  baseSalary: number | null;
+  /** Administrator-only Private Training rate reference. */
+  privateRate: number | null;
   isActive: boolean;
   remarks: string | null;
   /** Read-only — the link itself is managed from User & Role Management. */
@@ -42,6 +46,8 @@ export interface CoachCreateRequest {
   bankName: string | null;
   bankAccountNumber: string | null;
   bankAccountName: string | null;
+  baseSalary: number | null;
+  privateRate: number | null;
   remarks: string | null;
 }
 

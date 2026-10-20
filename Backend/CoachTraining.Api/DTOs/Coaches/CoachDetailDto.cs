@@ -12,6 +12,8 @@ public class CoachDetailDto
     public string? BankName { get; set; }
     public string? BankAccountNumber { get; set; }
     public string? BankAccountName { get; set; }
+    public decimal? BaseSalary { get; set; }
+    public decimal? PrivateRate { get; set; }
     public bool IsActive { get; set; }
     public string? Remarks { get; set; }
 

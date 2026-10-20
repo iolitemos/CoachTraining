@@ -267,6 +267,10 @@ namespace CoachTraining.Api.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<decimal?>("BaseSalary")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<string>("CoachCode")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -306,6 +310,10 @@ namespace CoachTraining.Api.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
+                    b.Property<decimal?>("PrivateRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<string>("Remarks")
                         .HasColumnType("text");
 
@@ -327,6 +335,143 @@ namespace CoachTraining.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Coaches");
+                });
+
+            modelBuilder.Entity("CoachTraining.Api.Models.CoachCompensationItem", b =>
+                {
+                    b.Property<int>("CoachCompensationItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CoachCompensationItemId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("CoachCompensationStatementId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CoachNameSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ParticipantNamesSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal>("PrivateRateSnapshot")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("ScheduledEndSnapshot")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("ScheduledStartSnapshot")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateOnly>("SessionDateSnapshot")
+                        .HasColumnType("date");
+
+                    b.Property<int>("TrainingSessionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("CoachCompensationItemId");
+
+                    b.HasIndex("CoachCompensationStatementId");
+
+                    b.HasIndex("TrainingSessionId")
+                        .IsUnique();
+
+                    b.ToTable("CoachCompensationItems");
+                });
+
+            modelBuilder.Entity("CoachTraining.Api.Models.CoachCompensationStatement", b =>
+                {
+                    b.Property<int>("CoachCompensationStatementId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CoachCompensationStatementId"));
+
+                    b.Property<decimal>("AdjustmentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("AdjustmentReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("BaseSalarySnapshot")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("CoachId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ConfirmedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ConfirmedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PaidByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("PaidDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CoachCompensationStatementId");
+
+                    b.HasIndex("CoachId", "Year", "Month")
+                        .IsUnique();
+
+                    b.HasIndex("Year", "Month", "Status");
+
+                    b.ToTable("CoachCompensationStatements");
                 });
 
             modelBuilder.Entity("CoachTraining.Api.Models.CoachSubstitutionHistory", b =>
@@ -839,6 +984,94 @@ namespace CoachTraining.Api.Migrations
                     b.ToTable("RoutineSchedules");
                 });
 
+            modelBuilder.Entity("CoachTraining.Api.Models.RoutineScheduleRequest", b =>
+                {
+                    b.Property<int>("RoutineScheduleRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RoutineScheduleRequestId"));
+
+                    b.Property<DateOnly?>("ApprovedDate")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly?>("ApprovedEndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("ApprovedRemarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<TimeOnly?>("ApprovedStartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("CoachId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("ProposedDate")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly>("ProposedEndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("ProposedRemarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<TimeOnly>("ProposedStartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("ReviewReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("ReviewedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReviewedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RoutineScheduleId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<Guid>("SubmissionBatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("RoutineScheduleRequestId");
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("RoutineScheduleId");
+
+                    b.HasIndex("SubmissionBatchId");
+
+                    b.HasIndex("CoachId", "ProposedDate");
+
+                    b.HasIndex("Status", "ProposedDate");
+
+                    b.ToTable("RoutineScheduleRequests");
+                });
+
             modelBuilder.Entity("CoachTraining.Api.Models.RoutineTrainingDate", b =>
                 {
                     b.Property<int>("RoutineTrainingDateId")
@@ -1024,6 +1257,10 @@ namespace CoachTraining.Api.Migrations
 
                     b.Property<int?>("OriginalSessionId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal?>("PrivateRateSnapshot")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
 
                     b.Property<string>("Remarks")
                         .HasColumnType("text");
@@ -1215,6 +1452,36 @@ namespace CoachTraining.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CoachTraining.Api.Models.CoachCompensationItem", b =>
+                {
+                    b.HasOne("CoachTraining.Api.Models.CoachCompensationStatement", "Statement")
+                        .WithMany("Items")
+                        .HasForeignKey("CoachCompensationStatementId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachTraining.Api.Models.TrainingSession", "TrainingSession")
+                        .WithOne("CompensationItem")
+                        .HasForeignKey("CoachTraining.Api.Models.CoachCompensationItem", "TrainingSessionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Statement");
+
+                    b.Navigation("TrainingSession");
+                });
+
+            modelBuilder.Entity("CoachTraining.Api.Models.CoachCompensationStatement", b =>
+                {
+                    b.HasOne("CoachTraining.Api.Models.Coach", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Coach");
+                });
+
             modelBuilder.Entity("CoachTraining.Api.Models.CoachSubstitutionHistory", b =>
                 {
                     b.HasOne("CoachTraining.Api.Models.User", "ActionByUser")
@@ -1356,6 +1623,31 @@ namespace CoachTraining.Api.Migrations
                     b.Navigation("Coach");
                 });
 
+            modelBuilder.Entity("CoachTraining.Api.Models.RoutineScheduleRequest", b =>
+                {
+                    b.HasOne("CoachTraining.Api.Models.Coach", "Coach")
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CoachTraining.Api.Models.User", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CoachTraining.Api.Models.RoutineSchedule", "RoutineSchedule")
+                        .WithMany()
+                        .HasForeignKey("RoutineScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Coach");
+
+                    b.Navigation("ReviewedByUser");
+
+                    b.Navigation("RoutineSchedule");
+                });
+
             modelBuilder.Entity("CoachTraining.Api.Models.TrainingApprovalHistory", b =>
                 {
                     b.HasOne("CoachTraining.Api.Models.User", "ActionByUser")
@@ -1437,6 +1729,11 @@ namespace CoachTraining.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CoachTraining.Api.Models.CoachCompensationStatement", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("CoachTraining.Api.Models.CompetitionMatch", b =>
                 {
                     b.Navigation("Coaches");
@@ -1450,6 +1747,8 @@ namespace CoachTraining.Api.Migrations
             modelBuilder.Entity("CoachTraining.Api.Models.TrainingSession", b =>
                 {
                     b.Navigation("Attendances");
+
+                    b.Navigation("CompensationItem");
 
                     b.Navigation("PrivateAthletes");
 

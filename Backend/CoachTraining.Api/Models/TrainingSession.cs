@@ -40,6 +40,12 @@ public class TrainingSession : AuditableEntity
     public string? ActualCoachCodeSnapshot { get; set; }
     public string? ActualCoachNameSnapshot { get; set; }
 
+    /// <summary>
+    /// Private rate captured when a Private session is locked. This keeps historical
+    /// compensation stable when the Coach master rate changes later.
+    /// </summary>
+    public decimal? PrivateRateSnapshot { get; set; }
+
     public SessionStatus Status { get; set; } = SessionStatus.Scheduled;
 
     /// <summary>Optional, Private Training only (requirement.md 4.5 / FR-PRIVATE-006).</summary>
@@ -60,4 +66,5 @@ public class TrainingSession : AuditableEntity
     public ICollection<PrivateSessionAthlete> PrivateAthletes { get; set; } = [];
     public ICollection<Attendance> Attendances { get; set; } = [];
     public TrainingLog? TrainingLog { get; set; }
+    public CoachCompensationItem? CompensationItem { get; set; }
 }

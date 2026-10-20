@@ -113,6 +113,14 @@
             ตารางฝึกซ้อมประจำ
           </a>
           <a
+            routerLink="/routine-schedule-requests"
+            routerLinkActive="shell-nav-active"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideClipboardCheck [size]="18"></svg>
+            คำขอตารางจากโค้ช
+          </a>
+          <a
             routerLink="/private-sessions"
             routerLinkActive="shell-nav-active"
             class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
@@ -137,6 +145,14 @@
           >
             <svg lucideUserCheck [size]="18"></svg>
             จัดการโค้ช
+          </a>
+          <a
+            routerLink="/coach-compensations"
+            routerLinkActive="shell-nav-active"
+            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+          >
+            <svg lucideFileBarChart [size]="18"></svg>
+            สรุปค่าตอบแทนโค้ช
           </a>
           <a
             routerLink="/athletes"
@@ -279,6 +295,15 @@
               ตารางฝึกซ้อมประจำ
             </a>
             <a
+              routerLink="/routine-schedule-requests"
+              routerLinkActive="shell-nav-active"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideClipboardCheck [size]="18"></svg>
+              คำขอตารางจากโค้ช
+            </a>
+            <a
               routerLink="/private-sessions"
               routerLinkActive="shell-nav-active"
               (click)="closeSidebar()"
@@ -306,6 +331,15 @@
             >
               <svg lucideUserCheck [size]="18"></svg>
               จัดการโค้ช
+            </a>
+            <a
+              routerLink="/coach-compensations"
+              routerLinkActive="shell-nav-active"
+              (click)="closeSidebar()"
+              class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-(--shell-accent-50) hover:text-(--shell-accent-700)"
+            >
+              <svg lucideFileBarChart [size]="18"></svg>
+              สรุปค่าตอบแทนโค้ช
             </a>
             <a
               routerLink="/athletes"

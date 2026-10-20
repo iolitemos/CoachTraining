@@ -1,6 +1,6 @@
 <app-page-header
   [title]="isEditMode() ? 'แก้ไขตารางฝึกซ้อมประจำ' : 'เพิ่มตารางฝึกซ้อมประจำ'"
-  [subtitle]="isSelfService() ? 'เพิ่มวันที่และเวลาฝึกซ้อมประจำของคุณ' : 'เลือกโค้ช วันที่ และเวลาฝึกซ้อม'"
+  [subtitle]="isSelfService() ? 'ส่งวันที่และเวลาของคุณให้ผู้ดูแลระบบตรวจสอบก่อนสร้างตารางจริง' : 'เลือกโค้ช วันที่ และเวลาฝึกซ้อม'"
 >
   <a
     actions
@@ -180,7 +180,7 @@
         [disabled]="submitting()"
         class="mt-2 min-h-11 rounded-lg bg-primary-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {{ submitting() ? 'กำลังบันทึก...' : 'บันทึก' }}
+        {{ submitting() ? 'กำลังบันทึก...' : (isSelfService() ? 'ส่งคำขออนุมัติ' : 'บันทึก') }}
       </button>
     </form>
   }

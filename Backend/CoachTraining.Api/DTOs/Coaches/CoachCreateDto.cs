@@ -35,5 +35,11 @@ public class CoachCreateDto
     [MaxLength(200)]
     public string? BankAccountName { get; set; }
 
+    [Range(typeof(decimal), "0", "9999999999999999.99", ErrorMessage = "เงินเดือนพื้นฐานต้องอยู่ระหว่าง 0 ถึง 9,999,999,999,999,999.99")]
+    public decimal? BaseSalary { get; set; }
+
+    [Range(typeof(decimal), "0", "9999999999999999.99", ErrorMessage = "อัตราค่าสอน Private ต้องอยู่ระหว่าง 0 ถึง 9,999,999,999,999,999.99")]
+    public decimal? PrivateRate { get; set; }
+
     public string? Remarks { get; set; }
 }

@@ -12,6 +12,7 @@ import {
   RoutineScheduleSaveRequest,
   RoutineScheduleSaveResult,
 } from '../models/routine-schedule.model';
+import { RoutineScheduleRequest } from '../models/routine-schedule-request.model';
 
 @Injectable({ providedIn: 'root' })
 export class RoutineScheduleService {
@@ -63,9 +64,9 @@ export class RoutineScheduleService {
     return response.data;
   }
 
-  async createOwn(request: Omit<RoutineScheduleSaveRequest, 'coachId'>): Promise<RoutineScheduleSaveResult> {
+  async createOwn(request: Omit<RoutineScheduleSaveRequest, 'coachId'>): Promise<RoutineScheduleRequest> {
     const response = await firstValueFrom(
-      this.http.post<ApiSuccessBody<RoutineScheduleSaveResult>>(
+      this.http.post<ApiSuccessBody<RoutineScheduleRequest>>(
         `${environment.apiBaseUrl}/coach/routine-schedules`,
         request,
       ),

@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { CoachHome } from './coach-home';
+import { AuthService } from '../../services/auth.service';
 
 describe('CoachHome calendar', () => {
   let component: CoachHome;
@@ -35,6 +36,11 @@ describe('CoachHome calendar', () => {
     const colleaguesRequest = httpMock.expectOne((r) =>
       r.url.endsWith('/dashboard/coach/calendar-colleagues'),
     );
+    const scheduleRequestsRequest = httpMock.expectOne((r) =>
+      r.url.endsWith('/coach/routine-schedules/requests'),
+    );
+    expect(scheduleRequestsRequest.request.params.get('dateFrom')).toBeTruthy();
+    expect(scheduleRequestsRequest.request.params.get('dateTo')).toBeTruthy();
     const competitionRequest = httpMock.expectOne((r) => r.url.endsWith('/competition-matches'));
 
     request.flush({
@@ -47,6 +53,7 @@ describe('CoachHome calendar', () => {
         totalPages: 1,
       },
     });
+    scheduleRequestsRequest.flush({ message: 'Success', data: [] });
     colleaguesRequest.flush({ message: 'Success', data: [] });
     competitionRequest.flush({
       message: 'Success',
@@ -80,11 +87,30 @@ describe('CoachHome calendar', () => {
   });
 
   it('switches between overview and calendar tabs', () => {
+    expect(component.activeTab()).toBe('calendar');
+
+    component.selectTab('overview');
     expect(component.activeTab()).toBe('overview');
 
     component.selectTab('calendar');
 
     expect(component.activeTab()).toBe('calendar');
+  });
+
+  it('restores and remembers the last viewed calendar month per signed-in user', () => {
+    const auth = TestBed.inject(AuthService);
+    const storageKey = `coach-training:filters:${auth.currentUser()?.userId ?? 'anonymous'}:coach-home-calendar`;
+    sessionStorage.setItem(storageKey, JSON.stringify({ month: '2026-11-01', date: '2026-11-18' }));
+
+    (component as any).restoreCalendarState();
+
+    expect(component.visibleMonth().getFullYear()).toBe(2026);
+    expect(component.visibleMonth().getMonth()).toBe(10);
+    expect(component.selectedDate()).toBe('2026-11-18');
+
+    component.selectTab('calendar');
+    expect(sessionStorage.getItem(storageKey)).toContain('2026-11-01');
+    sessionStorage.removeItem(storageKey);
   });
 
   it('hides overdue sessions by default and toggles their visibility', () => {
@@ -160,6 +186,27 @@ describe('CoachHome calendar', () => {
 
     emptyDay.sessions = [{ trainingType: 'Routine' } as never];
     expect(component.calendarDayBackground(emptyDay, true)).toBe('#d1fae5');
+  });
+
+  it('shows pending Coach requests on their proposed calendar date without counting them as sessions', () => {
+    component.visibleMonth.set(new Date(2026, 0, 1));
+    component.calendarRequests.set([
+      {
+        routineScheduleRequestId: 91,
+        proposedDate: '2026-01-12',
+        proposedStartTime: '18:00:00',
+        proposedEndTime: '20:00:00',
+        status: 'Pending',
+      } as never,
+    ]);
+
+    const day = component.calendarDays().find((item) => item.isoDate === '2026-01-12')!;
+    expect(day.requests).toHaveLength(1);
+    expect(day.sessions).toHaveLength(0);
+    expect(component.currentMonthSessionCount()).toBe(0);
+    expect(component.currentMonthPendingRequestCount()).toBe(1);
+    expect(component.calendarDayBackground(day)).toBe('#fef3c7');
+    expect(component.requestStatusLabel(day.requests[0])).toBe('รออนุมัติ');
   });
 
 });

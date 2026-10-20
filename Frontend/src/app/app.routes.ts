@@ -67,6 +67,12 @@ export const routes: Routes = [
             canActivate: [roleGuard],
             data: { roles: [AppRole.Coach], selfService: true },
           },
+          {
+            path: 'routine-schedule-requests',
+            loadComponent: () => import('./pages/coach-routine-requests/coach-routine-requests').then((m) => m.CoachRoutineRequests),
+            canActivate: [roleGuard],
+            data: { roles: [AppRole.Coach] },
+          },
         ],
       },
       {
@@ -113,6 +119,13 @@ export const routes: Routes = [
         loadChildren: () => import('./pages/coaches/coaches.routes').then((m) => m.COACHES_ROUTES),
       },
       {
+        path: 'coach-compensations',
+        canActivate: [roleGuard],
+        data: { roles: [AppRole.Administrator] },
+        loadComponent: () =>
+          import('./pages/coach-compensations/coach-compensations').then((m) => m.CoachCompensations),
+      },
+      {
         path: 'athletes',
         canActivate: [roleGuard],
         data: { roles: [AppRole.Administrator] },
@@ -123,6 +136,13 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: [AppRole.Administrator] },
         loadChildren: () => import('./pages/competition-matches/competition-matches.routes').then((m) => m.COMPETITION_MATCHES_ROUTES),
+      },
+      {
+        path: 'routine-schedule-requests',
+        canActivate: [roleGuard],
+        data: { roles: [AppRole.Administrator] },
+        loadComponent: () =>
+          import('./pages/routine-schedule-requests/routine-schedule-requests').then((m) => m.RoutineScheduleRequests),
       },
       {
         path: 'routine-schedules',

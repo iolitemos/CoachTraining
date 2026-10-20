@@ -97,6 +97,14 @@ public class TrainingApprovalService : ITrainingApprovalService
             // Approved -> Locked) and is recorded once as ApprovalActionType.Approve.
             _sessionStatusService.EnsureValidTransition(SessionStatus.Approved, SessionStatus.Locked);
             session.Status = SessionStatus.Locked;
+            if (session.TrainingType == TrainingType.Private)
+            {
+                var creditedCoachId = session.ActualCoachId ?? session.AssignedCoachId;
+                session.PrivateRateSnapshot = await _db.Coaches
+                    .Where(coach => coach.CoachId == creditedCoachId)
+                    .Select(coach => coach.PrivateRate)
+                    .FirstOrDefaultAsync() ?? 0m;
+            }
             session.UpdatedByUserId = actionByUserId;
             session.UpdatedDate = DateTime.UtcNow;
 
@@ -251,6 +259,20 @@ public class TrainingApprovalService : ITrainingApprovalService
             {
                 return new ApprovalActionResult { Error = $"สามารถปลดล็อกได้เฉพาะเซสชันที่ถูกล็อกแล้วเท่านั้น (สถานะปัจจุบัน: {session.Status})" };
             }
+
+            var finalizedCompensation = await _db.CoachCompensationItems
+                .AnyAsync(item => item.TrainingSessionId == trainingSessionId
+                    && item.Statement.Status != CompensationStatementStatus.Draft);
+            if (finalizedCompensation)
+            {
+                return new ApprovalActionResult { Error = "ไม่สามารถปลดล็อกเซสชันที่อยู่ในสรุปค่าตอบแทนซึ่งยืนยันหรือจ่ายแล้ว" };
+            }
+
+            var draftCompensationItems = await _db.CoachCompensationItems
+                .Where(item => item.TrainingSessionId == trainingSessionId
+                    && item.Statement.Status == CompensationStatementStatus.Draft)
+                .ToListAsync();
+            _db.CoachCompensationItems.RemoveRange(draftCompensationItems);
 
             session.Status = SessionStatus.Completed;
             session.UpdatedByUserId = actionByUserId;

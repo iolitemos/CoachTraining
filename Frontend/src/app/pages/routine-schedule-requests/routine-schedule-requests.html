@@ -1,0 +1,913 @@
+<app-page-header
+  title="คำขอตารางสอนประจำ"
+  subtitle="ตรวจสอบคำขอจากโค้ช เปรียบเทียบข้อมูล และดูภาพรวมตามวันในปฏิทิน"
+/>
+
+<div class="mt-4 space-y-4 sm:mt-5 sm:space-y-5">
+  @if (success(); as message) {
+    <div
+      class="flex items-start justify-between gap-3 rounded-xl border border-success/30 bg-success-surface px-4 py-3 text-sm text-success"
+      role="status"
+    >
+      <span>{{ message }}</span>
+      <button
+        type="button"
+        class="shrink-0 text-lg leading-none"
+        aria-label="ปิดข้อความ"
+        (click)="success.set(null)"
+      >
+        ×
+      </button>
+    </div>
+  }
+  @if (batchError(); as message) {
+    <div
+      class="flex items-start justify-between gap-3 rounded-xl border border-danger/30 bg-danger-surface px-4 py-3 text-sm text-danger"
+      role="alert"
+    >
+      <span>{{ message }}</span>
+      <button
+        type="button"
+        class="shrink-0 text-lg leading-none"
+        aria-label="ปิดข้อความ"
+        (click)="batchError.set(null)"
+      >
+        ×
+      </button>
+    </div>
+  }
+
+  <section aria-label="สรุปคำขอ" class="grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
+    <button
+      type="button"
+      class="rounded-2xl border bg-surface p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm sm:p-4"
+      [class.border-warning]="statusFilter() === 'Pending'"
+      [class.ring-2]="statusFilter() === 'Pending'"
+      [class.ring-amber-100]="statusFilter() === 'Pending'"
+      [class.border-border]="statusFilter() !== 'Pending'"
+      (click)="selectStatus('Pending')"
+    >
+      <span class="text-xs font-medium text-text-secondary sm:text-sm">รอตรวจสอบ</span>
+      <span class="mt-1 flex items-end justify-between gap-2">
+        <strong class="text-2xl font-bold text-text sm:text-3xl">{{ pendingCount() }}</strong>
+        <span class="mb-1 h-2.5 w-2.5 rounded-full bg-warning"></span>
+      </span>
+    </button>
+    <button
+      type="button"
+      class="rounded-2xl border bg-surface p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm sm:p-4"
+      [class.border-orange-500]="statusFilter() === 'RevisionRequested'"
+      [class.ring-2]="statusFilter() === 'RevisionRequested'"
+      [class.ring-orange-100]="statusFilter() === 'RevisionRequested'"
+      [class.border-border]="statusFilter() !== 'RevisionRequested'"
+      (click)="selectStatus('RevisionRequested')"
+    >
+      <span class="text-xs font-medium text-text-secondary sm:text-sm">ส่งกลับให้แก้ไข</span>
+      <span class="mt-1 flex items-end justify-between gap-2">
+        <strong class="text-2xl font-bold text-text sm:text-3xl">{{ revisionCount() }}</strong>
+        <span class="mb-1 h-2.5 w-2.5 rounded-full bg-orange-500"></span>
+      </span>
+    </button>
+    <button
+      type="button"
+      class="rounded-2xl border bg-surface p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm sm:p-4"
+      [class.border-success]="statusFilter() === 'Approved'"
+      [class.ring-2]="statusFilter() === 'Approved'"
+      [class.ring-green-100]="statusFilter() === 'Approved'"
+      [class.border-border]="statusFilter() !== 'Approved'"
+      (click)="selectStatus('Approved')"
+    >
+      <span class="text-xs font-medium text-text-secondary sm:text-sm">อนุมัติแล้ว</span>
+      <span class="mt-1 flex items-end justify-between gap-2">
+        <strong class="text-2xl font-bold text-text sm:text-3xl">{{ approvedCount() }}</strong>
+        <span class="mb-1 h-2.5 w-2.5 rounded-full bg-success"></span>
+      </span>
+    </button>
+    <button
+      type="button"
+      class="rounded-2xl border bg-surface p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm sm:p-4"
+      [class.border-primary-500]="statusFilter() === ''"
+      [class.ring-2]="statusFilter() === ''"
+      [class.ring-primary-100]="statusFilter() === ''"
+      [class.border-border]="statusFilter() !== ''"
+      (click)="selectStatus('')"
+    >
+      <span class="text-xs font-medium text-text-secondary sm:text-sm">คำขอทั้งหมด</span>
+      <span class="mt-1 flex items-end justify-between gap-2">
+        <strong class="text-2xl font-bold text-text sm:text-3xl">{{ requests().length }}</strong>
+        <span class="mb-1 h-2.5 w-2.5 rounded-full bg-primary-500"></span>
+      </span>
+    </button>
+  </section>
+
+  <section class="rounded-2xl border border-border bg-surface p-3 sm:p-4">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div class="grid grid-cols-2 rounded-xl bg-secondary-50 p-1" aria-label="รูปแบบการแสดงผล">
+        <button
+          type="button"
+          class="min-h-10 rounded-lg px-4 text-sm font-semibold transition-colors"
+          [class.bg-surface]="viewMode() === 'calendar'"
+          [class.text-primary-700]="viewMode() === 'calendar'"
+          [class.shadow-sm]="viewMode() === 'calendar'"
+          [class.text-text-secondary]="viewMode() !== 'calendar'"
+          (click)="setViewMode('calendar')"
+        >
+          ปฏิทิน
+        </button>
+        <button
+          type="button"
+          class="min-h-10 rounded-lg px-4 text-sm font-semibold transition-colors"
+          [class.bg-surface]="viewMode() === 'list'"
+          [class.text-primary-700]="viewMode() === 'list'"
+          [class.shadow-sm]="viewMode() === 'list'"
+          [class.text-text-secondary]="viewMode() !== 'list'"
+          (click)="setViewMode('list')"
+        >
+          รายการ
+        </button>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 lg:flex lg:items-end">
+        <label class="block sm:min-w-48">
+          <span class="mb-1 block text-xs font-medium text-text-secondary">สถานะคำขอ</span>
+          <select
+            class="min-h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-text outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+            [value]="statusFilter()"
+            (change)="selectStatus($any($event.target).value)"
+          >
+            <option value="">ทุกสถานะ</option>
+            <option value="Pending">รอตรวจสอบ</option>
+            <option value="RevisionRequested">ขอให้แก้ไข</option>
+            <option value="Approved">อนุมัติแล้ว</option>
+            <option value="Rejected">ปฏิเสธ</option>
+            <option value="Cancelled">ยกเลิก</option>
+          </select>
+        </label>
+        <label class="block sm:min-w-56">
+          <span class="mb-1 block text-xs font-medium text-text-secondary">โค้ช</span>
+          <select
+            class="min-h-11 w-full rounded-xl border border-border bg-surface px-3 text-sm text-text outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+            [value]="coachFilter() ?? ''"
+            (change)="selectCoach($any($event.target).value)"
+          >
+            <option value="">โค้ชทั้งหมด</option>
+            @for (coach of coachOptions(); track coach.coachId) {
+              <option [value]="coach.coachId">{{ coach.label }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  @if (visiblePendingRequests().length > 0 || selectedPendingRequests().length > 0) {
+    <section
+      class="flex flex-col gap-3 rounded-2xl border border-primary-200 bg-primary-50/60 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4"
+      aria-label="อนุมัติคำขอหลายรายการ"
+    >
+      <div class="flex items-center gap-3">
+        <label
+          class="flex min-h-10 cursor-pointer items-center gap-2 text-sm font-semibold text-text"
+        >
+          <input
+            type="checkbox"
+            class="h-4 w-4 rounded border-border"
+            [checked]="allVisiblePendingSelected()"
+            (change)="toggleVisiblePending()"
+          />
+          เลือกคำขอที่รอตรวจสอบตามตัวกรองทั้งหมด
+        </label>
+        @if (selectedPendingRequests().length > 0) {
+          <button
+            type="button"
+            class="text-xs font-semibold text-text-secondary hover:text-danger"
+            (click)="clearSelection()"
+          >
+            ล้างที่เลือก
+          </button>
+        }
+      </div>
+      <button
+        type="button"
+        class="min-h-11 rounded-xl bg-success px-5 text-sm font-semibold text-white shadow-sm hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+        [disabled]="selectedPendingRequests().length === 0 || processing()"
+        (click)="requestBatchApprove()"
+      >
+        อนุมัติที่เลือก {{ selectedPendingRequests().length }} รายการ
+      </button>
+    </section>
+  }
+
+  @switch (state()) {
+    @case ('loading') {
+      <app-loading-indicator label="กำลังโหลดคำขอ..." />
+    }
+    @case ('error') {
+      <app-error-state message="ไม่สามารถโหลดคำขอได้" (retry)="load()" />
+    }
+    @case ('ready') {
+      @if (viewMode() === 'calendar') {
+        <section
+          class="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
+          aria-label="ปฏิทินคำขอตารางสอนประจำ"
+        >
+          <div
+            class="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <h2 class="text-lg font-bold text-text">{{ monthLabel() }}</h2>
+              <p class="mt-0.5 text-xs text-text-secondary">
+                {{ currentMonthRequestCount() }} คำขอตามตัวกรองในเดือนนี้
+              </p>
+              @if (statusFilter() === 'Pending') {
+                <div class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+                  <span class="inline-flex items-center gap-1.5 text-amber-700">
+                    <span class="h-2 w-2 rounded-full bg-warning"></span>รอตรวจสอบ
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 text-green-700">
+                    <span class="h-2 w-2 rounded-full bg-success"></span>อนุมัติแล้ว (แสดงประกอบ)
+                  </span>
+                </div>
+              }
+            </div>
+            <div
+              class="grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2"
+              aria-label="เปลี่ยนเดือน"
+            >
+              <button
+                type="button"
+                class="min-h-11 rounded-xl border border-border text-xl text-text-secondary hover:bg-secondary-50"
+                aria-label="เดือนก่อนหน้า"
+                (click)="moveMonth(-1)"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                class="min-h-11 rounded-xl border border-border px-4 text-sm font-semibold text-text-secondary hover:bg-secondary-50"
+                (click)="goToCurrentMonth()"
+              >
+                เดือนปัจจุบัน
+              </button>
+              <button
+                type="button"
+                class="min-h-11 rounded-xl border border-border text-xl text-text-secondary hover:bg-secondary-50"
+                aria-label="เดือนถัดไป"
+                (click)="moveMonth(1)"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-7 border-b border-border bg-secondary-50">
+            @for (header of dayHeaders; track header) {
+              <div
+                class="py-2 text-center text-[11px] font-semibold text-text-secondary sm:text-xs"
+              >
+                {{ header }}
+              </div>
+            }
+          </div>
+
+          <div class="hidden grid-cols-7 md:grid">
+            @for (day of calendarDays(); track day.isoDate) {
+              <div
+                class="relative min-h-32 border-b border-r border-border p-2 pb-10"
+                [class.bg-secondary-50]="!day.isCurrentMonth"
+              >
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    class="flex min-h-9 min-w-9 items-center justify-center rounded-lg text-sm font-semibold hover:bg-primary-50"
+                    [class.bg-primary-600]="day.isToday"
+                    [class.text-white]="day.isToday"
+                    [class.ring-2]="selectedDate() === day.isoDate && !day.isToday"
+                    [class.ring-primary-500]="selectedDate() === day.isoDate && !day.isToday"
+                    [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday"
+                    (click)="selectDay(day)"
+                  >
+                    {{ day.dayNumber }}
+                  </button>
+                  @if (day.competitionMatches.length > 0) {
+                    <span
+                      class="inline-flex size-6 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-xs shadow-sm"
+                      role="img"
+                      [attr.aria-label]="
+                        'มีการแข่งขัน ' + day.competitionMatches.length + ' รายการ'
+                      "
+                      [title]="day.competitionMatches[0].name"
+                      >🏆</span
+                    >
+                  }
+                </div>
+
+                <div class="mt-1.5 space-y-1">
+                  @for (
+                    request of day.requests.slice(0, 3);
+                    track request.routineScheduleRequestId
+                  ) {
+                    <div
+                      class="flex w-full items-center gap-1.5 rounded-md border-l-[3px] px-1.5 py-1.5 text-left text-[11px] transition-colors hover:brightness-95"
+                      [style.border-left-color]="requestCoachColor(request)"
+                      [class.bg-amber-50]="request.status === 'Pending'"
+                      [class.text-amber-900]="request.status === 'Pending'"
+                      [class.bg-orange-50]="request.status === 'RevisionRequested'"
+                      [class.text-orange-900]="request.status === 'RevisionRequested'"
+                      [class.bg-green-50]="request.status === 'Approved'"
+                      [class.text-green-900]="request.status === 'Approved'"
+                      [class.bg-red-50]="request.status === 'Rejected'"
+                      [class.text-red-900]="request.status === 'Rejected'"
+                      [class.bg-secondary-100]="request.status === 'Cancelled'"
+                      [class.text-text-secondary]="request.status === 'Cancelled'"
+                    >
+                      @if (request.status === 'Pending') {
+                        <input
+                          type="checkbox"
+                          class="h-3.5 w-3.5 shrink-0 rounded border-border"
+                          [checked]="isSelected(request.routineScheduleRequestId)"
+                          [attr.aria-label]="'เลือกคำขอของโค้ช' + requestCoachName(request)"
+                          (change)="
+                            toggleSelection(
+                              request.routineScheduleRequestId,
+                              $any($event.target).checked
+                            )
+                          "
+                        />
+                      }
+                      <button
+                        type="button"
+                        class="min-w-0 flex-1 truncate text-left font-semibold"
+                        [title]="'โค้ช' + requestCoachName(request)"
+                        (click)="open(request)"
+                      >
+                        โค้ช{{ requestCoachName(request) }}
+                      </button>
+                    </div>
+                  }
+                  @if (day.requests.length > 3) {
+                    <button
+                      type="button"
+                      class="text-xs font-semibold text-primary-600"
+                      (click)="selectDay(day)"
+                    >
+                      อีก {{ day.requests.length - 3 }} คำขอ
+                    </button>
+                  }
+                </div>
+                @if (day.isRoutineTrainingDate) {
+                  <button
+                    type="button"
+                    class="absolute bottom-2 left-2 inline-flex min-h-7 items-center gap-1 rounded-full bg-violet-100 px-2 text-[11px] font-semibold text-violet-800 hover:bg-violet-200"
+                    [attr.aria-label]="'นักกีฬาที่วางแผนมาซ้อม ' + day.plannedAthleteCount + ' คน'"
+                    (click)="selectDay(day)"
+                  >
+                    <svg
+                      class="size-3.5"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z" />
+                    </svg>
+                    {{ day.plannedAthleteCount }} คน
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="grid grid-cols-7 gap-y-1 p-1.5 md:hidden min-[360px]:p-2">
+            @for (day of calendarDays(); track day.isoDate) {
+              <button
+                type="button"
+                class="relative mx-auto flex size-10 items-center justify-center rounded-xl text-xs font-semibold transition-colors"
+                [class.bg-primary-600]="day.isToday"
+                [class.text-white]="day.isToday"
+                [class.bg-secondary-50]="!day.isCurrentMonth && !day.isToday"
+                [class.text-text-secondary]="!day.isCurrentMonth && !day.isToday"
+                [class.ring-2]="selectedDate() === day.isoDate"
+                [class.ring-primary-500]="selectedDate() === day.isoDate"
+                (click)="selectDay(day)"
+              >
+                {{ day.dayNumber }}
+                @if (day.requests.length > 0) {
+                  <span
+                    class="absolute bottom-1 h-1.5 w-1.5 rounded-full"
+                    [class.bg-white]="day.isToday"
+                    [class.bg-warning]="!day.isToday && hasStatus(day, 'Pending')"
+                    [class.bg-success]="!day.isToday && !hasStatus(day, 'Pending')"
+                  ></span>
+                  <span
+                    class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-100 px-1 text-[9px] font-bold text-primary-800"
+                  >
+                    {{ coachCount(day) }}
+                  </span>
+                }
+                @if (day.competitionMatches.length > 0) {
+                  <span
+                    class="absolute -left-1 -top-1 inline-flex size-5 items-center justify-center rounded-full border border-amber-400 bg-amber-100 text-[10px] shadow-sm"
+                    role="img"
+                    aria-label="มีการแข่งขัน"
+                    >🏆</span
+                  >
+                }
+                @if (day.isRoutineTrainingDate) {
+                  <span
+                    class="absolute -bottom-1 -left-1 inline-flex min-w-5 items-center justify-center rounded-full bg-violet-600 px-1 text-[8px] font-bold text-white"
+                    [attr.aria-label]="'นักกีฬาที่วางแผนมาซ้อม ' + day.plannedAthleteCount + ' คน'"
+                  >
+                    {{ day.plannedAthleteCount }}
+                  </span>
+                }
+              </button>
+            }
+          </div>
+
+          @if (selectedDay(); as day) {
+            <div class="border-t border-border bg-secondary-50/60 p-3 sm:p-4">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-sm font-bold text-text">
+                    คำขอวันที่ {{ day.isoDate | displayDate }}
+                  </h3>
+                  <p class="mt-0.5 text-xs text-text-secondary">
+                    {{ coachCount(day) }} โค้ช · {{ day.requests.length }} รายการ
+                  </p>
+                  <div class="mt-1.5 flex flex-wrap gap-1.5">
+                    @if (day.competitionMatches.length > 0) {
+                      <span
+                        class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800"
+                      >
+                        🏆 แข่งขัน {{ day.competitionMatches.length }} รายการ
+                      </span>
+                    }
+                    @if (day.isRoutineTrainingDate) {
+                      <span
+                        class="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-800"
+                      >
+                        นักกีฬาวางแผนมา {{ day.plannedAthleteCount }} คน
+                      </span>
+                    }
+                  </div>
+                </div>
+              </div>
+              @if (day.competitionMatches.length > 0) {
+                <div class="mb-3 grid gap-2 sm:grid-cols-2">
+                  @for (match of day.competitionMatches; track match.competitionMatchId) {
+                    <div
+                      class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+                    >
+                      <p class="font-semibold">🏆 {{ match.name }}</p>
+                      <p class="mt-0.5 text-xs">{{ match.province }}</p>
+                    </div>
+                  }
+                </div>
+              }
+              @if (day.requests.length === 0) {
+                <p class="rounded-xl bg-surface px-3 py-5 text-center text-sm text-text-secondary">
+                  ไม่มีคำขอตามตัวกรองในวันนี้
+                </p>
+              } @else {
+                <div class="grid gap-2 lg:grid-cols-2">
+                  @for (request of day.requests; track request.routineScheduleRequestId) {
+                    <div
+                      class="flex items-center gap-3 rounded-xl border border-l-4 border-border bg-surface p-3 text-left transition-colors hover:border-primary-300"
+                      [style.border-left-color]="requestCoachColor(request)"
+                    >
+                      @if (request.status === 'Pending') {
+                        <input
+                          type="checkbox"
+                          class="h-4 w-4 shrink-0 rounded border-border"
+                          [checked]="isSelected(request.routineScheduleRequestId)"
+                          [attr.aria-label]="'เลือกคำขอของโค้ช' + requestCoachName(request)"
+                          (change)="
+                            toggleSelection(
+                              request.routineScheduleRequestId,
+                              $any($event.target).checked
+                            )
+                          "
+                        />
+                      }
+                      <button
+                        type="button"
+                        class="min-w-0 flex-1 text-left"
+                        (click)="open(request)"
+                      >
+                        <p class="truncate font-semibold text-text">
+                          โค้ช{{ requestCoachName(request) }}
+                        </p>
+                      </button>
+                      <span
+                        class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                        [class.bg-amber-50]="request.status === 'Pending'"
+                        [class.text-amber-700]="request.status === 'Pending'"
+                        [class.bg-orange-50]="request.status === 'RevisionRequested'"
+                        [class.text-orange-700]="request.status === 'RevisionRequested'"
+                        [class.bg-green-50]="request.status === 'Approved'"
+                        [class.text-green-700]="request.status === 'Approved'"
+                        [class.bg-red-50]="request.status === 'Rejected'"
+                        [class.text-red-700]="request.status === 'Rejected'"
+                        [class.bg-secondary-100]="request.status === 'Cancelled'"
+                        [class.text-text-secondary]="request.status === 'Cancelled'"
+                      >
+                        {{ statusLabel(request.status) }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </section>
+      } @else {
+        @if (filteredRequests().length === 0) {
+          <app-empty-state title="ไม่พบคำขอ" description="ลองเปลี่ยนสถานะหรือโค้ชที่ใช้กรอง" />
+        } @else {
+          <div class="grid items-start gap-4 lg:grid-cols-2 xl:gap-5">
+            @for (request of filteredRequests(); track request.routineScheduleRequestId) {
+              <article
+                class="relative overflow-hidden rounded-2xl border border-border bg-surface text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-md"
+              >
+                <span
+                  class="block h-1.5"
+                  [class.bg-warning]="request.status === 'Pending'"
+                  [class.bg-orange-500]="request.status === 'RevisionRequested'"
+                  [class.bg-success]="request.status === 'Approved'"
+                  [class.bg-danger]="request.status === 'Rejected'"
+                  [class.bg-secondary-300]="request.status === 'Cancelled'"
+                ></span>
+                @if (request.status === 'Pending') {
+                  <input
+                    type="checkbox"
+                    class="absolute left-4 top-6 z-10 h-4 w-4 rounded border-border sm:left-5"
+                    [checked]="isSelected(request.routineScheduleRequestId)"
+                    [attr.aria-label]="'เลือกคำขอของโค้ช' + requestCoachName(request)"
+                    (change)="
+                      toggleSelection(request.routineScheduleRequestId, $any($event.target).checked)
+                    "
+                  />
+                }
+                <button
+                  type="button"
+                  class="block w-full p-4 text-left sm:p-5"
+                  (click)="open(request)"
+                >
+                  <span class="flex items-start justify-between gap-3">
+                    <span class="min-w-0" [class.pl-7]="request.status === 'Pending'">
+                      <strong class="block truncate text-lg text-text">
+                        <span
+                          class="mr-1.5 inline-block size-2.5 rounded-full align-middle"
+                          [style.background-color]="requestCoachColor(request)"
+                        ></span>
+                        โค้ช{{ requestCoachName(request) }}
+                      </strong>
+                      <span class="mt-0.5 block text-xs text-text-secondary">{{
+                        requestCoachCode(request)
+                      }}</span>
+                    </span>
+                    <span
+                      class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                      [class.bg-amber-50]="request.status === 'Pending'"
+                      [class.text-amber-700]="request.status === 'Pending'"
+                      [class.bg-orange-50]="request.status === 'RevisionRequested'"
+                      [class.text-orange-700]="request.status === 'RevisionRequested'"
+                      [class.bg-green-50]="request.status === 'Approved'"
+                      [class.text-green-700]="request.status === 'Approved'"
+                      [class.bg-red-50]="request.status === 'Rejected'"
+                      [class.text-red-700]="request.status === 'Rejected'"
+                      [class.bg-secondary-100]="request.status === 'Cancelled'"
+                      [class.text-text-secondary]="request.status === 'Cancelled'"
+                    >
+                      {{ statusLabel(request.status) }}
+                    </span>
+                  </span>
+                  <span class="mt-4 block rounded-xl bg-secondary-50 p-3.5">
+                    <span class="block text-xs font-medium text-text-secondary">
+                      {{ request.status === 'Approved' ? 'วันที่ตารางปัจจุบัน' : 'วันที่เสนอ' }}
+                    </span>
+                    <strong class="mt-1 block text-text">
+                      {{ requestDate(request) | displayDate }}
+                    </strong>
+                    <span class="mt-1 block text-sm text-text-secondary">
+                      {{ requestRemarks(request) || 'ไม่ได้ระบุหมายเหตุ' }}
+                    </span>
+                  </span>
+                  <span
+                    class="mt-3 flex items-center justify-between gap-3 text-xs text-text-secondary"
+                  >
+                    <span>{{ statusDescription(request.status) }}</span>
+                    <span class="shrink-0 font-semibold text-primary-600">ดูรายละเอียด →</span>
+                  </span>
+                </button>
+              </article>
+            }
+          </div>
+        }
+      }
+    }
+  }
+</div>
+
+@if (selected(); as request) {
+  <div
+    class="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center sm:p-4"
+    (click)="close()"
+  >
+    <section
+      class="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-surface p-3.5 shadow-xl sm:rounded-2xl sm:p-4"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <p class="text-xs font-semibold uppercase tracking-wide text-primary-600">
+              ตรวจสอบคำขอ
+            </p>
+            <span
+              class="rounded-full px-2.5 py-1 text-xs font-semibold"
+              [class.bg-amber-50]="request.status === 'Pending'"
+              [class.text-amber-700]="request.status === 'Pending'"
+              [class.bg-orange-50]="request.status === 'RevisionRequested'"
+              [class.text-orange-700]="request.status === 'RevisionRequested'"
+              [class.bg-green-50]="request.status === 'Approved'"
+              [class.text-green-700]="request.status === 'Approved'"
+              [class.bg-red-50]="request.status === 'Rejected'"
+              [class.text-red-700]="request.status === 'Rejected'"
+              [class.bg-secondary-100]="request.status === 'Cancelled'"
+              [class.text-text-secondary]="request.status === 'Cancelled'"
+            >
+              {{ statusLabel(request.status) }}
+            </span>
+          </div>
+          <div class="mt-1 flex flex-wrap items-baseline gap-x-2">
+            <h2 class="truncate text-lg font-bold text-text">
+              <span
+                class="mr-1.5 inline-block size-2.5 rounded-full align-middle"
+                [style.background-color]="requestCoachColor(request)"
+              ></span>
+              โค้ช{{ requestCoachName(request) }}
+            </h2>
+            <span class="text-xs text-text-secondary">{{ requestCoachCode(request) }}</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-50 text-lg leading-none text-text-secondary hover:bg-secondary-100"
+          aria-label="ปิดหน้าต่าง"
+          (click)="close()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="mt-3 grid gap-2.5">
+        <div class="rounded-lg border border-border bg-secondary-50 p-3">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="font-bold text-text">ข้อมูลที่โค้ชเสนอ</h3>
+            <span class="rounded-full bg-surface px-2 py-1 text-[11px] text-text-secondary">
+              ผู้เสนอ: โค้ช{{ request.coachNickname || request.coachName }}
+            </span>
+          </div>
+          <dl class="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-[1fr_1fr_2fr]">
+            <div class="col-span-2 sm:col-span-1">
+              <dt class="text-xs font-medium text-text-secondary">วันที่ฝึกสอน</dt>
+              <dd class="font-semibold text-text">{{ request.proposedDate | displayDate }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium text-text-secondary">เวลา</dt>
+              <dd class="font-semibold text-text">
+                {{ request.proposedStartTime.slice(0, 5) }}–{{
+                  request.proposedEndTime.slice(0, 5)
+                }}
+                น.
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium text-text-secondary">หมายเหตุ</dt>
+              <dd class="text-text">{{ request.proposedRemarks || 'ไม่ได้ระบุหมายเหตุ' }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        @if (request.status === 'Pending') {
+          <div class="rounded-lg border border-primary-200 bg-primary-50/40 p-3">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="font-bold text-text">ข้อมูลที่จะอนุมัติ</h3>
+              @if (changed('date') || changed('start') || changed('end') || changed('remarks')) {
+                <span
+                  class="rounded-full bg-warning-surface px-2 py-1 text-[11px] font-medium text-warning"
+                >
+                  มีการปรับข้อมูล
+                </span>
+              }
+            </div>
+            <div class="mt-2 grid gap-2.5 sm:grid-cols-3">
+              <label class="text-xs font-medium text-text">
+                วันที่
+                <app-date-input
+                  class="mt-1 block"
+                  [(ngModel)]="approvedDate"
+                  ariaLabel="วันที่อนุมัติ"
+                />
+                @if (changed('date')) {
+                  <small class="mt-1 block text-warning">ต่างจากวันที่ที่โค้ชเสนอ</small>
+                }
+              </label>
+              <label class="text-xs font-medium text-text">
+                เวลาเริ่ม
+                <input
+                  type="time"
+                  [(ngModel)]="approvedStartTime"
+                  class="mt-1 min-h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+                @if (changed('start')) {
+                  <small class="mt-1 block text-warning">มีการแก้ไข</small>
+                }
+              </label>
+              <label class="text-xs font-medium text-text">
+                เวลาสิ้นสุด
+                <input
+                  type="time"
+                  [(ngModel)]="approvedEndTime"
+                  class="mt-1 min-h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+                @if (changed('end')) {
+                  <small class="mt-1 block text-warning">มีการแก้ไข</small>
+                }
+              </label>
+              <label class="text-xs font-medium text-text sm:col-span-3">
+                หมายเหตุ
+                <textarea
+                  [(ngModel)]="approvedRemarks"
+                  rows="1"
+                  class="mt-1 min-h-10 w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                ></textarea>
+                @if (changed('remarks')) {
+                  <small class="mt-1 block text-warning">มีการแก้ไข</small>
+                }
+              </label>
+            </div>
+          </div>
+        } @else {
+          <div class="rounded-lg border border-border p-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="font-bold text-text">
+                {{ request.status === 'Approved' ? 'ตารางปัจจุบัน' : 'ผลการตรวจสอบ' }}
+              </h3>
+              @if (scheduleChangedAfterApproval(request)) {
+                <span
+                  class="rounded-full bg-warning-surface px-2 py-0.5 text-[11px] font-medium text-warning"
+                >
+                  แก้ไขหลังอนุมัติ
+                </span>
+              }
+            </div>
+            @if (request.status === 'Approved' && request.approvedDate) {
+              <dl class="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-[1fr_1fr_2fr]">
+                <div class="col-span-2 sm:col-span-3">
+                  <dt class="text-xs font-medium text-text-secondary">ผู้สอนปัจจุบัน</dt>
+                  <dd class="font-semibold text-text">
+                    โค้ช{{ requestCoachName(request) }}
+                    <span class="ml-1 font-normal text-text-secondary">
+                      {{ requestCoachCode(request) }}
+                    </span>
+                  </dd>
+                </div>
+                <div class="col-span-2 sm:col-span-1">
+                  <dt class="text-xs font-medium text-text-secondary">วันที่ฝึกสอน</dt>
+                  <dd class="font-semibold text-text">
+                    {{ requestDate(request) | displayDate }}
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-xs font-medium text-text-secondary">เวลา</dt>
+                  <dd class="font-semibold text-text">
+                    {{ requestStartTime(request).slice(0, 5) }}–{{
+                      requestEndTime(request).slice(0, 5)
+                    }}
+                    น.
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-xs font-medium text-text-secondary">หมายเหตุ</dt>
+                  <dd class="text-text">
+                    {{ requestRemarks(request) || 'ไม่ได้ระบุหมายเหตุ' }}
+                  </dd>
+                </div>
+              </dl>
+              @if (scheduleChangedAfterApproval(request)) {
+                <p class="mt-2 text-[11px] text-text-secondary">
+                  อนุมัติครั้งแรกให้โค้ช{{ request.coachNickname || request.coachName }}:
+                  {{ request.approvedDate | displayDate }} ·
+                  {{ request.approvedStartTime?.slice(0, 5) }}–{{
+                    request.approvedEndTime?.slice(0, 5)
+                  }}
+                  น.
+                </p>
+              }
+            } @else {
+              <p class="mt-3 text-sm text-text-secondary">
+                {{ statusDescription(request.status) }}
+              </p>
+            }
+          </div>
+        }
+      </div>
+
+      @if (request.status === 'Pending') {
+        <div
+          class="mt-2.5 grid gap-2.5 rounded-lg border border-border p-3 sm:grid-cols-[1fr_auto] sm:items-end"
+        >
+          <label class="block text-xs font-medium text-text">
+            เหตุผลหรือข้อความถึงโค้ช
+            <span class="font-normal text-text-secondary">
+              (จำเป็นเมื่อขอแก้ไข ปฏิเสธ หรืออนุมัติตารางทับซ้อน)
+            </span>
+            <textarea
+              [(ngModel)]="reason"
+              rows="1"
+              class="mt-1 min-h-10 w-full resize-none rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+              placeholder="ระบุสิ่งที่ต้องแก้ไขหรือเหตุผลในการดำเนินการ"
+            ></textarea>
+          </label>
+          <label
+            class="flex min-h-10 items-center gap-2 rounded-lg bg-warning-surface px-3 py-2 text-xs text-text"
+          >
+            <input type="checkbox" [(ngModel)]="overrideConflict" class="h-4 w-4" />
+            อนุมัติแม้พบตารางทับซ้อน
+          </label>
+        </div>
+      } @else if (request.reviewReason) {
+        <div class="mt-4 rounded-xl border border-border bg-secondary-50 p-4 text-sm">
+          <p class="text-xs font-semibold text-text-secondary">เหตุผลจากผู้ตรวจสอบ</p>
+          <p class="mt-1 text-text">{{ request.reviewReason }}</p>
+        </div>
+      }
+
+      @if (error()) {
+        <p
+          class="mt-3 rounded-xl border border-danger/30 bg-danger-surface p-3 text-sm text-danger"
+        >
+          {{ error() }}
+        </p>
+      }
+
+      <div class="mt-3 border-t border-border pt-3">
+        @if (request.status === 'Pending') {
+          <div class="grid gap-2 sm:grid-cols-[auto_auto_1fr]">
+            <button
+              type="button"
+              [disabled]="processing()"
+              class="min-h-10 rounded-lg border border-danger/50 px-4 text-sm font-semibold text-danger hover:bg-danger-surface disabled:opacity-50"
+              (click)="decide('reject')"
+            >
+              ปฏิเสธ
+            </button>
+            <button
+              type="button"
+              [disabled]="processing()"
+              class="min-h-10 rounded-lg border border-orange-300 px-4 text-sm font-semibold text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+              (click)="decide('revision')"
+            >
+              ขอให้แก้ไข
+            </button>
+            <button
+              type="button"
+              [disabled]="processing()"
+              class="min-h-10 rounded-lg bg-success px-4 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-50 sm:justify-self-end"
+              (click)="approve()"
+            >
+              {{ processing() ? 'กำลังดำเนินการ...' : 'อนุมัติและสร้างตาราง' }}
+            </button>
+          </div>
+        } @else {
+          <div class="flex justify-end">
+            <button
+              type="button"
+              class="min-h-11 rounded-xl border border-border px-5 text-sm font-semibold text-text-secondary hover:bg-secondary-50"
+              (click)="close()"
+            >
+              ปิด
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+  </div>
+}
+
+<app-confirmation-dialog
+  [open]="batchConfirmationOpen()"
+  title="อนุมัติคำขอที่เลือกทั้งหมด?"
+  [message]="
+    'ระบบจะใช้ข้อมูลวันที่และรายละเอียดตามที่โค้ชเสนอ เพื่อสร้างตารางฝึกซ้อม ' +
+    selectedPendingRequests().length +
+    ' รายการในครั้งเดียว'
+  "
+  [confirmLabel]="'อนุมัติ ' + selectedPendingRequests().length + ' รายการ'"
+  cancelLabel="กลับไปตรวจสอบ"
+  [processing]="processing()"
+  (confirmed)="confirmBatchApprove()"
+  (cancelled)="batchConfirmationOpen.set(false)"
+/>

@@ -60,6 +60,8 @@ export class CoachForm implements OnInit {
     bankName: ['', Validators.maxLength(100)],
     bankAccountNumber: ['', Validators.maxLength(30)],
     bankAccountName: ['', Validators.maxLength(200)],
+    baseSalary: this.fb.control<number | null>(null, Validators.min(0)),
+    privateRate: this.fb.control<number | null>(null, Validators.min(0)),
     remarks: [''],
   });
 
@@ -85,6 +87,8 @@ export class CoachForm implements OnInit {
           bankName: coach.bankName ?? '',
           bankAccountNumber: coach.bankAccountNumber ?? '',
           bankAccountName: coach.bankAccountName ?? '',
+          baseSalary: coach.baseSalary,
+          privateRate: coach.privateRate,
           remarks: coach.remarks ?? '',
         });
         this.linkedUsername.set(coach.linkedUsername);
@@ -116,6 +120,8 @@ export class CoachForm implements OnInit {
       bankName: value.bankName || null,
       bankAccountNumber: value.bankAccountNumber || null,
       bankAccountName: value.bankAccountName || null,
+      baseSalary: value.baseSalary,
+      privateRate: value.privateRate,
       remarks: value.remarks || null,
     };
 

@@ -58,3 +58,11 @@ public enum ConflictType
     AthleteOverlap,
     PrivateVsRoutineOverlap,
 }
+
+/// <summary>Administrator-only monthly coach compensation workflow.</summary>
+public enum CompensationStatementStatus
+{
+    Draft,
+    Confirmed,
+    Paid,
+}

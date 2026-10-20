@@ -194,6 +194,60 @@ public class TrainingApprovalServiceTests
     }
 
     [Fact]
+    public async Task ApproveAsync_PrivateSession_SnapshotsActualCoachPrivateRate()
+    {
+        using var db = TestDbContextFactory.Create();
+        var assignedCoach = await SeedCoachAsync(db, "C001");
+        var actualCoach = await SeedCoachAsync(db, "C002");
+        actualCoach.PrivateRate = 900m;
+        var session = await SeedSessionAsync(db, assignedCoach, SessionStatus.Submitted, TrainingType.Private);
+        session.ActualCoachId = actualCoach.CoachId;
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).ApproveAsync(
+            session.TrainingSessionId,
+            new ApprovalCommentRequest(),
+            actionByUserId: 9);
+
+        Assert.Null(result.Error);
+        Assert.Equal(900m, (await db.TrainingSessions.FindAsync(session.TrainingSessionId))!.PrivateRateSnapshot);
+    }
+
+    [Fact]
+    public async Task UnlockAsync_WhenSessionIsInConfirmedCompensation_ReturnsError()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var session = await SeedSessionAsync(db, coach, SessionStatus.Locked, TrainingType.Private);
+        var statement = new CoachCompensationStatement
+        {
+            CoachId = coach.CoachId,
+            Year = session.SessionDate.Year,
+            Month = session.SessionDate.Month,
+            Status = CompensationStatementStatus.Confirmed,
+        };
+        statement.Items.Add(new CoachCompensationItem
+        {
+            TrainingSessionId = session.TrainingSessionId,
+            SessionDateSnapshot = session.SessionDate,
+            ScheduledStartSnapshot = session.ScheduledStartDateTime,
+            ScheduledEndSnapshot = session.ScheduledEndDateTime,
+            CoachNameSnapshot = coach.FullName,
+            ParticipantNamesSnapshot = "Athlete A",
+        });
+        db.CoachCompensationStatements.Add(statement);
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).UnlockAsync(
+            session.TrainingSessionId,
+            new ApprovalReasonRequest { Reason = "แก้ไขเวลา" },
+            actionByUserId: 9);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal(SessionStatus.Locked, (await db.TrainingSessions.FindAsync(session.TrainingSessionId))!.Status);
+    }
+
+    [Fact]
     public async Task RejectAsync_ReturnsSessionToCompletedAndRequiresReason()
     {
         using var db = TestDbContextFactory.Create();

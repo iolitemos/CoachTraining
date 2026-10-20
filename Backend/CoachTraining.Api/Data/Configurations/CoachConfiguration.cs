@@ -19,6 +19,8 @@ public class CoachConfiguration : IEntityTypeConfiguration<Coach>
         builder.Property(c => c.BankName).HasMaxLength(100);
         builder.Property(c => c.BankAccountNumber).HasMaxLength(30);
         builder.Property(c => c.BankAccountName).HasMaxLength(200);
+        builder.Property(c => c.BaseSalary).HasPrecision(18, 2);
+        builder.Property(c => c.PrivateRate).HasPrecision(18, 2);
 
         builder.HasIndex(c => c.CoachCode).IsUnique();
 

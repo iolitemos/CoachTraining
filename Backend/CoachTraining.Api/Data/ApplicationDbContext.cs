@@ -34,6 +34,7 @@ public class ApplicationDbContext : DbContext
 
     // 2.4 Routine Schedule Data
     public DbSet<RoutineSchedule> RoutineSchedules => Set<RoutineSchedule>();
+    public DbSet<RoutineScheduleRequest> RoutineScheduleRequests => Set<RoutineScheduleRequest>();
 
     // 2.5 / 2.6 Training Session and Private Athlete Assignment Data
     public DbSet<TrainingSession> TrainingSessions => Set<TrainingSession>();
@@ -48,6 +49,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<TrainingApprovalHistory> TrainingApprovalHistories => Set<TrainingApprovalHistory>();
     public DbSet<ConflictOverrideHistory> ConflictOverrideHistories => Set<ConflictOverrideHistory>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    // Administrator-only monthly Coach compensation.
+    public DbSet<CoachCompensationStatement> CoachCompensationStatements => Set<CoachCompensationStatement>();
+    public DbSet<CoachCompensationItem> CoachCompensationItems => Set<CoachCompensationItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

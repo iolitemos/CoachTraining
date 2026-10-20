@@ -99,7 +99,8 @@ public class RoutineScheduleService : IRoutineScheduleService
 
             // Wrapped in a transaction so a failure while generating the initial
             // batch of sessions never leaves an orphaned, session-less schedule behind.
-            await using var transaction = await _db.Database.BeginTransactionAsync();
+            var ownsTransaction = _db.Database.CurrentTransaction is null;
+            await using var transaction = ownsTransaction ? await _db.Database.BeginTransactionAsync() : null;
 
             _db.RoutineSchedules.Add(schedule);
             await _db.SaveChangesAsync();
@@ -123,7 +124,7 @@ public class RoutineScheduleService : IRoutineScheduleService
             // FR-CONFLICT-005 — the override itself remains identifiable in history.
             await RecordConflictOverrideAsync(conflicts, overrideReason, schedule.RoutineScheduleId, actionByUserId);
 
-            await transaction.CommitAsync();
+            if (transaction is not null) await transaction.CommitAsync();
 
             return new RoutineScheduleSaveResult { Schedule = MapToDetail(schedule, coach), InitialGeneration = generation };
         }

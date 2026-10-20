@@ -34,6 +34,9 @@ import { CompetitionMatchService } from '../../services/competition-match.servic
 import { CalendarNote } from '../../models/calendar-note.model';
 import { CalendarNoteService } from '../../services/calendar-note.service';
 import { CalendarNoteDialog } from '../../shared/calendar-note-dialog/calendar-note-dialog';
+import { RoutineScheduleRequest } from '../../models/routine-schedule-request.model';
+import { RoutineScheduleRequestService } from '../../services/routine-schedule-request.service';
+import { FilterStateService } from '../../services/filter-state.service';
 
 type ViewState = 'loading' | 'error' | 'ready';
 type CoachHomeTab = 'overview' | 'calendar';
@@ -45,6 +48,7 @@ interface CalendarDay {
   isCurrentMonth: boolean;
   isToday: boolean;
   sessions: TrainingSessionListItem[];
+  requests: RoutineScheduleRequest[];
   competitionMatches: CompetitionMatch[];
   note: CalendarNote | null;
 }
@@ -86,10 +90,11 @@ export class CoachHome implements OnInit {
   private longPressTriggered = false;
   readonly dayHeaders = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   state = signal<ViewState>('loading');
-  activeTab = signal<CoachHomeTab>('overview');
+  activeTab = signal<CoachHomeTab>('calendar');
   dashboard = signal<CoachDashboardResponse | null>(null);
   calendarState = signal<ViewState>('loading');
   calendarSessions = signal<TrainingSessionListItem[]>([]);
+  calendarRequests = signal<RoutineScheduleRequest[]>([]);
   calendarColleagues = signal<CoachCalendarColleague[]>([]);
   calendarCompetitionMatches = signal<CompetitionMatch[]>([]);
   calendarNotes = signal<CalendarNote[]>([]);
@@ -121,6 +126,9 @@ export class CoachHome implements OnInit {
         sessions: this.calendarSessions()
           .filter((session) => session.sessionDate === isoDate)
           .sort((a, b) => a.scheduledStartDateTime.localeCompare(b.scheduledStartDateTime)),
+        requests: this.calendarRequests()
+          .filter((request) => request.proposedDate === isoDate && (request.status === 'Pending' || request.status === 'RevisionRequested'))
+          .sort((a, b) => a.proposedStartTime.localeCompare(b.proposedStartTime)),
         competitionMatches: this.calendarCompetitionMatches().filter(
           (match) => match.startDate <= isoDate && isoDate <= match.endDate,
         ),
@@ -145,19 +153,28 @@ export class CoachHome implements OnInit {
       .reduce((total, day) => total + day.sessions.length, 0),
   );
 
+  currentMonthPendingRequestCount = computed(() =>
+    this.calendarDays()
+      .filter((day) => day.isCurrentMonth)
+      .reduce((total, day) => total + day.requests.length, 0),
+  );
+
   upcomingSessionsThisMonth = computed(() => this.dashboard()?.upcomingSessions ?? []);
 
   constructor(
     private readonly coachDashboardService: CoachDashboardService,
     private readonly trainingSessionService: TrainingSessionService,
     private readonly routineScheduleService: RoutineScheduleService,
+    private readonly routineScheduleRequestService: RoutineScheduleRequestService,
     private readonly competitionMatchService: CompetitionMatchService,
     private readonly calendarNoteService: CalendarNoteService,
+    private readonly filterState: FilterStateService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
+    this.restoreCalendarState();
     if (this.route.snapshot.queryParamMap.get('view') === 'calendar') {
       this.activeTab.set('calendar');
     }
@@ -167,6 +184,7 @@ export class CoachHome implements OnInit {
 
   selectTab(tab: CoachHomeTab): void {
     this.activeTab.set(tab);
+    if (tab === 'calendar') this.rememberCalendarState();
   }
 
   toggleOverdueSessions(): void {
@@ -177,7 +195,7 @@ export class CoachHome implements OnInit {
     this.calendarState.set('loading');
     const days = this.calendarDays();
     try {
-      const [result, colleagues, competitionMatches, notes] = await Promise.all([
+      const [result, requests, colleagues, competitionMatches, notes] = await Promise.all([
         this.trainingSessionService.list({
           page: 1,
           pageSize: 100,
@@ -187,6 +205,7 @@ export class CoachHome implements OnInit {
           dateFrom: days[0].isoDate,
           dateTo: days[days.length - 1].isoDate,
         }),
+        this.routineScheduleRequestService.listOwn(days[0].isoDate, days[days.length - 1].isoDate),
         this.coachDashboardService.getCalendarColleagues(
           days[0].isoDate,
           days[days.length - 1].isoDate,
@@ -195,6 +214,7 @@ export class CoachHome implements OnInit {
         this.calendarNoteService.list(days[0].isoDate, days[days.length - 1].isoDate),
       ]);
       this.calendarSessions.set(result.items);
+      this.calendarRequests.set(requests);
       this.calendarColleagues.set(colleagues);
       this.calendarCompetitionMatches.set(competitionMatches);
       this.calendarNotes.set(notes);
@@ -212,6 +232,7 @@ export class CoachHome implements OnInit {
     const next = new Date(current.getFullYear(), current.getMonth() + offset, 1);
     this.visibleMonth.set(next);
     this.selectedDate.set(toIsoDate(next));
+    this.rememberCalendarState();
     void this.loadCalendar();
   }
 
@@ -219,6 +240,7 @@ export class CoachHome implements OnInit {
     const today = new Date();
     this.visibleMonth.set(startOfMonth(today));
     this.selectedDate.set(toIsoDate(today));
+    this.rememberCalendarState();
     void this.loadCalendar();
   }
 
@@ -231,7 +253,10 @@ export class CoachHome implements OnInit {
     this.selectedDate.set(day.isoDate);
     if (!day.isCurrentMonth) {
       this.visibleMonth.set(startOfMonth(day.date));
+      this.rememberCalendarState();
       void this.loadCalendar();
+    } else {
+      this.rememberCalendarState();
     }
   }
 
@@ -241,6 +266,9 @@ export class CoachHome implements OnInit {
     this.longPressTimer = setTimeout(() => {
       this.longPressTimer = null;
       this.longPressTriggered = true;
+      this.selectedDate.set(day.isoDate);
+      this.visibleMonth.set(startOfMonth(day.date));
+      this.rememberCalendarState();
       void this.router.navigate(['/coach/routine-schedules/new'], {
         queryParams: { date: day.isoDate },
       });
@@ -254,6 +282,28 @@ export class CoachHome implements OnInit {
     }
   }
 
+  private restoreCalendarState(): void {
+    const today = new Date();
+    const restored = this.filterState.restore(
+      'coach-home-calendar',
+      { month: toIsoDate(startOfMonth(today)), date: toIsoDate(today) },
+      this.route.snapshot.queryParamMap,
+    );
+    const month = parseIsoDate(restored.month);
+    const selected = parseIsoDate(restored.date);
+    if (month) this.visibleMonth.set(startOfMonth(month));
+    if (selected) this.selectedDate.set(toIsoDate(selected));
+  }
+
+  private rememberCalendarState(): void {
+    this.filterState.save(
+      'coach-home-calendar',
+      { month: toIsoDate(this.visibleMonth()), date: this.selectedDate() },
+      this.route,
+      { view: 'calendar', month: toIsoDate(this.visibleMonth()), date: this.selectedDate() },
+    );
+  }
+
   canDelete(session: TrainingSessionListItem): boolean {
     return session.trainingType === 'Routine' && session.status === 'Scheduled' && session.routineScheduleId !== null;
   }
@@ -262,9 +312,28 @@ export class CoachHome implements OnInit {
     return day.sessions.some((session) => session.trainingType === trainingType);
   }
 
+  hasPendingRequest(day: CalendarDay): boolean {
+    return day.requests.some((request) => request.status === 'Pending');
+  }
+
+  requestStatusLabel(request: RoutineScheduleRequest): string {
+    return request.status === 'RevisionRequested' ? 'ต้องแก้ไข' : 'รออนุมัติ';
+  }
+
+  visibleSessionLimit(day: CalendarDay): number {
+    return Math.max(0, 3 - Math.min(day.requests.length, 2));
+  }
+
+  hiddenCalendarItemCount(day: CalendarDay): number {
+    const visibleRequests = Math.min(day.requests.length, 2);
+    const visibleSessions = Math.min(day.sessions.length, this.visibleSessionLimit(day));
+    return day.requests.length + day.sessions.length - visibleRequests - visibleSessions;
+  }
+
   calendarDayBackground(day: CalendarDay, isSelected = false): string | null {
     const hasRoutine = this.hasTrainingType(day, 'Routine');
     const hasPrivate = this.hasTrainingType(day, 'Private');
+    const hasRequest = day.requests.length > 0;
     if (hasRoutine && hasPrivate) {
       return 'linear-gradient(135deg, #d1fae5 0 50%, #dbeafe 50% 100%)';
     }
@@ -273,6 +342,9 @@ export class CoachHome implements OnInit {
     }
     if (hasPrivate) {
       return '#dbeafe';
+    }
+    if (hasRequest) {
+      return '#fef3c7';
     }
     return isSelected ? '#e5e7eb' : null;
   }
@@ -371,4 +443,13 @@ function toIsoDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function parseIsoDate(value: string | number | null): Date | null {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split('-').map(Number);
+  const parsed = new Date(year, month - 1, day);
+  return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day
+    ? parsed
+    : null;
 }

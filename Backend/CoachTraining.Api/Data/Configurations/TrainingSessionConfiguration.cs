@@ -16,6 +16,7 @@ public class TrainingSessionConfiguration : IEntityTypeConfiguration<TrainingSes
         builder.Property(s => s.AssignedCoachNameSnapshot).HasMaxLength(200).IsRequired();
         builder.Property(s => s.ActualCoachCodeSnapshot).HasMaxLength(30);
         builder.Property(s => s.ActualCoachNameSnapshot).HasMaxLength(200);
+        builder.Property(s => s.PrivateRateSnapshot).HasPrecision(18, 2);
         builder.Property(s => s.Location).HasMaxLength(200);
 
         // Scheduled/actual times are the gym's local wall-clock time (this system

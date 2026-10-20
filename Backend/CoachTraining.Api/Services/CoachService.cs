@@ -70,6 +70,8 @@ public class CoachService : ICoachService
                 BankName = dto.BankName,
                 BankAccountNumber = dto.BankAccountNumber,
                 BankAccountName = dto.BankAccountName,
+                BaseSalary = dto.BaseSalary,
+                PrivateRate = dto.PrivateRate,
                 Remarks = dto.Remarks,
                 IsActive = true,
                 CreatedByUserId = actionByUserId,
@@ -106,6 +108,8 @@ public class CoachService : ICoachService
         coach.BankName = dto.BankName;
         coach.BankAccountNumber = dto.BankAccountNumber;
         coach.BankAccountName = dto.BankAccountName;
+        coach.BaseSalary = dto.BaseSalary;
+        coach.PrivateRate = dto.PrivateRate;
         coach.Remarks = dto.Remarks;
         coach.UpdatedByUserId = actionByUserId;
         coach.UpdatedDate = DateTime.UtcNow;
@@ -171,6 +175,8 @@ public class CoachService : ICoachService
         BankName = coach.BankName,
         BankAccountNumber = coach.BankAccountNumber,
         BankAccountName = coach.BankAccountName,
+        BaseSalary = coach.BaseSalary,
+        PrivateRate = coach.PrivateRate,
         IsActive = coach.IsActive,
         Remarks = coach.Remarks,
         LinkedUserId = coach.UserId,

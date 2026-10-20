@@ -28,6 +28,12 @@ public class Coach : AuditableEntity
 
     public string? BankAccountName { get; set; }
 
+    /// <summary>Administrator-only compensation reference data. No payroll calculation is performed.</summary>
+    public decimal? BaseSalary { get; set; }
+
+    /// <summary>Administrator-only Private Training rate reference. No compensation calculation is performed.</summary>
+    public decimal? PrivateRate { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public string? Remarks { get; set; }

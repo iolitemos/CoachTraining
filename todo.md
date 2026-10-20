@@ -80,6 +80,7 @@
 
 ### 2.2 Coach Data
 
+- [x] Add optional Base Salary and Private Rate reference fields to Coach persistence with non-negative decimal validation and an EF Core migration.
 - [x] Create Coach entity with explicit `CoachId` primary key and common audit columns.
 - [x] Add unique Coach Code constraint.
 - [x] Add optional User-to-Coach relationship.
@@ -210,6 +211,18 @@
 - [x] Create the EF Core migration for parent Routine participation planning.
 - [x] Create the EF Core migration for separate Routine Training availability dates.
 
+### 2.15 Coach Compensation Data (User-approved additional scope)
+
+- [x] Add monthly Coach compensation statements and Private Session item snapshots with Draft, Confirmed, and Paid states.
+- [x] Snapshot the Actual Coach's Private Rate when a Private Training Session becomes Locked.
+- [x] Add uniqueness, date-range, status, and historical-traceability indexes/relationships with an EF Core migration.
+
+### 2.16 Coach Routine Schedule Approval Requests (User-approved workflow)
+
+- [x] Add persistent Coach-proposed and Administrator-approved Routine date/time snapshots with Pending, Approved, Revision Requested, Rejected, and Cancelled states.
+- [x] Link approved requests to the resulting Routine Schedule without creating an operational Session before approval.
+- [x] Add request status/date/Coach indexes and the `AddRoutineScheduleApprovalRequests` EF Core migration.
+
 ---
 
 ## 3. Authentication
@@ -305,6 +318,7 @@
 
 ### 4.1 Coach Management Backend
 
+- [x] Add Administrator-only Coach create/edit/detail support for Base Salary and Private Rate without exposing them through shared Coach option APIs.
 - [x] Create Coach request/response DTOs (`FR-COACH-001`–`004`).
 - [x] Create Coach service.
 - [x] Create Coach controller with explicit routes.
@@ -363,6 +377,15 @@
 - [x] Synchronize Routine Schedule coach/date/time edits to the linked Scheduled Training Session while preserving progressed history.
 - [x] Ensure generated Routine sessions are identified as Routine throughout queries and reports.
 - [x] Confirm Routine APIs do not expose Group, Team, or Location fields.
+
+### 4.3A Coach Routine Schedule Request Approval Backend (User-approved workflow)
+
+- [x] Change Coach self-service creation to submit Pending requests while keeping Administrator creation immediate.
+- [x] Add Coach-owned request listing, correction/resubmission, and cancellation APIs.
+- [x] Add Administrator request listing, approve, request-revision, and reject APIs with reasons.
+- [x] Preserve proposed and approved values for comparison and create the Routine Schedule/Session atomically only on approval.
+- [x] Revalidate schedule conflicts at submission and approval, requiring an Administrator reason for overrides.
+- [x] Add Administrator batch approval for selected Pending requests using Coach-proposed values in one transaction.
 
 ### 4.4 Private Training Backend
 
@@ -615,12 +638,21 @@
 - [x] Add Administrator date-range summary and per-date athlete-name APIs.
 - [x] Keep planning selections separate from Attendance and never infer or create an attendance status.
 
+### 4.22 Coach Compensation Backend (User-approved additional scope)
+
+- [x] Add Administrator-only monthly compensation APIs and service logic.
+- [x] Calculate Base Salary plus one Private Rate per Locked Private Session, credited to Actual Coach.
+- [x] Support reasoned adjustment, confirmation, and paid-state workflows while preventing recalculation after confirmation.
+- [x] Prevent unlocking a Session included in a Confirmed or Paid compensation statement.
+- [x] Add automated tests for calculation eligibility, Actual Coach credit, rate snapshots, adjustments, and status transitions.
+
 ---
 
 ## 5. Frontend Modules
 
 ### 5.1 Coach Management Frontend
 
+- [x] Add responsive optional Base Salary and Private Rate inputs to the Administrator-only Coach form with non-negative validation.
 - [x] Create Coach list page.
 - [x] Add Coach search/filter/pagination.
 - [x] Add Coach list loading state.
@@ -695,6 +727,18 @@
 - [x] Confirm Routine Schedule UI has no Location field.
 - [x] Make Routine Schedule pages responsive.
 
+### 5.3A Coach Routine Schedule Request Approval Frontend (User-approved workflow)
+
+- [x] Change Coach self-service copy and action to clearly submit for approval.
+- [x] Add a Coach request-status page with correction/resubmission and cancellation actions.
+- [x] Add an Administrator request-review page that compares Coach-proposed and Administrator-approved values and highlights changes.
+- [x] Keep approved request calendars, lists, Coach filters, and Coach counts synchronized with the linked Routine Schedule's current date and Coach while preserving the original proposal for audit comparison.
+- [x] Show Coach calendar colors, Competition days, and Parent Routine participation-plan athlete counts on the Administrator Routine Schedule Request calendar.
+- [x] Add responsive approve, request-revision, reject, conflict-override, loading, empty, success, and error states.
+- [ ] Redesign the Coach request-status page for mobile and desktop with status summaries, filters, clearer proposed/approved comparison, and safer cancellation confirmation. <!-- Implemented; targeted tests and Angular template compilation pass. Awaiting production build because the existing ng build process exits 134 without diagnostics. -->
+- [ ] Add responsive calendar/list views, status summaries, Coach filtering, and a clearer comparison workflow to the Administrator Routine Schedule Request page. <!-- Implemented; 4 targeted tests and Angular template compilation pass. Awaiting production build because the existing ng build process exits 134 without diagnostics. -->
+- [ ] Allow Administrators to select individual or filtered Pending requests and approve them as one batch, while simplifying calendar cards to Coach names without time. <!-- Implemented; backend build, 7 backend tests, 5 frontend tests, and Angular template compilation pass. Awaiting production build because the existing ng build process exits 134 without diagnostics. -->
+
 ### 5.4 Private Training Frontend
 
 - [x] Create Private Training list page.
@@ -750,6 +794,9 @@
 - [x] Open the Coach's Routine Training create form with the selected date after a calendar-day long press.
 - [x] Allow a Coach to delete only the Coach's own untouched Scheduled Routine Training from the calendar.
 - [x] Use distinct calendar colors and legends for Routine and Private Training on desktop and mobile.
+- [x] Show Coach-submitted Routine schedule requests on the Coach Home calendar with a distinct pending/revision state without counting them as confirmed Sessions.
+- [x] Restore the signed-in Coach's last viewed calendar month and selected date after navigating away or submitting a Routine schedule request.
+- [x] Make the Calendar tab the default landing view for Coach Home while retaining access to the Overview tab.
 - [x] Add distinct calendar background colors, including a split background for dates containing both training types.
 - [x] Use a gray selected-day background only when empty while preserving training-type backgrounds on populated dates.
 - [x] Match the selected calendar-day border to a darker shade of its Routine or Private Training background.
@@ -1007,6 +1054,13 @@
 - [x] Integrate per-date planned-attendance counts, the monthly total, and selected-date athlete names into the main Administrator Routine Training calendar.
 - [x] Mark Competition Match dates and shared Calendar Notes in the Routine Training date-management calendar and confirm before removing an open date.
 
+### 5.20 Coach Compensation Frontend (User-approved additional scope)
+
+- [x] Add an Administrator-only monthly compensation page and navigation.
+- [x] Display Base Salary, Private compensation, adjustments, net amount, and linked Session details responsively.
+- [x] Add calculate/refresh, adjustment, confirm, and mark-paid actions with loading, success, error, and confirmation states.
+- [ ] Refresh the compensation summary UI and export/share a coach-ready PNG statement. <!-- Implemented; all 141 frontend tests and Angular template compilation pass. Awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
+
 ---
 
 ## 6. Realtime Features
@@ -1156,6 +1210,7 @@
 - [x] Test inactive athletes and invalid/disabled/rotated links cannot read or change plans.
 - [x] Test Administrator planning summaries return correct counts and athlete names by date.
 - [x] Test Routine availability-date add/remove behavior remains independent from Coach Routine schedules.
+- [x] Test Coach Routine requests create no operational schedule before approval, preserve proposed/approved comparisons, support correction after revision, and create a schedule only on approval.
 
 ### 9.2 Backend API Tests
 
@@ -1258,6 +1313,7 @@
 - [x] Run `ng build` after dashboard/report frontend implementation.
 - [x] Run `dotnet build` and relevant tests after Parent Routine Participation Planning backend implementation.
 - [x] Run `ng build` and relevant tests after Parent Routine Participation Planning frontend implementation.
+- [x] Run backend build, targeted backend tests, Angular template compilation, and targeted frontend tests after Coach Routine Schedule Request Approval implementation.
 
 ### 10.2 Final Validation
 
