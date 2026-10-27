@@ -61,6 +61,9 @@ export class RoutineScheduleRequests implements OnInit {
   competitionMatches = signal<CompetitionMatch[]>([]);
   participationSummaries = signal<RoutineParticipationPlanSummary[]>([]);
   selected = signal<RoutineScheduleRequest | null>(null);
+  calendarRejecting = signal<RoutineScheduleRequest | null>(null);
+  approvedDeleting = signal<RoutineScheduleRequest | null>(null);
+  calendarRejectError = signal<string | null>(null);
   processing = signal(false);
   error = signal<string | null>(null);
   success = signal<string | null>(null);
@@ -78,6 +81,7 @@ export class RoutineScheduleRequests implements OnInit {
   approvedEndTime = '';
   approvedRemarks = '';
   reason = '';
+  calendarRejectReason = '';
   overrideConflict = false;
 
   readonly pendingCount = computed(
@@ -339,6 +343,98 @@ export class RoutineScheduleRequests implements OnInit {
     if (!day.isCurrentMonth) {
       this.visibleMonth.set(startOfMonth(day.date));
       void this.loadParticipationSummaries();
+    }
+  }
+
+  openCalendarReject(request: RoutineScheduleRequest, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    if (request.status !== 'Pending' || this.processing()) return;
+    this.calendarRejecting.set(request);
+    this.calendarRejectReason = '';
+    this.calendarRejectError.set(null);
+  }
+
+  openCalendarRemove(request: RoutineScheduleRequest, event?: Event): void {
+    if (request.status === 'Pending') {
+      this.openCalendarReject(request, event);
+      return;
+    }
+
+    event?.preventDefault();
+    event?.stopPropagation();
+    if (request.status !== 'Approved' || request.routineScheduleId === null || this.processing()) {
+      return;
+    }
+    this.approvedDeleting.set(request);
+    this.batchError.set(null);
+  }
+
+  closeApprovedDelete(): void {
+    if (this.processing()) return;
+    this.approvedDeleting.set(null);
+  }
+
+  async confirmApprovedDelete(): Promise<void> {
+    const request = this.approvedDeleting();
+    if (!request || request.status !== 'Approved' || this.processing()) return;
+
+    this.processing.set(true);
+    this.batchError.set(null);
+    try {
+      const cancelled = await this.service.deleteApproved(request.routineScheduleRequestId);
+      this.requests.update((requests) =>
+        requests.map((item) =>
+          item.routineScheduleRequestId === cancelled.routineScheduleRequestId ? cancelled : item,
+        ),
+      );
+      this.approvedDeleting.set(null);
+      this.success.set(`ลบตารางฝึกซ้อมของโค้ช${this.requestCoachName(request)}แล้ว`);
+    } catch (error) {
+      this.approvedDeleting.set(null);
+      this.batchError.set(this.message(error));
+    } finally {
+      this.processing.set(false);
+    }
+  }
+
+  closeCalendarReject(): void {
+    if (this.processing()) return;
+    this.calendarRejecting.set(null);
+    this.calendarRejectReason = '';
+    this.calendarRejectError.set(null);
+  }
+
+  async confirmCalendarReject(): Promise<void> {
+    const request = this.calendarRejecting();
+    if (!request || request.status !== 'Pending' || this.processing()) return;
+    const reason = this.calendarRejectReason.trim();
+    if (!reason) {
+      this.calendarRejectError.set('กรุณาระบุเหตุผลที่ปฏิเสธคำขอ');
+      return;
+    }
+
+    this.processing.set(true);
+    this.calendarRejectError.set(null);
+    try {
+      const rejected = await this.service.reject(request.routineScheduleRequestId, reason);
+      this.requests.update((requests) =>
+        requests.map((item) =>
+          item.routineScheduleRequestId === rejected.routineScheduleRequestId ? rejected : item,
+        ),
+      );
+      this.selectedIds.update((selected) => {
+        const next = new Set(selected);
+        next.delete(request.routineScheduleRequestId);
+        return next;
+      });
+      this.success.set(`ปฏิเสธคำขอของโค้ช${this.requestCoachName(request)}แล้ว`);
+      this.calendarRejecting.set(null);
+      this.calendarRejectReason = '';
+    } catch (error) {
+      this.calendarRejectError.set(this.message(error));
+    } finally {
+      this.processing.set(false);
     }
   }
 

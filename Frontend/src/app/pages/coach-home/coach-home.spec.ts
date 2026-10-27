@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 
 import { CoachHome } from './coach-home';
 import { AuthService } from '../../services/auth.service';
+import { RoutineScheduleRequest } from '../../models/routine-schedule-request.model';
 
 describe('CoachHome calendar', () => {
   let component: CoachHome;
@@ -152,19 +153,63 @@ describe('CoachHome calendar', () => {
     expect(component.sessionDuration(session)).toBe('1 ชม. 30 นาที');
   });
 
-  it('opens the self-service create page with the held calendar date', () => {
-    vi.useFakeTimers();
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+  it('immediately submits a 16:30–20:30 request by tapping a date in edit mode', async () => {
     const day = component.calendarDays()[10];
 
-    component.startDateLongPress(day);
-    vi.advanceTimersByTime(600);
+    await component.handleCalendarDayClick(day);
+    httpMock.expectNone((item) => item.method === 'POST' && item.url.endsWith('/coach/routine-schedules'));
 
-    expect(navigate).toHaveBeenCalledWith(['/coach/routine-schedules/new'], {
-      queryParams: { date: day.isoDate },
+    component.toggleCalendarEditMode();
+    const createPromise = component.handleCalendarDayClick(day);
+    const createRequest = httpMock.expectOne((item) =>
+      item.method === 'POST' && item.url.endsWith('/coach/routine-schedules'),
+    );
+    expect(createRequest.request.body).toEqual({
+      effectiveStartDate: day.isoDate,
+      startTime: '16:30',
+      endTime: '20:30',
+      remarks: null,
     });
-    vi.useRealTimers();
+    createRequest.flush({
+      message: 'Success',
+      data: {
+        routineScheduleRequestId: 90,
+        proposedDate: day.isoDate,
+        proposedStartTime: '16:30:00',
+        proposedEndTime: '20:30:00',
+        status: 'Pending',
+      },
+    });
+    await createPromise;
+
+    expect(component.calendarRequests()[0].routineScheduleRequestId).toBe(90);
+    expect(component.calendarActionSuccess()).toContain('16:30–20:30');
+  });
+
+  it('opens deletion confirmation by tapping a pending date and cancels the request', async () => {
+    const request = {
+      routineScheduleRequestId: 91,
+      proposedDate: '2026-10-12',
+      proposedStartTime: '16:30:00',
+      proposedEndTime: '20:30:00',
+      status: 'Pending',
+    } as RoutineScheduleRequest;
+    component.visibleMonth.set(new Date(2026, 9, 1));
+    component.calendarRequests.set([request]);
+    component.toggleCalendarEditMode();
+    const day = component.calendarDays().find((item) => item.isoDate === request.proposedDate)!;
+    await component.handleCalendarDayClick(day);
+    expect(component.pendingRequestDelete()).toBe(request);
+
+    const deletePromise = component.confirmRequestDelete();
+    httpMock.expectOne((item) =>
+      item.method === 'DELETE' && item.url.endsWith('/coach/routine-schedules/requests/91'),
+    ).flush({ message: 'Success', data: { ...request, status: 'Cancelled' } });
+    await deletePromise;
+
+    expect(component.pendingRequestDelete()).toBeNull();
+    expect(component.calendarRequests()[0].status).toBe('Cancelled');
+    expect(component.calendarActionSuccess()).toBe('ลบคำขอฝึกซ้อมประจำแล้ว');
   });
 
   it('detects Routine and Private session types for calendar color markers', () => {

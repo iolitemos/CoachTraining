@@ -1,5 +1,6 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   LucideArrowRight,
   LucideCalendarCheck2,
@@ -37,6 +38,7 @@ import { CalendarNoteDialog } from '../../shared/calendar-note-dialog/calendar-n
 import { RoutineScheduleRequest } from '../../models/routine-schedule-request.model';
 import { RoutineScheduleRequestService } from '../../services/routine-schedule-request.service';
 import { FilterStateService } from '../../services/filter-state.service';
+import { ApiErrorBody } from '../../models/paged-result.model';
 
 type ViewState = 'loading' | 'error' | 'ready';
 type CoachHomeTab = 'overview' | 'calendar';
@@ -85,9 +87,8 @@ interface CalendarDay {
   templateUrl: './coach-home.html',
   styleUrl: './coach-home.css',
 })
-export class CoachHome implements OnInit {
-  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
-  private longPressTriggered = false;
+export class CoachHome implements OnInit, OnDestroy {
+  private toastTimeoutId: ReturnType<typeof setTimeout> | null = null;
   readonly dayHeaders = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
   state = signal<ViewState>('loading');
   activeTab = signal<CoachHomeTab>('calendar');
@@ -101,10 +102,15 @@ export class CoachHome implements OnInit {
   noteDialogOpen = signal(false);
   visibleMonth = signal(startOfMonth(new Date()));
   selectedDate = signal(toIsoDate(new Date()));
+  calendarEditMode = signal(false);
   overdueSessionsExpanded = signal(false);
   pendingDelete = signal<TrainingSessionListItem | null>(null);
+  pendingRequestDelete = signal<RoutineScheduleRequest | null>(null);
+  calendarDateProcessing = signal<string | null>(null);
   deleteProcessing = signal(false);
+  requestDeleteProcessing = signal(false);
   calendarActionError = signal<string | null>(null);
+  calendarActionSuccess = signal<string | null>(null);
 
   monthLabel = computed(() =>
     new Intl.DateTimeFormat('th-TH', { month: 'long', year: 'numeric' }).format(this.visibleMonth()),
@@ -170,7 +176,6 @@ export class CoachHome implements OnInit {
     private readonly calendarNoteService: CalendarNoteService,
     private readonly filterState: FilterStateService,
     private readonly route: ActivatedRoute,
-    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -180,6 +185,10 @@ export class CoachHome implements OnInit {
     }
     void this.load();
     void this.loadCalendar();
+  }
+
+  ngOnDestroy(): void {
+    if (this.toastTimeoutId !== null) clearTimeout(this.toastTimeoutId);
   }
 
   selectTab(tab: CoachHomeTab): void {
@@ -245,11 +254,6 @@ export class CoachHome implements OnInit {
   }
 
   selectDay(day: CalendarDay): void {
-    if (this.longPressTriggered) {
-      this.longPressTriggered = false;
-      return;
-    }
-
     this.selectedDate.set(day.isoDate);
     if (!day.isCurrentMonth) {
       this.visibleMonth.set(startOfMonth(day.date));
@@ -260,26 +264,60 @@ export class CoachHome implements OnInit {
     }
   }
 
-  startDateLongPress(day: CalendarDay): void {
-    this.cancelDateLongPress();
-    this.longPressTriggered = false;
-    this.longPressTimer = setTimeout(() => {
-      this.longPressTimer = null;
-      this.longPressTriggered = true;
-      this.selectedDate.set(day.isoDate);
-      this.visibleMonth.set(startOfMonth(day.date));
-      this.rememberCalendarState();
-      void this.router.navigate(['/coach/routine-schedules/new'], {
-        queryParams: { date: day.isoDate },
+  async handleCalendarDayClick(day: CalendarDay): Promise<void> {
+    this.selectDay(day);
+    if (!this.calendarEditMode() || this.calendarDateProcessing()) return;
+
+    const pendingRequest = day.requests.find((request) => request.status === 'Pending');
+    if (pendingRequest) {
+      this.dismissCalendarToast();
+      this.pendingRequestDelete.set(pendingRequest);
+      return;
+    }
+
+    if (day.requests.some((request) => request.status === 'RevisionRequested')) {
+      this.showCalendarToast('วันนี้มีคำขอที่ผู้ดูแลส่งกลับมาให้แก้ไข กรุณาเปิด “ดูคำขอของฉัน”', 'error');
+      return;
+    }
+
+    this.calendarDateProcessing.set(day.isoDate);
+    this.dismissCalendarToast();
+    try {
+      const request = await this.routineScheduleService.createOwn({
+        effectiveStartDate: day.isoDate,
+        startTime: '16:30',
+        endTime: '20:30',
+        remarks: null,
       });
-    }, 600);
+      this.calendarRequests.update((requests) => [request, ...requests]);
+      this.showCalendarToast(`ส่งคำขอฝึกซ้อมวันที่ ${day.isoDate} เวลา 16:30–20:30 แล้ว`, 'success');
+    } catch (error) {
+      const body = error instanceof HttpErrorResponse ? (error.error as ApiErrorBody | undefined) : undefined;
+      this.showCalendarToast(body?.message ?? 'ไม่สามารถเพิ่มคำขอฝึกซ้อมได้ กรุณาตรวจสอบตารางที่อาจทับซ้อน', 'error');
+    } finally {
+      this.calendarDateProcessing.set(null);
+    }
   }
 
-  cancelDateLongPress(): void {
-    if (this.longPressTimer !== null) {
-      clearTimeout(this.longPressTimer);
-      this.longPressTimer = null;
+  toggleCalendarEditMode(): void {
+    this.calendarEditMode.update((enabled) => !enabled);
+    this.dismissCalendarToast();
+  }
+
+  dismissCalendarToast(): void {
+    this.calendarActionError.set(null);
+    this.calendarActionSuccess.set(null);
+    if (this.toastTimeoutId !== null) {
+      clearTimeout(this.toastTimeoutId);
+      this.toastTimeoutId = null;
     }
+  }
+
+  private showCalendarToast(message: string, type: 'success' | 'error'): void {
+    this.dismissCalendarToast();
+    if (type === 'success') this.calendarActionSuccess.set(message);
+    else this.calendarActionError.set(message);
+    this.toastTimeoutId = setTimeout(() => this.dismissCalendarToast(), 3500);
   }
 
   private restoreCalendarState(): void {
@@ -352,12 +390,24 @@ export class CoachHome implements OnInit {
   requestDelete(session: TrainingSessionListItem, event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.calendarActionError.set(null);
+    this.dismissCalendarToast();
     this.pendingDelete.set(session);
+  }
+
+  requestDeletePendingRequest(request: RoutineScheduleRequest, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.calendarEditMode() || request.status !== 'Pending') return;
+    this.dismissCalendarToast();
+    this.pendingRequestDelete.set(request);
   }
 
   cancelDelete(): void {
     this.pendingDelete.set(null);
+  }
+
+  cancelRequestDelete(): void {
+    this.pendingRequestDelete.set(null);
   }
 
   async confirmDelete(): Promise<void> {
@@ -367,16 +417,38 @@ export class CoachHome implements OnInit {
     }
 
     this.deleteProcessing.set(true);
-    this.calendarActionError.set(null);
+    this.dismissCalendarToast();
     try {
       await this.routineScheduleService.deleteOwn(session.routineScheduleId);
       this.pendingDelete.set(null);
+      this.showCalendarToast('ลบตารางฝึกซ้อมประจำแล้ว', 'success');
       await Promise.all([this.load(), this.loadCalendar()]);
     } catch {
-      this.calendarActionError.set('ไม่สามารถลบตารางได้ รายการอาจเริ่มดำเนินการหรือมีประวัติแล้ว');
+      this.showCalendarToast('ไม่สามารถลบตารางได้ รายการอาจเริ่มดำเนินการหรือมีประวัติแล้ว', 'error');
       this.pendingDelete.set(null);
     } finally {
       this.deleteProcessing.set(false);
+    }
+  }
+
+  async confirmRequestDelete(): Promise<void> {
+    const request = this.pendingRequestDelete();
+    if (!request || request.status !== 'Pending' || this.requestDeleteProcessing()) return;
+
+    this.requestDeleteProcessing.set(true);
+    this.dismissCalendarToast();
+    try {
+      const cancelled = await this.routineScheduleRequestService.cancelOwn(request.routineScheduleRequestId);
+      this.calendarRequests.update((requests) =>
+        requests.map((item) => item.routineScheduleRequestId === cancelled.routineScheduleRequestId ? cancelled : item),
+      );
+      this.pendingRequestDelete.set(null);
+      this.showCalendarToast('ลบคำขอฝึกซ้อมประจำแล้ว', 'success');
+    } catch {
+      this.showCalendarToast('ไม่สามารถลบคำขอได้ รายการอาจได้รับการตรวจสอบแล้ว', 'error');
+      this.pendingRequestDelete.set(null);
+    } finally {
+      this.requestDeleteProcessing.set(false);
     }
   }
 

@@ -24,6 +24,9 @@ export interface CoachCompensationStatement {
   coachCode: string;
   coachFullName: string;
   coachNickname: string | null;
+  bankName: string | null;
+  bankAccountNumber: string | null;
+  bankAccountName: string | null;
   year: number;
   month: number;
   status: CompensationStatementStatus;

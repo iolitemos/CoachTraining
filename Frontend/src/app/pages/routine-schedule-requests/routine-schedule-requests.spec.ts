@@ -218,6 +218,81 @@ describe('RoutineScheduleRequests', () => {
     expect(component.processing()).toBe(false);
   });
 
+  it('requires a reason before rejecting a pending request from the calendar', async () => {
+    const pending = request(6, 'Pending');
+    component.openCalendarReject(pending);
+    component.calendarRejectReason = '   ';
+
+    await component.confirmCalendarReject();
+
+    expect(component.calendarRejectError()).toContain('กรุณาระบุเหตุผล');
+    expect(component.calendarRejecting()).toBe(pending);
+    expect(component.processing()).toBe(false);
+  });
+
+  it('rejects a pending request directly from the calendar and updates the page state', async () => {
+    const pending = request(7, 'Pending');
+    component.requests.set([pending]);
+    component.selectedIds.set(new Set([pending.routineScheduleRequestId]));
+    component.openCalendarReject(pending);
+    component.calendarRejectReason = 'ตารางเวลาซ้ำกับกิจกรรมของยิม';
+
+    const reject = component.confirmCalendarReject();
+    const rejectRequest = httpMock.expectOne((item) =>
+      item.url.endsWith(`/routine-schedule-requests/${pending.routineScheduleRequestId}/reject`),
+    );
+    expect(rejectRequest.request.method).toBe('POST');
+    expect(rejectRequest.request.body).toEqual({ reason: 'ตารางเวลาซ้ำกับกิจกรรมของยิม' });
+    rejectRequest.flush({
+      message: 'Success',
+      data: {
+        ...pending,
+        status: 'Rejected',
+        reviewReason: 'ตารางเวลาซ้ำกับกิจกรรมของยิม',
+      },
+    });
+    await reject;
+
+    expect(component.requests()[0].status).toBe('Rejected');
+    expect(component.selectedIds().has(pending.routineScheduleRequestId)).toBe(false);
+    expect(component.calendarRejecting()).toBeNull();
+    expect(component.success()).toContain('ปฏิเสธคำขอ');
+  });
+
+  it('deletes an approved untouched schedule directly from the calendar', async () => {
+    const approved = request(8, 'Approved', {
+      routineScheduleId: 81,
+      approvedDate: '2026-11-03',
+      approvedStartTime: '18:30:00',
+      approvedEndTime: '20:30:00',
+    });
+    component.requests.set([approved]);
+    component.openCalendarRemove(approved);
+
+    expect(component.approvedDeleting()).toBe(approved);
+
+    const deletion = component.confirmApprovedDelete();
+    const deleteRequest = httpMock.expectOne((item) =>
+      item.url.endsWith(
+        `/routine-schedule-requests/${approved.routineScheduleRequestId}/approved-schedule`,
+      ),
+    );
+    expect(deleteRequest.request.method).toBe('DELETE');
+    deleteRequest.flush({
+      message: 'Success',
+      data: {
+        ...approved,
+        status: 'Cancelled',
+        reviewReason: 'ผู้ดูแลลบตารางฝึกซ้อมที่อนุมัติแล้ว',
+      },
+    });
+    await deletion;
+
+    expect(component.requests()[0].status).toBe('Cancelled');
+    expect(component.approvedDeleting()).toBeNull();
+    expect(component.success()).toContain('ลบตารางฝึกซ้อม');
+  });
+
   it('selects only pending requests and approves the selection as one batch', async () => {
     const first = request(1, 'Pending');
     const second = request(2, 'Pending', { proposedDate: '2026-11-04' });

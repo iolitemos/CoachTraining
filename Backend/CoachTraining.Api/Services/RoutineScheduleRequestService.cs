@@ -262,6 +262,38 @@ public class RoutineScheduleRequestService : IRoutineScheduleRequestService
     public Task<RoutineScheduleRequestActionResult> RejectAsync(int id, RoutineScheduleRequestDecisionDto dto, int userId) =>
         DecideAsync(id, RoutineScheduleRequestStatus.Rejected, dto.Reason, userId);
 
+    public async Task<RoutineScheduleRequestActionResult> DeleteApprovedAsync(int id, int userId)
+    {
+        var request = await Query().FirstOrDefaultAsync(x => x.RoutineScheduleRequestId == id);
+        if (request is null) return new RoutineScheduleRequestActionResult { NotFound = true };
+        if (request.Status != RoutineScheduleRequestStatus.Approved || request.RoutineScheduleId is null)
+            return new RoutineScheduleRequestActionResult { Error = "ลบได้เฉพาะคำขอที่อนุมัติและมีตารางฝึกซ้อมอยู่" };
+
+        var previous = JsonSerializer.Serialize(new
+        {
+            Status = request.Status.ToString(),
+            request.RoutineScheduleId,
+            request.ApprovedDate,
+            request.ApprovedStartTime,
+            request.ApprovedEndTime,
+        });
+        var (found, error) = await _routineScheduleService.DeleteAsync(request.RoutineScheduleId.Value, userId);
+        if (!found) return new RoutineScheduleRequestActionResult { Error = "ไม่พบตารางฝึกซ้อมที่อนุมัติไว้" };
+        if (error is not null) return new RoutineScheduleRequestActionResult { Error = error };
+
+        request.Status = RoutineScheduleRequestStatus.Cancelled;
+        request.ReviewReason = "ผู้ดูแลลบตารางฝึกซ้อมที่อนุมัติแล้ว";
+        request.ReviewedByUserId = userId;
+        request.ReviewedDate = DateTime.UtcNow;
+        request.UpdatedByUserId = userId;
+        request.UpdatedDate = DateTime.UtcNow;
+        AddAudit(request.RoutineScheduleRequestId, "DeleteApprovedSchedule", previous,
+            JsonSerializer.Serialize(new { Status = request.Status.ToString(), request.ReviewReason }), userId);
+        await _db.SaveChangesAsync();
+
+        return new RoutineScheduleRequestActionResult { Request = Map(request) };
+    }
+
     private async Task<RoutineScheduleRequestActionResult> DecideAsync(int id, RoutineScheduleRequestStatus status, string reason, int userId)
     {
         var request = await Query().FirstOrDefaultAsync(x => x.RoutineScheduleRequestId == id);

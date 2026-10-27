@@ -36,6 +36,39 @@ describe('CoachCompensations', () => {
     expect(component.statusLabel('Paid')).toBe('จ่ายแล้ว');
   });
 
+  it('shows the coach bank account details on the compensation statement', () => {
+    component.statement.set({
+      coachCompensationStatementId: 1,
+      coachId: 7,
+      coachCode: 'C007',
+      coachFullName: 'สมชาย ใจดี',
+      coachNickname: 'ชาย',
+      bankName: 'ธนาคารกสิกรไทย',
+      bankAccountNumber: '123-4-56789-0',
+      bankAccountName: 'นายสมชาย ใจดี',
+      year: 2026,
+      month: 10,
+      status: 'Draft',
+      baseSalary: 15000,
+      privateSessionCount: 0,
+      privateCompensation: 0,
+      adjustmentAmount: 0,
+      adjustmentReason: null,
+      netAmount: 15000,
+      confirmedDate: null,
+      paidDate: null,
+      items: [],
+    });
+
+    fixture.detectChanges();
+
+    const content = fixture.nativeElement.textContent;
+    expect(content).toContain('ข้อมูลบัญชีรับเงิน');
+    expect(content).toContain('ธนาคารกสิกรไทย');
+    expect(content).toContain('123-4-56789-0');
+    expect(content).toContain('นายสมชาย ใจดี');
+  });
+
   it('creates a shareable compensation image with the statement summary', () => {
     const fillText = vi.fn();
     const context = {
@@ -61,6 +94,9 @@ describe('CoachCompensations', () => {
       coachCode: 'C007',
       coachFullName: 'สมชาย ใจดี',
       coachNickname: 'ชาย',
+      bankName: 'ธนาคารกสิกรไทย',
+      bankAccountNumber: '123-4-56789-0',
+      bankAccountName: 'นายสมชาย ใจดี',
       year: 2026,
       month: 10,
       status: 'Confirmed',
@@ -91,5 +127,8 @@ describe('CoachCompensations', () => {
     expect(canvas.height).toBeGreaterThan(900);
     expect(fillText).toHaveBeenCalledWith('สรุปค่าตอบแทนโค้ช', 84, 150);
     expect(fillText).toHaveBeenCalledWith('C007  •  ตุลาคม 2026', 84, 280);
+    expect(fillText).toHaveBeenCalledWith('ธนาคาร: ธนาคารกสิกรไทย', 112, 466);
+    expect(fillText).toHaveBeenCalledWith('เลขบัญชี: 123-4-56789-0', 580, 466);
+    expect(fillText).toHaveBeenCalledWith('ชื่อบัญชี: นายสมชาย ใจดี', 1055, 466);
   });
 });

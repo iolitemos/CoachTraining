@@ -104,4 +104,13 @@ export class RoutineScheduleRequestService {
     );
     return response.data;
   }
+
+  async deleteApproved(id: number): Promise<RoutineScheduleRequest> {
+    const response = await firstValueFrom(
+      this.http.delete<ApiSuccessBody<RoutineScheduleRequest>>(
+        `${this.baseUrl}/${id}/approved-schedule`,
+      ),
+    );
+    return response.data;
+  }
 }

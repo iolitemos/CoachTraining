@@ -50,6 +50,10 @@ public class RoutineScheduleRequestsController : ControllerBase
     public async Task<IActionResult> Reject(int id, [FromBody] RoutineScheduleRequestDecisionDto dto) =>
         ToActionResult(await _service.RejectAsync(id, dto, _currentUser.UserId!.Value), "ปฏิเสธคำขอแล้ว");
 
+    [HttpDelete("{id:int}/approved-schedule")]
+    public async Task<IActionResult> DeleteApprovedSchedule(int id) =>
+        ToActionResult(await _service.DeleteApprovedAsync(id, _currentUser.UserId!.Value), "ลบตารางฝึกซ้อมที่อนุมัติแล้วสำเร็จ");
+
     private IActionResult ToActionResult(RoutineScheduleRequestActionResult result, string message)
     {
         if (result.NotFound) return NotFound(new ApiErrorResponse("ไม่พบคำขอตารางฝึกซ้อม"));

@@ -43,6 +43,9 @@ public class CoachCompensationStatementDto
     public string CoachCode { get; set; } = string.Empty;
     public string CoachFullName { get; set; } = string.Empty;
     public string? CoachNickname { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? BankAccountName { get; set; }
     public int Year { get; set; }
     public int Month { get; set; }
     public string Status { get; set; } = string.Empty;

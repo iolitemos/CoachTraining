@@ -29,6 +29,9 @@ public class CoachCompensationServiceTests
             FullName = "Actual Coach",
             BaseSalary = 30_000m,
             PrivateRate = 800m,
+            BankName = "ธนาคารกสิกรไทย",
+            BankAccountNumber = "123-4-56789-0",
+            BankAccountName = "Actual Coach",
         };
         db.Coaches.AddRange(assignedCoach, actualCoach);
         await db.SaveChangesAsync();
@@ -60,6 +63,9 @@ public class CoachCompensationServiceTests
         Assert.Equal(1, result.Data.PrivateSessionCount);
         Assert.Equal(750m, result.Data.PrivateCompensation);
         Assert.Equal(30_750m, result.Data.NetAmount);
+        Assert.Equal("ธนาคารกสิกรไทย", result.Data.BankName);
+        Assert.Equal("123-4-56789-0", result.Data.BankAccountNumber);
+        Assert.Equal("Actual Coach", result.Data.BankAccountName);
         Assert.Equal(lockedPrivate.TrainingSessionId, result.Data.Items.Single().TrainingSessionId);
         Assert.Equal("One", result.Data.Items.Single().ParticipantNames);
     }

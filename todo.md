@@ -738,6 +738,8 @@
 - [ ] Redesign the Coach request-status page for mobile and desktop with status summaries, filters, clearer proposed/approved comparison, and safer cancellation confirmation. <!-- Implemented; targeted tests and Angular template compilation pass. Awaiting production build because the existing ng build process exits 134 without diagnostics. -->
 - [ ] Add responsive calendar/list views, status summaries, Coach filtering, and a clearer comparison workflow to the Administrator Routine Schedule Request page. <!-- Implemented; 4 targeted tests and Angular template compilation pass. Awaiting production build because the existing ng build process exits 134 without diagnostics. -->
 - [ ] Allow Administrators to select individual or filtered Pending requests and approve them as one batch, while simplifying calendar cards to Coach names without time. <!-- Implemented; backend build, 7 backend tests, 5 frontend tests, and Angular template compilation pass. Awaiting production build because the existing ng build process exits 134 without diagnostics. -->
+- [ ] Allow Administrators to reject a Pending Routine Schedule request directly from the calendar with a required reason. <!-- Implemented; 9 targeted tests, all 144 frontend tests, and Angular template compilation pass. Awaiting successful frontend production build because the existing ng build process exits 134 without diagnostics. -->
+- [ ] Allow Administrators to delete an approved, untouched Routine Schedule directly from the request calendar while preserving the request as Cancelled history. <!-- Implemented; backend build, all 302 backend tests, 10 targeted frontend tests, all 145 frontend tests, and Angular template compilation pass. Awaiting successful frontend production build because the existing ng build process exits 134 without diagnostics. -->
 
 ### 5.4 Private Training Frontend
 
@@ -804,6 +806,7 @@
 - [ ] Show assigned Private participants and date-specific planned Routine athletes in the Coach Home overview cards and calendar. <!-- Implemented; targeted backend/frontend tests, backend build, and frontend TypeScript compilation pass. Awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
 - [x] Add distinct colors to Coach Home summary statuses and consistently color Routine/Private type badges.
 - [x] Allow Coach self-service Routine Training creation across a date range filtered by selected weekdays.
+- [ ] Add a guarded Coach Home calendar edit mode so tapping a date immediately submits a 16:30–20:30 Routine request, and tapping its Pending date again opens deletion confirmation on mobile and desktop without requiring a separate mobile delete icon. <!-- Implemented; targeted and all 142 frontend tests plus Angular template compilation pass. Awaiting successful frontend production build because the existing ng build process exits 134 without diagnostics. -->
 
 ### 5.6 Coach Session Frontend
 
@@ -1060,6 +1063,7 @@
 - [x] Display Base Salary, Private compensation, adjustments, net amount, and linked Session details responsively.
 - [x] Add calculate/refresh, adjustment, confirm, and mark-paid actions with loading, success, error, and confirmation states.
 - [ ] Refresh the compensation summary UI and export/share a coach-ready PNG statement. <!-- Implemented; all 141 frontend tests and Angular template compilation pass. Awaiting successful frontend production build (current ng build exits 134 without diagnostics). -->
+- [ ] Show Coach bank account reference details on the compensation page and exported PNG statement. <!-- Implemented; backend build, all 302 backend tests, 4 targeted frontend tests, all 146 frontend tests, and Angular template compilation pass. Awaiting successful frontend production build because the existing ng build process exits 134 without diagnostics. -->
 
 ---
 

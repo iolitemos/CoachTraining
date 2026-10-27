@@ -299,6 +299,52 @@
       </div>
 
       <div class="p-4 sm:p-6">
+        <section
+          class="mb-5 overflow-hidden rounded-2xl border border-primary-100 bg-primary-50/60"
+          aria-label="ข้อมูลบัญชีรับเงิน"
+        >
+          <div class="flex items-center gap-2 border-b border-primary-100 px-4 py-3 sm:px-5">
+            <span
+              class="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-primary-700 shadow-sm"
+            >
+              <svg
+                class="size-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M3 10h18M5 10V8l7-4 7 4v2M5 20h14M7 10v7m5-7v7m5-7v7" />
+              </svg>
+            </span>
+            <div>
+              <h3 class="text-sm font-semibold text-text">ข้อมูลบัญชีรับเงิน</h3>
+              <p class="text-xs text-text-secondary">ข้อมูลอ้างอิงจากประวัติโค้ช</p>
+            </div>
+          </div>
+          <dl
+            class="grid grid-cols-1 divide-y divide-primary-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+          >
+            <div class="px-4 py-3 sm:px-5">
+              <dt class="text-xs text-text-secondary">ธนาคาร / ช่องทางรับเงิน</dt>
+              <dd class="mt-1 font-semibold text-text">{{ item.bankName || 'ยังไม่ได้ระบุ' }}</dd>
+            </div>
+            <div class="px-4 py-3 sm:px-5">
+              <dt class="text-xs text-text-secondary">เลขบัญชี</dt>
+              <dd class="mt-1 font-semibold tabular-nums text-text">
+                {{ item.bankAccountNumber || 'ยังไม่ได้ระบุ' }}
+              </dd>
+            </div>
+            <div class="px-4 py-3 sm:px-5">
+              <dt class="text-xs text-text-secondary">ชื่อบัญชี</dt>
+              <dd class="mt-1 font-semibold text-text">
+                {{ item.bankAccountName || 'ยังไม่ได้ระบุ' }}
+              </dd>
+            </div>
+          </dl>
+        </section>
+
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <article class="rounded-2xl border border-border bg-secondary-50 p-4">
             <div class="flex items-center justify-between gap-3">

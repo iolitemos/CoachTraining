@@ -98,6 +98,69 @@ public class RoutineScheduleRequestServiceTests
     }
 
     [Fact]
+    public async Task DeleteApproved_RemovesUntouchedScheduleAndPreservesRequestAsCancelledHistory()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var service = CreateService(db);
+        var created = await service.CreateAsync(coach.CoachId, new RoutineScheduleRequestCreateDto
+        {
+            ProposedDate = new DateOnly(2026, 11, 2),
+            ProposedStartTime = new TimeOnly(18, 0),
+            ProposedEndTime = new TimeOnly(20, 0),
+        }, 10);
+        var approved = await service.ApproveAsync(created.Request!.RoutineScheduleRequestId,
+            new RoutineScheduleRequestReviewDto
+            {
+                ApprovedDate = created.Request.ProposedDate,
+                ApprovedStartTime = created.Request.ProposedStartTime,
+                ApprovedEndTime = created.Request.ProposedEndTime,
+            }, 20);
+
+        var result = await service.DeleteApprovedAsync(approved.Request!.RoutineScheduleRequestId, 20);
+
+        Assert.Null(result.Error);
+        Assert.Equal(RoutineScheduleRequestStatus.Cancelled, result.Request!.Status);
+        Assert.Equal("ผู้ดูแลลบตารางฝึกซ้อมที่อนุมัติแล้ว", result.Request.ReviewReason);
+        Assert.Empty(await db.RoutineSchedules.ToListAsync());
+        Assert.Empty(await db.TrainingSessions.ToListAsync());
+        Assert.Contains(await db.AuditLogs.ToListAsync(), x =>
+            x.EntityName == nameof(RoutineScheduleRequest) && x.Action == "DeleteApprovedSchedule");
+    }
+
+    [Fact]
+    public async Task DeleteApproved_DoesNotRemoveScheduleThatHasProgressedHistory()
+    {
+        using var db = TestDbContextFactory.Create();
+        var coach = await SeedCoachAsync(db);
+        var service = CreateService(db);
+        var created = await service.CreateAsync(coach.CoachId, new RoutineScheduleRequestCreateDto
+        {
+            ProposedDate = new DateOnly(2026, 11, 2),
+            ProposedStartTime = new TimeOnly(18, 0),
+            ProposedEndTime = new TimeOnly(20, 0),
+        }, 10);
+        var approved = await service.ApproveAsync(created.Request!.RoutineScheduleRequestId,
+            new RoutineScheduleRequestReviewDto
+            {
+                ApprovedDate = created.Request.ProposedDate,
+                ApprovedStartTime = created.Request.ProposedStartTime,
+                ApprovedEndTime = created.Request.ProposedEndTime,
+            }, 20);
+        var session = await db.TrainingSessions.SingleAsync();
+        session.Status = SessionStatus.Completed;
+        await db.SaveChangesAsync();
+
+        var result = await service.DeleteApprovedAsync(approved.Request!.RoutineScheduleRequestId, 20);
+
+        Assert.NotNull(result.Error);
+        Assert.Equal(RoutineScheduleRequestStatus.Approved,
+            (await db.RoutineScheduleRequests.SingleAsync()).Status);
+        Assert.Single(await db.RoutineSchedules.ToListAsync());
+        Assert.Single(await db.TrainingSessions.ToListAsync());
+    }
+
+    [Fact]
     public async Task Revision_CanBeEditedByOwningCoachAndReturnsToPending()
     {
         using var db = TestDbContextFactory.Create();

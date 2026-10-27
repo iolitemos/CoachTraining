@@ -15,4 +15,5 @@ public interface IRoutineScheduleRequestService
     Task<RoutineScheduleRequestBatchActionResult> ApproveBatchAsync(RoutineScheduleRequestBatchApproveDto dto, int userId);
     Task<RoutineScheduleRequestActionResult> RequestRevisionAsync(int id, RoutineScheduleRequestDecisionDto dto, int userId);
     Task<RoutineScheduleRequestActionResult> RejectAsync(int id, RoutineScheduleRequestDecisionDto dto, int userId);
+    Task<RoutineScheduleRequestActionResult> DeleteApprovedAsync(int id, int userId);
 }

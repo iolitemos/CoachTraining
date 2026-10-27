@@ -37,7 +37,7 @@ export function createCompensationStatementCanvas(
 ): HTMLCanvasElement {
   const detailHeight = Math.max(statement.items.length, 1) * 76;
   const adjustmentHeight = statement.adjustmentReason ? 112 : 0;
-  const height = 840 + detailHeight + adjustmentHeight;
+  const height = 960 + detailHeight + adjustmentHeight;
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH;
   canvas.height = height;
@@ -48,11 +48,34 @@ export function createCompensationStatementCanvas(
   context.fillStyle = '#f1f5f9';
   context.fillRect(0, 0, WIDTH, height);
   drawHeader(context, statement);
+  drawBankAccount(context, statement);
   drawSummary(context, statement);
   const detailTop = drawAdjustment(context, statement);
   drawDetails(context, statement, detailTop);
   drawFooter(context, height);
   return canvas;
+}
+
+function drawBankAccount(
+  context: CanvasRenderingContext2D,
+  statement: CoachCompensationStatement,
+): void {
+  roundedRect(context, 84, 388, WIDTH - 168, 100, 22, '#ffffff');
+  context.fillStyle = '#1e40af';
+  context.font = `600 24px ${FONT}`;
+  context.fillText('ข้อมูลบัญชีรับเงิน', 112, 425);
+
+  const details = [
+    `ธนาคาร: ${statement.bankName || 'ยังไม่ได้ระบุ'}`,
+    `เลขบัญชี: ${statement.bankAccountNumber || 'ยังไม่ได้ระบุ'}`,
+    `ชื่อบัญชี: ${statement.bankAccountName || 'ยังไม่ได้ระบุ'}`,
+  ];
+  const columns = [112, 580, 1055];
+  context.fillStyle = '#334155';
+  context.font = `500 22px ${FONT}`;
+  details.forEach((detail, index) => {
+    context.fillText(truncate(context, detail, 400), columns[index], 466);
+  });
 }
 
 function drawHeader(
@@ -105,7 +128,7 @@ function drawSummary(
   context: CanvasRenderingContext2D,
   statement: CoachCompensationStatement,
 ): void {
-  const top = 400;
+  const top = 520;
   const gap = 24;
   const cardWidth = (WIDTH - 168 - gap * 3) / 4;
   const cards = [
@@ -145,16 +168,16 @@ function drawAdjustment(
   context: CanvasRenderingContext2D,
   statement: CoachCompensationStatement,
 ): number {
-  if (!statement.adjustmentReason) return 620;
+  if (!statement.adjustmentReason) return 740;
 
-  roundedRect(context, 84, 598, WIDTH - 168, 88, 20, '#fffbeb');
+  roundedRect(context, 84, 718, WIDTH - 168, 88, 20, '#fffbeb');
   context.fillStyle = '#92400e';
   context.font = `600 24px ${FONT}`;
-  context.fillText('หมายเหตุการปรับยอด', 112, 634);
+  context.fillText('หมายเหตุการปรับยอด', 112, 754);
   context.fillStyle = '#78350f';
   context.font = `400 23px ${FONT}`;
-  context.fillText(truncate(context, statement.adjustmentReason, WIDTH - 480), 360, 634);
-  return 724;
+  context.fillText(truncate(context, statement.adjustmentReason, WIDTH - 480), 360, 754);
+  return 844;
 }
 
 function drawDetails(
